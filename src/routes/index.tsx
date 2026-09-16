@@ -1,24 +1,54 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Hero } from "@/components/site/Hero";
+import { MarketIntelligence } from "@/components/site/MarketIntelligence";
+import { SignalEngine } from "@/components/site/SignalEngine";
+import { AIAnalyst } from "@/components/site/AIAnalyst";
+import { DashboardReveal } from "@/components/site/DashboardReveal";
+import { Capabilities } from "@/components/site/Capabilities";
+import { MarketExplorer } from "@/components/site/MarketExplorer";
+import { ResearchSection } from "@/components/site/ResearchSection";
+import { PortfolioIntelligence } from "@/components/site/PortfolioIntelligence";
+import { RiskEngine } from "@/components/site/RiskEngine";
+import { Coverage } from "@/components/site/Coverage";
+import { Philosophy } from "@/components/site/Philosophy";
+import { ProductShowcase } from "@/components/site/ProductShowcase";
+import { CallToAction } from "@/components/site/CallToAction";
+
+const title = "Quant Plus — AI-Powered Market Intelligence";
+const description =
+  "Real-time market data, quantitative signals and AI analysis in one intelligent research platform. See the market differently.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      
+      <Hero />
+      <MarketIntelligence />
+      <SignalEngine />
+      <AIAnalyst />
+      <DashboardReveal />
+      <Capabilities />
+      <MarketExplorer />
+      <ResearchSection />
+      <PortfolioIntelligence />
+      <RiskEngine />
+      <Coverage />
+      <Philosophy />
+      <ProductShowcase />
+      <CallToAction />
+    </>
   );
 }
