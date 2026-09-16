@@ -11,6 +11,7 @@ export function AnimatedNumber({
   prefix = "",
   suffix = "",
   signed = false,
+  locale = "en-US",
   className,
 }: {
   value: number;
@@ -18,6 +19,7 @@ export function AnimatedNumber({
   prefix?: string;
   suffix?: string;
   signed?: boolean;
+  locale?: string;
   className?: string;
 }) {
   const previous = useRef(value);
