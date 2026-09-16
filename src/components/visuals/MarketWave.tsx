@@ -57,25 +57,63 @@ export function MarketWave({
       return `rgba(110, 168, 255, ${alpha})`;
     };
 
-    const draw = (time: number) => {
-      const { volatility: vol, volume: vlm } = params.current;
-      ctx.clearRect(0, 0, width, height);
-      const amp = (height / 2) * (0.16 + (vol / 100) * 0.6);
-      const mid = height * 0.55;
-      const t = time * 0.00028;
+    /* ---- deterministic random-walk tick series (real price-action shape) ---- */
+    const COUNT = 180;
+    let seed = 0x9e3779b9 ^ Math.round(volatility * 977 + volume * 31);
+    const rnd = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 0xffffffff;
+    };
+    const prices: number[] = [];
+    const vols: number[] = [];
+    let last = 100;
+    let drift = (params.current.tone === "negative" ? -1 : 1) * 0.012;
+    const stepVol = () => 0.18 + (params.current.volatility / 100) * 0.85;
+    const tick = () => {
+      // fat-tailed shock: mostly small moves, occasional jumps
+      const u = rnd();
+      const shock = (rnd() - 0.5) * (u > 0.94 ? 4.2 : u > 0.72 ? 1.6 : 0.7);
+      if (rnd() > 0.985) drift = -drift * (0.6 + rnd() * 0.8);
+      last = last + drift + shock * stepVol();
+      prices.push(last);
+      vols.push(Math.min(1, 0.12 + Math.abs(shock) * 0.42 + rnd() * 0.3));
+      if (prices.length > COUNT) {
+        prices.shift();
+        vols.shift();
+      }
+    };
+    for (let i = 0; i < COUNT; i++) tick();
 
-      const yAt = (u: number) =>
-        mid -
-        (Math.sin(u * 7.2 + t * 2.1) * amp * 0.55 +
-          Math.sin(u * 17.4 + t * 3.4) * amp * 0.24 * (vol / 60) +
-          Math.sin(u * 2.3 - t) * amp * 0.4) +
-        (u - 0.5) * height * 0.08;
+    let lastTickAt = 0;
+    const TICK_MS = 420;
+
+    const draw = (time: number) => {
+      const { volume: vlm } = params.current;
+      if (running && time - lastTickAt > TICK_MS) {
+        lastTickAt = time;
+        tick();
+      }
+      ctx.clearRect(0, 0, width, height);
+
+      const priceTop = height * 0.06;
+      const priceBottom = height * 0.72;
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (const p of prices) {
+        if (p < lo) lo = p;
+        if (p > hi) hi = p;
+      }
+      const pad = (hi - lo) * 0.18 || 1;
+      lo -= pad;
+      hi += pad;
+      const yOf = (p: number) => priceBottom - ((p - lo) / (hi - lo)) * (priceBottom - priceTop);
+      const xOf = (i: number) => (i / (COUNT - 1)) * width;
 
       // measurement grid
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
       for (let g = 1; g < 5; g++) {
-        const y = (height / 5) * g;
+        const y = priceTop + ((priceBottom - priceTop) / 5) * g;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -85,87 +123,77 @@ export function MarketWave({
       for (let g = 1; g < cols; g++) {
         const x = (width / cols) * g;
         ctx.beginPath();
-        ctx.moveTo(x, 0);
+        ctx.moveTo(x, priceTop * 0.4);
         ctx.lineTo(x, height);
         ctx.stroke();
       }
 
-      // area fill
+      // area fill under price
       ctx.beginPath();
-      ctx.moveTo(0, height);
-      for (let x = 0; x <= width; x += 4) ctx.lineTo(x, yAt(x / width));
-      ctx.lineTo(width, height);
+      ctx.moveTo(0, priceBottom);
+      prices.forEach((p, i) => ctx.lineTo(xOf(i), yOf(p)));
+      ctx.lineTo(width, priceBottom);
       ctx.closePath();
-      const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, colourFor(0.3));
-      grad.addColorStop(0.55, colourFor(0.08));
+      const grad = ctx.createLinearGradient(0, priceTop, 0, priceBottom);
+      grad.addColorStop(0, colourFor(0.26));
+      grad.addColorStop(0.6, colourFor(0.06));
       grad.addColorStop(1, "rgba(5, 7, 12, 0)");
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // price line with glow
+      // jagged price line
       ctx.beginPath();
-      ctx.lineWidth = 1.6;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 1.25;
       ctx.strokeStyle = colourFor(0.95);
-      ctx.shadowColor = colourFor(0.5);
-      ctx.shadowBlur = 12;
-      for (let x = 0; x <= width; x += 3) {
-        const y = yAt(x / width);
-        if (x === 0) ctx.moveTo(x, y);
+      ctx.shadowColor = colourFor(0.45);
+      ctx.shadowBlur = 8;
+      prices.forEach((p, i) => {
+        const x = xOf(i);
+        const y = yOf(p);
+        if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-      }
+      });
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // volume histogram along the base
-      const bars = width < 700 ? 34 : 76;
-      for (let i = 0; i < bars; i++) {
-        const u = i / bars;
-        const h =
-          (0.1 + Math.abs(Math.sin(u * 24 + t * 1.6 + i * 0.6)) * (0.22 + (vlm / 100) * 0.5)) *
-          (height * 0.2);
-        ctx.fillStyle = colourFor(0.07 + (i % 3) * 0.035);
-        ctx.fillRect(u * width, height - h, Math.max(1.5, width / bars - 3), h);
+      // volume histogram, one bar per tick, up/down coloured
+      const baseline = height;
+      const barW = Math.max(1, width / COUNT - 1);
+      const volMax = height * 0.22 * (0.5 + vlm / 100);
+      for (let i = 1; i < prices.length; i++) {
+        const h = vols[i]! * volMax;
+        const up = prices[i]! >= prices[i - 1]!;
+        ctx.fillStyle = up ? colourFor(0.2) : "rgba(255, 92, 108, 0.16)";
+        ctx.fillRect(xOf(i) - barW / 2, baseline - h, barW, h);
       }
 
-      // volume particles
-      const count = Math.round((vlm / 100) * (width < 700 ? 40 : 130));
-      for (let i = 0; i < count; i++) {
-        const u = ((i * 37.13) % 100) / 100;
-        const drift = ((time * 0.00004 + i * 0.017) % 1) * 0.4;
-        const px = ((u + drift) % 1) * width;
-        const spread = ((i * 13.7) % 100) / 100 - 0.5;
-        const py = yAt(px / width) + spread * amp * 1.5;
-        ctx.fillStyle = colourFor(0.06 + (((i * 7) % 10) / 10) * 0.22);
-        ctx.fillRect(px, py, 1.2, 1.2);
-      }
-
-      // scanning cursor + live marker
-      const scanU = (time * 0.00006) % 1;
-      const scanX = scanU * width;
-      ctx.strokeStyle = colourFor(0.22);
+      // last price: dashed level + pulsing marker at the right edge
+      const lastY = yOf(prices[prices.length - 1]!);
+      ctx.setLineDash([3, 5]);
+      ctx.strokeStyle = colourFor(0.3);
       ctx.beginPath();
-      ctx.moveTo(scanX, 0);
-      ctx.lineTo(scanX, height);
+      ctx.moveTo(0, lastY);
+      ctx.lineTo(width, lastY);
       ctx.stroke();
+      ctx.setLineDash([]);
 
-      const markerY = yAt(scanU);
-      const pulse = 3 + Math.sin(time * 0.004) * 1.2;
-      ctx.fillStyle = colourFor(0.16);
+      const pulse = 2.4 + Math.sin(time * 0.004) * 1.1;
+      ctx.fillStyle = colourFor(0.14);
       ctx.beginPath();
-      ctx.arc(scanX, markerY, pulse * 2.6, 0, Math.PI * 2);
+      ctx.arc(width - 1, lastY, pulse * 2.4, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = colourFor(1);
       ctx.beginPath();
-      ctx.arc(scanX, markerY, 2.6, 0, Math.PI * 2);
+      ctx.arc(width - 1, lastY, 2.2, 0, Math.PI * 2);
       ctx.fill();
 
       // right-edge price ladder
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
       for (let g = 0; g <= 5; g++) {
-        const y = (height / 5) * g;
+        const y = priceTop + ((priceBottom - priceTop) / 5) * g;
         ctx.beginPath();
-        ctx.moveTo(width - 10, y);
+        ctx.moveTo(width - 9, y);
         ctx.lineTo(width, y);
         ctx.stroke();
       }
