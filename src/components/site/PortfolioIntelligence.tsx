@@ -60,14 +60,14 @@ export function PortfolioIntelligence() {
               <span className="label-tech">Portfolio value</span>
               <p className="display-mono-xl mt-3">
                 ₹
-                <AnimatedNumber value={Math.round(value)} decimals={0} />
+                <AnimatedNumber value={Math.round(value)} decimals={0} locale="en-IN" />
               </p>
             </div>
             <div>
               <span className="label-tech">Today's P&amp;L</span>
               <p className="mt-3 font-mono text-2xl text-positive">
                 +₹
-                <AnimatedNumber value={Math.round(pnl)} decimals={0} />
+                <AnimatedNumber value={Math.round(pnl)} decimals={0} locale="en-IN" />
               </p>
             </div>
             <div>
