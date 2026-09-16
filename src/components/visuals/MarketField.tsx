@@ -88,6 +88,7 @@ export function MarketField({ className, expansion = 0, density = "full" }: Mark
 
       for (let i = 0; i < lines.length; i++) {
         const l = lines[i];
+        if (!l) continue;
         const baseY = centre + (l.y - 0.5) * height * spread;
         if (baseY < -40 || baseY > height + 40) continue;
 
@@ -129,6 +130,11 @@ export function MarketField({ className, expansion = 0, density = "full" }: Mark
         }
       } else {
         const l = lines[pulse.line];
+        if (!l) {
+          pulse = { line: 0, x: -1, active: false, next: 1200 };
+          if (running) raf = requestAnimationFrame(draw);
+          return;
+        }
         const baseY = centre + (l.y - 0.5) * height * spread;
         pulse.x += width / 90;
         const segments = 26;
