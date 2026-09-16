@@ -153,8 +153,8 @@ export function DashboardPreview({
       </div>
 
       {/* bottom row */}
-      <div className={cn("grid gap-px border-t border-border bg-border sm:grid-cols-3", step(7))}>
-        <div className="bg-background p-4 sm:p-5">
+      <div className={cn("grid gap-px border-t border-border bg-border sm:grid-cols-3")}>
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Sector performance</span>
           <ul className="mt-4 space-y-2">
             {sectors.map((s) => (
@@ -178,7 +178,7 @@ export function DashboardPreview({
           </ul>
         </div>
 
-        <div className="bg-background p-4 sm:p-5">
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Watchlist</span>
           <ul className="mt-4 space-y-2.5">
             {watchlist.map((inst) => (
@@ -208,7 +208,7 @@ export function DashboardPreview({
           </ul>
         </div>
 
-        <div className="bg-background p-4 sm:p-5">
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Risk metrics</span>
           <ul className="mt-4 space-y-2.5 font-mono text-[10px]">
             {[
