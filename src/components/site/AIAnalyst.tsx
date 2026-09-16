@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Eyebrow, SectionShell } from "@/components/site/primitives";
 import { Reveal } from "@/components/site/Reveal";
 import { useInView, usePrefersReducedMotion } from "@/hooks/use-reveal";
+import { useCountUp, useTypewriter } from "@/hooks/use-live";
 import { analystSteps } from "@/data/market";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ export function AIAnalyst() {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });
   const reduced = usePrefersReducedMotion();
   const [stage, setStage] = useState(0);
+  const typed = useTypewriter("“Why is NIFTY 500 moving today?”", { active: inView, speed: 34 });
 
   useEffect(() => {
     if (!inView) return;
@@ -30,6 +32,7 @@ export function AIAnalyst() {
   }, [inView, reduced]);
 
   const complete = stage > analystSteps.length;
+  const confidence = useCountUp(78, { active: complete, duration: 1200 });
 
   return (
     <SectionShell id="ai-analyst" className="border-t border-border">
@@ -62,8 +65,15 @@ export function AIAnalyst() {
 
           <div className="mt-8">
             <span className="label-tech">User</span>
-            <p className="mt-3 text-lg leading-snug sm:text-2xl">
-              “Why is NIFTY 500 moving today?”
+            <p className="mt-3 min-h-[2.2em] text-lg leading-snug sm:text-2xl">
+              {typed.text}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "ml-1 inline-block h-[1em] w-[2px] translate-y-[0.12em] bg-primary",
+                  typed.done ? "opacity-0" : "animate-pulse",
+                )}
+              />
             </p>
           </div>
 
@@ -135,7 +145,9 @@ export function AIAnalyst() {
           <div className="mt-9 flex items-end justify-between border-t border-border pt-6">
             <div>
               <span className="label-tech">Confidence</span>
-              <p className="mt-2 font-mono text-2xl text-primary-soft">78%</p>
+              <p className="mt-2 font-mono text-2xl num-tabular text-primary-soft">
+                {Math.round(confidence)}%
+              </p>
             </div>
             <p className="max-w-[55%] text-[11px] leading-relaxed text-subtle">
               Analysis of current conditions. Not investment advice or a forecast.

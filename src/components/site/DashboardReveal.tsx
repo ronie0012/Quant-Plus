@@ -7,8 +7,8 @@ import { usePrefersReducedMotion, useScrollProgress } from "@/hooks/use-reveal";
 export function DashboardReveal() {
   const { ref, progress } = useScrollProgress<HTMLDivElement>();
   const reduced = usePrefersReducedMotion();
-  const t = Math.max(0, Math.min(1, (progress - 0.14) / 0.5));
-  const stage = reduced ? 7 : Math.round(t * 7);
+  const t = Math.max(0, Math.min(1, (progress - 0.06) / 0.26));
+  const stage = reduced ? 7 : Math.ceil(t * 7);
 
   return (
     <SectionShell id="platform" className="border-t border-border bg-surface">

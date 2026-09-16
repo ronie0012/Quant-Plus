@@ -27,10 +27,14 @@ export function DashboardPreview({
   className?: string;
 }) {
   const show = (n: number) => stage >= n;
+  /**
+   * Fades a panel's *contents* rather than the panel itself, so the frame and
+   * hairline grid stay intact while the interface assembles.
+   */
   const step = (n: number) =>
     cn(
-      "transition-all duration-[900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
-      show(n) ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
+      "[&>*]:transition-all [&>*]:duration-[900ms] [&>*]:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+      show(n) ? "[&>*]:translate-y-0 [&>*]:opacity-100" : "[&>*]:translate-y-3 [&>*]:opacity-0",
     );
 
   return (
@@ -121,7 +125,7 @@ export function DashboardPreview({
           <div className={cn("bg-background p-4 sm:p-5", step(6))}>
             <span className="label-tech">Signal strength</span>
             <ul className="mt-4 space-y-3">
-              {watchlist.map((inst) => (
+              {watchlist.map((inst, i) => (
                 <li key={inst.symbol} className="flex items-center gap-3">
                   <span className="w-20 font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
                     {inst.symbol}
@@ -129,10 +133,13 @@ export function DashboardPreview({
                   <span className="h-px flex-1 bg-border">
                     <span
                       className={cn(
-                        "block h-px",
+                        "block h-px transition-[width] duration-[1200ms] ease-out",
                         inst.change >= 0 ? "bg-positive" : "bg-negative",
                       )}
-                      style={{ width: show(6) ? `${inst.momentum}%` : "0%" }}
+                      style={{
+                        width: show(6) ? `${inst.momentum}%` : "0%",
+                        transitionDelay: `${i * 110}ms`,
+                      }}
                     />
                   </span>
                   <span className="w-7 text-right font-mono text-[10px] text-subtle">
@@ -146,8 +153,8 @@ export function DashboardPreview({
       </div>
 
       {/* bottom row */}
-      <div className={cn("grid gap-px border-t border-border bg-border sm:grid-cols-3", step(7))}>
-        <div className="bg-background p-4 sm:p-5">
+      <div className={cn("grid gap-px border-t border-border bg-border sm:grid-cols-3")}>
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Sector performance</span>
           <ul className="mt-4 space-y-2">
             {sectors.map((s) => (
@@ -156,7 +163,7 @@ export function DashboardPreview({
                 <span className="relative h-1.5 flex-1 bg-panel">
                   <span
                     className={cn(
-                      "absolute top-0 bottom-0",
+                      "absolute top-0 bottom-0 transition-[width] duration-[1200ms] ease-out",
                       s.value >= 0 ? "left-1/2 bg-positive/70" : "right-1/2 bg-negative/70",
                     )}
                     style={{ width: show(7) ? `${Math.abs(s.value) * 26}%` : "0%" }}
@@ -171,7 +178,7 @@ export function DashboardPreview({
           </ul>
         </div>
 
-        <div className="bg-background p-4 sm:p-5">
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Watchlist</span>
           <ul className="mt-4 space-y-2.5">
             {watchlist.map((inst) => (
@@ -201,7 +208,7 @@ export function DashboardPreview({
           </ul>
         </div>
 
-        <div className="bg-background p-4 sm:p-5">
+        <div className={cn("bg-background p-4 sm:p-5", step(7))}>
           <span className="label-tech">Risk metrics</span>
           <ul className="mt-4 space-y-2.5 font-mono text-[10px]">
             {[

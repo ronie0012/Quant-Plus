@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Hero } from "@/components/site/Hero";
+import { MarketTicker } from "@/components/site/MarketTicker";
 import { MarketIntelligence } from "@/components/site/MarketIntelligence";
 import { SignalEngine } from "@/components/site/SignalEngine";
 import { AIAnalyst } from "@/components/site/AIAnalyst";
@@ -34,8 +35,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <>
-      
       <Hero />
+      <MarketTicker />
       <MarketIntelligence />
       <SignalEngine />
       <AIAnalyst />

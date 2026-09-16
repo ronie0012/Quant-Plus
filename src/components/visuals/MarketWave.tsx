@@ -71,6 +71,25 @@ export function MarketWave({
           Math.sin(u * 2.3 - t) * amp * 0.4) +
         (u - 0.5) * height * 0.08;
 
+      // measurement grid
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
+      for (let g = 1; g < 5; g++) {
+        const y = (height / 5) * g;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      const cols = width < 700 ? 6 : 12;
+      for (let g = 1; g < cols; g++) {
+        const x = (width / cols) * g;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+
       // area fill
       ctx.beginPath();
       ctx.moveTo(0, height);
@@ -78,21 +97,36 @@ export function MarketWave({
       ctx.lineTo(width, height);
       ctx.closePath();
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, colourFor(0.16));
+      grad.addColorStop(0, colourFor(0.3));
+      grad.addColorStop(0.55, colourFor(0.08));
       grad.addColorStop(1, "rgba(5, 7, 12, 0)");
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // price line
+      // price line with glow
       ctx.beginPath();
-      ctx.lineWidth = 1.3;
-      ctx.strokeStyle = colourFor(0.9);
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = colourFor(0.95);
+      ctx.shadowColor = colourFor(0.5);
+      ctx.shadowBlur = 12;
       for (let x = 0; x <= width; x += 3) {
         const y = yAt(x / width);
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // volume histogram along the base
+      const bars = width < 700 ? 34 : 76;
+      for (let i = 0; i < bars; i++) {
+        const u = i / bars;
+        const h =
+          (0.1 + Math.abs(Math.sin(u * 24 + t * 1.6 + i * 0.6)) * (0.22 + (vlm / 100) * 0.5)) *
+          (height * 0.2);
+        ctx.fillStyle = colourFor(0.07 + (i % 3) * 0.035);
+        ctx.fillRect(u * width, height - h, Math.max(1.5, width / bars - 3), h);
+      }
 
       // volume particles
       const count = Math.round((vlm / 100) * (width < 700 ? 40 : 130));
@@ -104,6 +138,36 @@ export function MarketWave({
         const py = yAt(px / width) + spread * amp * 1.5;
         ctx.fillStyle = colourFor(0.06 + (((i * 7) % 10) / 10) * 0.22);
         ctx.fillRect(px, py, 1.2, 1.2);
+      }
+
+      // scanning cursor + live marker
+      const scanU = (time * 0.00006) % 1;
+      const scanX = scanU * width;
+      ctx.strokeStyle = colourFor(0.22);
+      ctx.beginPath();
+      ctx.moveTo(scanX, 0);
+      ctx.lineTo(scanX, height);
+      ctx.stroke();
+
+      const markerY = yAt(scanU);
+      const pulse = 3 + Math.sin(time * 0.004) * 1.2;
+      ctx.fillStyle = colourFor(0.16);
+      ctx.beginPath();
+      ctx.arc(scanX, markerY, pulse * 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = colourFor(1);
+      ctx.beginPath();
+      ctx.arc(scanX, markerY, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // right-edge price ladder
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      for (let g = 0; g <= 5; g++) {
+        const y = (height / 5) * g;
+        ctx.beginPath();
+        ctx.moveTo(width - 10, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
       }
 
       if (running) raf = requestAnimationFrame(draw);
