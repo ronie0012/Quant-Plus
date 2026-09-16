@@ -129,10 +129,13 @@ export function DashboardPreview({
                   <span className="h-px flex-1 bg-border">
                     <span
                       className={cn(
-                        "block h-px",
+                        "block h-px transition-[width] duration-[1200ms] ease-out",
                         inst.change >= 0 ? "bg-positive" : "bg-negative",
                       )}
-                      style={{ width: show(6) ? `${inst.momentum}%` : "0%" }}
+                      style={{
+                        width: show(6) ? `${inst.momentum}%` : "0%",
+                        transitionDelay: `${i * 110}ms`,
+                      }}
                     />
                   </span>
                   <span className="w-7 text-right font-mono text-[10px] text-subtle">
