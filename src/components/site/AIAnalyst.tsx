@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Eyebrow, SectionShell } from "@/components/site/primitives";
 import { Reveal } from "@/components/site/Reveal";
 import { useInView, usePrefersReducedMotion } from "@/hooks/use-reveal";
+import { useCountUp, useTypewriter } from "@/hooks/use-live";
 import { analystSteps } from "@/data/market";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ export function AIAnalyst() {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.3 });
   const reduced = usePrefersReducedMotion();
   const [stage, setStage] = useState(0);
+  const typed = useTypewriter("“Why is NIFTY 500 moving today?”", { active: inView, speed: 34 });
 
   useEffect(() => {
     if (!inView) return;
@@ -62,8 +64,15 @@ export function AIAnalyst() {
 
           <div className="mt-8">
             <span className="label-tech">User</span>
-            <p className="mt-3 text-lg leading-snug sm:text-2xl">
-              “Why is NIFTY 500 moving today?”
+            <p className="mt-3 min-h-[2.2em] text-lg leading-snug sm:text-2xl">
+              {typed.text}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "ml-1 inline-block h-[1em] w-[2px] translate-y-[0.12em] bg-primary",
+                  typed.done ? "opacity-0" : "animate-pulse",
+                )}
+              />
             </p>
           </div>
 
