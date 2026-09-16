@@ -27,10 +27,14 @@ export function DashboardPreview({
   className?: string;
 }) {
   const show = (n: number) => stage >= n;
+  /**
+   * Fades a panel's *contents* rather than the panel itself, so the frame and
+   * hairline grid stay intact while the interface assembles.
+   */
   const step = (n: number) =>
     cn(
-      "transition-all duration-[900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
-      show(n) ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
+      "[&>*]:transition-all [&>*]:duration-[900ms] [&>*]:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+      show(n) ? "[&>*]:translate-y-0 [&>*]:opacity-100" : "[&>*]:translate-y-3 [&>*]:opacity-0",
     );
 
   return (
