@@ -159,7 +159,7 @@ export function DashboardPreview({
                 <span className="relative h-1.5 flex-1 bg-panel">
                   <span
                     className={cn(
-                      "absolute top-0 bottom-0",
+                      "absolute top-0 bottom-0 transition-[width] duration-[1200ms] ease-out",
                       s.value >= 0 ? "left-1/2 bg-positive/70" : "right-1/2 bg-negative/70",
                     )}
                     style={{ width: show(7) ? `${Math.abs(s.value) * 26}%` : "0%" }}
