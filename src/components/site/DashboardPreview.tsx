@@ -56,12 +56,17 @@ export function DashboardPreview({
       </div>
 
       {/* product nav */}
-      <div className={cn("flex items-center gap-1 border-b border-border px-3 py-2", step(2))}>
+      <div
+        className={cn(
+          "flex items-center gap-1 overflow-x-auto border-b border-border px-3 py-2 [scrollbar-width:none]",
+          step(2),
+        )}
+      >
         {tabs.map((tab, i) => (
           <span
             key={tab}
             className={cn(
-              "px-3 py-1.5 font-mono text-[10px] tracking-[0.16em] uppercase",
+              "shrink-0 px-3 py-1.5 font-mono text-[10px] tracking-[0.16em] whitespace-nowrap uppercase",
               i === 0 ? "bg-panel text-foreground" : "text-subtle",
             )}
           >
