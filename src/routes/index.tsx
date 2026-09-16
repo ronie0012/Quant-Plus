@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <>
-      <h1 className="sr-only">Quant Plus — AI-powered market intelligence</h1>
+      
       <Hero />
       <MarketIntelligence />
       <SignalEngine />
