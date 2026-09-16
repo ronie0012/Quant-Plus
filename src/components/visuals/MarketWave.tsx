@@ -164,7 +164,7 @@ export function MarketWave({
       for (let i = 1; i < prices.length; i++) {
         const h = vols[i]! * volMax;
         const up = prices[i]! >= prices[i - 1]!;
-        ctx.fillStyle = up ? colourFor(0.2) : "rgba(255, 92, 108, 0.16)";
+        ctx.fillStyle = up ? colourFor(0.13) : "rgba(255, 92, 108, 0.1)";
         ctx.fillRect(xOf(i) - barW / 2, baseline - h, barW, h);
       }
 
