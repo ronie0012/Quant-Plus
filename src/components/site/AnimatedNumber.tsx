@@ -34,7 +34,7 @@ export function AnimatedNumber({
     return () => window.clearTimeout(id);
   }, [value]);
 
-  const body = value.toLocaleString("en-US", {
+  const body = value.toLocaleString(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
