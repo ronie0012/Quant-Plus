@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
+import { useDocumentProgress } from "@/hooks/use-live";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -13,6 +14,7 @@ const links = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const progress = useDocumentProgress();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -137,6 +139,15 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
+      <div
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-x-0 bottom-0 h-px origin-left bg-primary transition-opacity duration-500",
+          scrolled ? "opacity-100" : "opacity-0",
+        )}
+        style={{ transform: `scaleX(${progress})` }}
+      />
     </header>
   );
 }
