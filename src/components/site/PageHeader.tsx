@@ -14,7 +14,7 @@ export function PageHeader({
 }) {
   return (
     <header className="relative overflow-hidden border-b border-border pt-36 pb-20 md:pt-44 md:pb-28">
-      <MarketField className="absolute inset-0 opacity-45" density="light" />
+      <MarketField className="absolute inset-0 opacity-45" density="reduced" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
