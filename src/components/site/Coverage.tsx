@@ -21,7 +21,12 @@ export function Coverage() {
         {coverage.map((item, i) => {
           const soon = item.status === "Coming soon";
           return (
-            <Reveal as="li" key={item.label} delay={i * 60} className="bg-background p-5 sm:p-7">
+            <Reveal
+              as="li"
+              key={item.label}
+              delay={i * 60}
+              className="sheen group bg-background p-5 transition-colors duration-500 hover:bg-panel sm:p-7"
+            >
               <div className="flex items-start justify-between gap-4">
                 <span className="label-tech">{item.label}</span>
                 <span
