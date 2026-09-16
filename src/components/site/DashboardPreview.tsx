@@ -121,7 +121,7 @@ export function DashboardPreview({
           <div className={cn("bg-background p-4 sm:p-5", step(6))}>
             <span className="label-tech">Signal strength</span>
             <ul className="mt-4 space-y-3">
-              {watchlist.map((inst) => (
+              {watchlist.map((inst, i) => (
                 <li key={inst.symbol} className="flex items-center gap-3">
                   <span className="w-20 font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
                     {inst.symbol}
