@@ -123,8 +123,8 @@ export function MarketWave({
         const u = i / bars;
         const h =
           (0.1 + Math.abs(Math.sin(u * 24 + t * 1.6 + i * 0.6)) * (0.22 + (vlm / 100) * 0.5)) *
-          (height * 0.3);
-        ctx.fillStyle = colourFor(0.1 + (i % 3) * 0.05);
+          (height * 0.2);
+        ctx.fillStyle = colourFor(0.07 + (i % 3) * 0.035);
         ctx.fillRect(u * width, height - h, Math.max(1.5, width / bars - 3), h);
       }
 
