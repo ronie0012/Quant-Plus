@@ -11,6 +11,7 @@ export function AnimatedNumber({
   prefix = "",
   suffix = "",
   signed = false,
+  locale = "en-US",
   className,
 }: {
   value: number;
@@ -18,6 +19,7 @@ export function AnimatedNumber({
   prefix?: string;
   suffix?: string;
   signed?: boolean;
+  locale?: string;
   className?: string;
 }) {
   const previous = useRef(value);
@@ -32,7 +34,7 @@ export function AnimatedNumber({
     return () => window.clearTimeout(id);
   }, [value]);
 
-  const body = value.toLocaleString("en-US", {
+  const body = value.toLocaleString(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
