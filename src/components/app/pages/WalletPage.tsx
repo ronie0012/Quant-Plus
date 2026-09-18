@@ -175,7 +175,8 @@ export function WalletPage() {
             />
             <div className="p-5">
               <Segmented
-                options={["Add funds", "Withdraw"]}
+                label="Transfer type"
+                items={["Add funds", "Withdraw"]}
                 value={mode}
                 onChange={(next) => {
                   setMode(next as "Add funds" | "Withdraw");
