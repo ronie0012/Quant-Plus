@@ -67,14 +67,11 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
 
         <button
           type="button"
-          aria-label="Notifications"
-          className="relative flex h-9 w-9 items-center justify-center border border-border text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Notifications — no new notifications"
+          title="No new notifications"
+          className="flex h-9 w-9 items-center justify-center border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
         >
           <Bell className="h-3.5 w-3.5" />
-          <span
-            aria-hidden="true"
-            className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary"
-          />
         </button>
       </div>
     </header>
