@@ -61,7 +61,7 @@ export function usePlaceOrder() {
         p_type: order.order_type,
         p_qty: order.quantity,
         p_price: order.price,
-        p_limit: order.limit_price ?? null,
+        p_limit: order.limit_price ?? undefined,
       });
       if (error) throw new Error(error.message);
       return data as unknown as Order;
