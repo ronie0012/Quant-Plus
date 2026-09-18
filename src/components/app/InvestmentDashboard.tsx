@@ -13,7 +13,7 @@ const decisions = [["RELIANCE", "18 Sep 2026", "BUY", "84%", "Moderate"], ["TCS"
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) { return <div className={cn("dashboard-card rounded-lg border border-border bg-panel/85", className)}>{children}</div>; }
 function Label({ children }: { children: React.ReactNode }) { return <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-subtle">{children}</p>; }
 
-export function InvestmentDashboard({ email }: { email?: string }) {
+export function InvestmentDashboard({ email }: { email: string | undefined }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   return <AppShell email={email}>

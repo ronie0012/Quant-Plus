@@ -17,7 +17,7 @@ const searchResults = [
   ["RELIANCE", "Reliance Industries", "Energy"], ["TCS", "Tata Consultancy Services", "Technology"], ["INFY", "Infosys", "Technology"], ["HDFCBANK", "HDFC Bank", "Financials"], ["ICICIBANK", "ICICI Bank", "Financials"],
 ];
 
-export function AppShell({ children, email }: { children: ReactNode; email?: string | undefined }) {
+export function AppShell({ children, email }: { children: ReactNode; email: string | undefined }) {
   const [mobile, setMobile] = useState(false);
   const [palette, setPalette] = useState(false);
   const [query, setQuery] = useState("");
