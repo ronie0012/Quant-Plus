@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Bot, Check, ChevronRight, CircleAlert, Clock3, Database, Radio, Search, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app/AppShell";
@@ -50,4 +50,4 @@ export function InvestmentDashboard({ email }: { email?: string }) {
   </AppShell>;
 }
 
-function AnimateAssistant({open}:{open:boolean}) { return <>{open && <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="border-t border-border p-4"><div className="grid gap-2 sm:grid-cols-2">{["Why is RELIANCE bullish?","Explain the risk flag","Compare RELIANCE vs INFY","Review the latest decision"].map((prompt)=><button key={prompt} type="button" className="rounded-md border border-border bg-background px-3 py-3 text-left text-[11px] text-muted-foreground transition hover:border-border-strong hover:text-foreground">{prompt}</button>)}</div><p className="mt-4 flex items-center gap-2 text-[10px] text-subtle"><Database className="h-3 w-3"/>Assistant responses activate when analysis data is connected.</p></motion.div>}</>; }
+function AnimateAssistant({open}:{open:boolean}) { return <AnimatePresence>{open && <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden border-t border-border p-4"><div className="grid gap-2 sm:grid-cols-2">{["Why is RELIANCE bullish?","Explain the risk flag","Compare RELIANCE vs INFY","Review the latest decision"].map((prompt)=><button key={prompt} type="button" className="rounded-md border border-border bg-background px-3 py-3 text-left text-[11px] text-muted-foreground transition hover:border-border-strong hover:text-foreground">{prompt}</button>)}</div><p className="mt-4 flex items-center gap-2 text-[10px] text-subtle"><Database className="h-3 w-3"/>Assistant responses activate when analysis data is connected.</p></motion.div>}</AnimatePresence>; }

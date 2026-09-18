@@ -11,4 +11,4 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   ]}),
   component: DashboardPage,
 });
-function DashboardPage(){const {user}=Route.useRouteContext();return <InvestmentDashboard email={user.email}/>;}
+function DashboardPage(){const {user}=Route.useRouteContext();return <InvestmentDashboard email={user.email ?? undefined}/>;}
