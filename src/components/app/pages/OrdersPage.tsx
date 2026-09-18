@@ -150,7 +150,7 @@ export function OrdersPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => update.mutate({ id: order.id, status: "FILLED" })}
+                                onClick={() => act(order.id, "FILLED")}
                                 className="font-mono text-[9px] tracking-[0.14em] uppercase"
                               >
                                 Fill
@@ -158,7 +158,7 @@ export function OrdersPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => update.mutate({ id: order.id, status: "CANCELLED" })}
+                                onClick={() => act(order.id, "CANCELLED")}
                                 className="font-mono text-[9px] tracking-[0.14em] uppercase text-subtle"
                               >
                                 Cancel
