@@ -24,6 +24,7 @@ import {
   useWatchlist,
 } from "@/hooks/use-dashboard-data";
 import { researchDesks } from "@/data/market";
+import { StockBoard } from "@/components/app/stocks/StockBoard";
 import { cn } from "@/lib/utils";
 
 const marketRanges = ["1D", "1W", "1M", "3M", "1Y"] as const;
@@ -194,6 +195,7 @@ export function MarketsPage() {
           </Card>
         </div>
       </div>
+      <StockBoard />
     </div>
   );
 }
