@@ -2,9 +2,12 @@ import { Card, CardHead, EmptyState, Skeleton } from "@/components/app/cards";
 import { formatNum, useWatchlist } from "@/hooks/use-dashboard-data";
 import { series, toPath } from "@/data/market";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useTradingDesk } from "@/components/app/TradingDesk";
 
 export function WatchlistPanel() {
   const { data, isLoading, isError, refetch } = useWatchlist();
+  const { openTicket } = useTradingDesk();
 
   return (
     <Card delay={460} className="flex h-full flex-col">
@@ -66,12 +69,15 @@ export function WatchlistPanel() {
                   {up ? "+" : ""}
                   {formatNum(Number(w.change_pct))}%
                 </span>
-                <button
+                <Button
                   type="button"
-                  className="hidden shrink-0 border border-border px-2 py-1 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle opacity-0 transition-all duration-300 group-hover/row:opacity-100 hover:border-primary/50 hover:text-primary-soft md:block"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openTicket({ symbol: w.symbol, price: Number(w.price) })}
+                  className="hidden h-7 shrink-0 px-2 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle opacity-0 transition-all duration-300 group-hover/row:opacity-100 hover:border-primary/50 hover:text-primary-soft md:inline-flex"
                 >
-                  Analyze
-                </button>
+                  Trade
+                </Button>
               </li>
             );
           })}

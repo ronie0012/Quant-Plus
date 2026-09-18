@@ -37,6 +37,11 @@ function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="dash-rise -mx-4 -mt-6 flex h-9 items-center overflow-hidden border-b border-border bg-surface/70 sm:-mx-6 lg:-mx-8" style={{ ["--d" as string]: "0ms" }}>
+        <div className="flex min-w-max items-center gap-7 px-4 font-mono text-[9px] tracking-[0.12em] uppercase sm:px-6 lg:px-8">
+          <span className="text-subtle">NSE</span><span>NIFTY 50 <b className="font-normal text-positive">+0.62%</b></span><span>SENSEX <b className="font-normal text-positive">+0.54%</b></span><span>BANK NIFTY <b className="font-normal text-negative">−0.18%</b></span><span>INDIA VIX <b className="font-normal text-warning">14.26</b></span><span className="text-subtle">Demonstrative tape</span>
+        </div>
+      </div>
       <DashboardHero session={session} />
 
       <FundsRow />

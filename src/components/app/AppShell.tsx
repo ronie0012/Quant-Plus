@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { AppTopbar } from "@/components/app/AppTopbar";
 import { QuantAIDock } from "@/components/app/QuantAIDock";
+import { TradingDeskProvider } from "@/components/app/TradingDesk";
 import { cn } from "@/lib/utils";
 
 /** Sidebar + topbar application shell for every authenticated screen. */
@@ -12,6 +13,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
+    <TradingDeskProvider>
     <div className="relative min-h-screen bg-background">
       {/* ambient lighting */}
       <div
@@ -41,5 +43,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {pathname !== "/app/quant-ai" && <QuantAIDock />}
     </div>
+    </TradingDeskProvider>
   );
 }
