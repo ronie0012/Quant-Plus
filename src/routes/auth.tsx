@@ -20,6 +20,8 @@ export const Route = createFileRoute("/auth")({
         property: "og:description",
         content: "Access the Quant Plus market and portfolio terminal.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
   }),
