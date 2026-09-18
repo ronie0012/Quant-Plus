@@ -13,7 +13,7 @@ export function NewsPanel() {
   const { data, isLoading, isError, refetch } = useNews();
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card delay={380} className="flex h-full flex-col">
       <CardHead title="Market intelligence" meta="News that matters · market-wide" />
 
       {isLoading && (
