@@ -3,15 +3,12 @@ import {
   BookMarked,
   CheckCircle2,
   ChevronRight,
-  CircleHelp,
-  Database,
-  ExternalLink,
   Keyboard,
   LifeBuoy,
   LockKeyhole,
   Search,
   Shield,
-  UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -33,6 +30,20 @@ const settingsDefaults = {
   compact: false,
   reducedData: false,
 };
+type SettingKey = keyof typeof settingsDefaults;
+const notificationRows: Array<[SettingKey, string, string]> = [
+  ["marketAlerts", "Market movement", "Meaningful movement in tracked instruments"],
+  ["committeeAlerts", "Committee decisions", "Completed analyses and verdict changes"],
+  ["newsAlerts", "High-impact intelligence", "Only events marked high impact"],
+];
+const displayRows: Array<[SettingKey, string, string]> = [
+  ["compact", "Compact data rows", "Show more information per screen"],
+  ["reducedData", "Reduced data mode", "Use fewer chart points on limited connections"],
+];
+const privacyRows: Array<[LucideIcon, string, string]> = [
+  [LockKeyhole, "Private workspace", "Account data is scoped to your signed-in session"],
+  [Shield, "Decision boundary", "No trade execution or personalised advice"],
+];
 export function SettingsPage() {
   const { session } = useSession();
   const [settings, setSettings] = useState(settingsDefaults);
@@ -100,22 +111,14 @@ export function SettingsPage() {
           <Card>
             <CardHead title="Notifications" meta="Choose what earns your attention" />
             <div className="divide-y divide-border">
-              {[
-                ["marketAlerts", "Market movement", "Meaningful movement in tracked instruments"],
-                [
-                  "committeeAlerts",
-                  "Committee decisions",
-                  "Completed analyses and verdict changes",
-                ],
-                ["newsAlerts", "High-impact intelligence", "Only events marked high impact"],
-              ].map(([k, title, body]) => (
+              {notificationRows.map(([k, title, body]) => (
                 <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13px]">{title}</span>
                     <span className="mt-1 block text-[11px] text-subtle">{body}</span>
                   </span>
                   <Switch
-                    checked={settings[k as keyof typeof settings] as boolean}
+                    checked={settings[k]}
                     onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
                   />
                 </label>
@@ -125,21 +128,14 @@ export function SettingsPage() {
           <Card>
             <CardHead title="Display" meta="Terminal density and network use" />
             <div className="divide-y divide-border">
-              {[
-                ["compact", "Compact data rows", "Show more information per screen"],
-                [
-                  "reducedData",
-                  "Reduced data mode",
-                  "Use fewer chart points on limited connections",
-                ],
-              ].map(([k, title, body]) => (
+              {displayRows.map(([k, title, body]) => (
                 <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13px]">{title}</span>
                     <span className="mt-1 block text-[11px] text-subtle">{body}</span>
                   </span>
                   <Switch
-                    checked={settings[k as keyof typeof settings] as boolean}
+                    checked={settings[k]}
                     onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
                   />
                 </label>
@@ -190,14 +186,7 @@ export function SettingsPage() {
           <Card>
             <CardHead title="Privacy" meta="Account controls" />
             <div className="space-y-4 p-5">
-              {[
-                [
-                  LockKeyhole,
-                  "Private workspace",
-                  "Account data is scoped to your signed-in session",
-                ],
-                [Shield, "Decision boundary", "No trade execution or personalised advice"],
-              ].map(([Icon, title, body]) => (
+              {privacyRows.map(([Icon, title, body]) => (
                 <div key={String(title)} className="flex gap-3">
                   <Icon className="mt-0.5 h-4 w-4 text-primary-soft" />
                   <div>
@@ -264,8 +253,17 @@ const sources = [
     health: 0,
   },
 ];
+type Source = (typeof sources)[number];
 export function DataSourcesPage() {
-  const [selected, setSelected] = useState(sources[0]);
+  const initialSource: Source = sources[0] ?? {
+    name: "No source",
+    type: "Unavailable",
+    status: "Unavailable",
+    coverage: "Unavailable",
+    freshness: "—",
+    health: 0,
+  };
+  const [selected, setSelected] = useState<Source>(initialSource);
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
@@ -404,6 +402,11 @@ const faqs = [
     a: "Independent perspectives preserve useful disagreement. The committee shows limiting evidence rather than hiding it inside one score.",
   },
 ];
+const helpCards: Array<[LucideIcon, string, string]> = [
+  [BookMarked, "Getting started", "Navigate markets, portfolio and research"],
+  [Keyboard, "Keyboard & workflow", "Search quickly and review efficiently"],
+  [Shield, "Risk & disclosure", "Understand analytical boundaries"],
+];
 export function HelpPage() {
   const [query, setQuery] = useState("");
   const filtered = useMemo(
@@ -429,11 +432,7 @@ export function HelpPage() {
         </label>
       </PageIntro>
       <div className="grid gap-5 lg:grid-cols-3">
-        {[
-          [BookMarked, "Getting started", "Navigate markets, portfolio and research"],
-          [Keyboard, "Keyboard & workflow", "Search quickly and review efficiently"],
-          [Shield, "Risk & disclosure", "Understand analytical boundaries"],
-        ].map(([Icon, title, body], i) => (
+        {helpCards.map(([Icon, title, body], i) => (
           <Card key={String(title)} delay={120 + i * 80}>
             <div className="p-5">
               <span className="grid h-10 w-10 place-items-center border border-border bg-primary/10 text-primary-soft">
