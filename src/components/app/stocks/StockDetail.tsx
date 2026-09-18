@@ -124,7 +124,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex min-w-0 flex-col gap-5">
       <header className="dash-rise relative overflow-hidden rounded-xl border border-border bg-panel/60 px-5 py-6 sm:px-7">
         <div aria-hidden className="pointer-events-none absolute inset-0 grid-lines opacity-20" />
         <div
@@ -368,7 +368,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <OrderPanel stock={stock} />
 
           <Card delay={320}>
