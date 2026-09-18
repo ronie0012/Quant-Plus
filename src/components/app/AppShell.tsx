@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { AppTopbar } from "@/components/app/AppTopbar";
 import { QuantAIDock } from "@/components/app/QuantAIDock";
 import { TradingDeskProvider } from "@/components/app/TradingDesk";
+import { WalletGate } from "@/components/app/WalletGate";
 import { cn } from "@/lib/utils";
 
 /** Sidebar + topbar application shell for every authenticated screen. */
@@ -42,6 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {pathname !== "/app/quant-ai" && <QuantAIDock />}
+      <WalletGate />
     </div>
     </TradingDeskProvider>
   );

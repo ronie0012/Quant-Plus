@@ -16,11 +16,11 @@ type CardSpec = {
 };
 
 function specs(a: Account): CardSpec[] {
-  const available = Number(a.total_funds) - Number(a.funds_used);
+  const available = Number(a.wallet_balance);
   const deployed = a.total_funds > 0 ? (Number(a.funds_used) / Number(a.total_funds)) * 100 : 0;
   return [
     {
-      label: "Total funds",
+      label: "Funds added",
       value: Number(a.total_funds),
       support: "Account value",
       icon: Wallet,
@@ -45,9 +45,9 @@ function specs(a: Account): CardSpec[] {
       tone: "positive",
     },
     {
-      label: "Available funds",
+      label: "Wallet balance",
       value: available,
-      support: "Ready to deploy",
+      support: "Wallet balance",
       icon: PiggyBank,
       fill: a.total_funds > 0 ? (available / Number(a.total_funds)) * 100 : 0,
       seed: 43,
