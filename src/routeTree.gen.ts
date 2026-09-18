@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketsRouteImport } from './routes/markets'
@@ -25,7 +25,7 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
@@ -62,13 +62,13 @@ const ApiChatRoute = ApiChatRouteImport.update({
 const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   id: '/app/$section',
   path: '/app/$section',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAppDashboardRoute =
   AuthenticatedAppDashboardRouteImport.update({
     id: '/app/dashboard',
     path: '/app/dashboard',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -96,7 +96,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/ai': typeof AiRoute
   '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
@@ -145,7 +145,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AiRoute: typeof AiRoute
   AuthRoute: typeof AuthRoute
   MarketsRoute: typeof MarketsRoute
@@ -167,7 +167,7 @@ declare module '@tanstack/react-router' {
       id: '/_authenticated'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai': {
@@ -217,34 +217,35 @@ declare module '@tanstack/react-router' {
       path: '/app/$section'
       fullPath: '/app/$section'
       preLoaderRoute: typeof AuthenticatedAppSectionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/dashboard': {
       id: '/_authenticated/app/dashboard'
       path: '/app/dashboard'
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AuthenticatedAppDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
+interface AuthenticatedRouteChildren {
   AuthenticatedAppSectionRoute: typeof AuthenticatedAppSectionRoute
   AuthenticatedAppDashboardRoute: typeof AuthenticatedAppDashboardRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppSectionRoute: AuthenticatedAppSectionRoute,
   AuthenticatedAppDashboardRoute: AuthenticatedAppDashboardRoute,
 }
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AiRoute: AiRoute,
   AuthRoute: AuthRoute,
   MarketsRoute: MarketsRoute,
