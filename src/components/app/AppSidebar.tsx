@@ -131,10 +131,15 @@ export function AppSidebar({
             <ul className="space-y-0.5">
               {group.items.map((item) => {
                 const active = pathname === item.to;
+                const slug = item.to.replace("/app/", "");
+                const linkProps =
+                  slug === "dashboard"
+                    ? ({ to: "/app/dashboard" } as const)
+                    : ({ to: "/app/$section", params: { section: slug } } as const);
                 return (
                   <li key={item.to}>
                     <Link
-                      to={item.to}
+                      {...linkProps}
                       onClick={onCloseMobile}
                       title={collapsed ? item.label : undefined}
                       className={cn(
