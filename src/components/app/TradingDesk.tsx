@@ -17,7 +17,9 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatINR, useInstruments, useWatchlist } from "@/hooks/use-dashboard-data";
+import { formatINR, useWatchlist } from "@/hooks/use-dashboard-data";
+import { usePlaceOrder } from "@/hooks/use-orders";
+import { nifty50 } from "@/data/nifty50";
 import { cn } from "@/lib/utils";
 
 type Side = "BUY" | "SELL";
@@ -48,7 +50,7 @@ const routes = [
 
 export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { data: instruments } = useInstruments();
+  const place = usePlaceOrder();
   const { data: watchlist } = useWatchlist();
   const first = watchlist?.[0];
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -85,15 +87,15 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const pages = routes.map(({ label, section }) => ({ label, meta: "Workspace", section }));
-    const symbols = (instruments ?? []).map((item) => ({
+    const symbols = nifty50.map((item) => ({
       label: item.symbol,
-      meta: item.name,
-      section: "markets" as const,
+      meta: item.company,
+      section: "stock" as const,
     }));
     return [...pages, ...symbols].filter(
       (item) => !needle || `${item.label} ${item.meta}`.toLowerCase().includes(needle),
     );
-  }, [instruments, query]);
+  }, [query]);
 
   const estimate = (ticket?.price ?? 0) * quantity;
 
@@ -112,7 +114,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
             <div className="max-h-[420px] overflow-y-auto p-2">
               <p className="px-3 py-2 font-mono text-[9px] tracking-[0.18em] uppercase text-subtle">Commands & instruments</p>
               {results.slice(0, 9).map((result) => (
-                <Button key={`${result.section}-${result.label}`} variant="ghost" onClick={() => { setCommandOpen(false); setQuery(""); if (result.section === "dashboard") void navigate({ to: "/app/dashboard" }); else void navigate({ to: "/app/$section", params: { section: result.section } }); }} className="h-auto w-full justify-between rounded px-3 py-3 text-left font-normal">
+                <Button key={`${result.section}-${result.label}`} variant="ghost" onClick={() => { setCommandOpen(false); setQuery(""); if (result.section === "stock") void navigate({ to: "/app/stocks/$symbol", params: { symbol: result.label } }); else if (result.section === "dashboard") void navigate({ to: "/app/dashboard" }); else void navigate({ to: "/app/$section", params: { section: result.section } }); }} className="h-auto w-full justify-between rounded px-3 py-3 text-left font-normal">
                   <span><span className="block font-mono text-xs">{result.label}</span><span className="mt-1 block text-[11px] text-subtle">{result.meta}</span></span>
                   <ArrowRight className="text-subtle" />
                 </Button>
@@ -137,8 +139,8 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                 <span className="grid h-14 w-14 place-items-center rounded-full border border-positive/30 bg-positive/10 text-positive"><Check className="h-6 w-6" /></span>
                 <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.2em] text-positive">Simulated order accepted</p>
                 <h3 className="mt-3 text-2xl">{ticket.side} {quantity} {ticket.symbol}</h3>
-                <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">No real order was placed. This confirmation demonstrates the complete trading workflow.</p>
-                <Button className="mt-7" onClick={() => setTicket(null)}>Return to terminal</Button>
+                <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">Recorded in your simulated order book. No funds or securities moved.</p>
+                <div className="mt-7 flex gap-2"><Button variant="outline" onClick={() => { setTicket(null); void navigate({ to: "/app/$section", params: { section: "orders" } }); }}>View orders</Button><Button onClick={() => setTicket(null)}>Return to terminal</Button></div>
               </div>
             ) : (
               <div className="flex flex-1 flex-col p-5">
@@ -164,7 +166,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                   <div className="flex justify-between"><dt className="text-muted-foreground">Product</dt><dd className="font-mono">DELIVERY</dd></div>
                   <div className="flex justify-between"><dt className="text-muted-foreground">Validity</dt><dd className="font-mono">DAY</dd></div>
                 </dl>
-                <div className="mt-auto pt-6"><p className="mb-3 text-[11px] leading-relaxed text-subtle">Simulation only. No funds or securities will move.</p><Button onClick={() => setConfirmed(true)} className={cn("h-12 w-full font-mono text-xs tracking-[0.16em]", ticket.side === "SELL" && "bg-negative text-foreground hover:bg-negative/90")}>Review & place simulated {ticket.side.toLowerCase()} order</Button></div>
+                <div className="mt-auto pt-6"><p className="mb-3 text-[11px] leading-relaxed text-subtle">Simulation only. No funds or securities will move.</p><Button disabled={place.isPending} onClick={() => { void place.mutateAsync({ symbol: ticket.symbol, side: ticket.side, order_type: orderType, quantity, price: Number(ticket.price.toFixed(2)), limit_price: orderType === "MARKET" ? null : Number(ticket.price.toFixed(2)) }).then(() => setConfirmed(true)); }} className={cn("h-12 w-full font-mono text-xs tracking-[0.16em]", ticket.side === "SELL" && "bg-negative text-foreground hover:bg-negative/90")}>Place {ticket.side.toLowerCase()} order</Button></div>
               </div>
             )}
           </aside>
