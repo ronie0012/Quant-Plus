@@ -108,7 +108,7 @@ export function FundsRow() {
               )}
             >
               {s.tone === "positive" && "+"}
-              <AnimatedNumber value={s.value} locale="en-IN" prefix="₹" digits={0} />
+              <AnimatedNumber value={s.value} locale="en-IN" prefix="₹" decimals={0} />
             </p>
 
             <div className="mt-4 flex items-center justify-between gap-3">
