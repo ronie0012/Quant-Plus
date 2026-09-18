@@ -1,7 +1,6 @@
 # Roadmap
 
-- [x] Audit existing authenticated navigation, data sources, and reusable UI patterns
-- [x] Build all remaining authenticated product pages
-- [x] Add cohesive animation, responsive states, and realistic interactions
-- [x] Add unique metadata for authenticated content routes
-- [x] Verify every destination on desktop and mobile
+- [ ] Audit current authenticated trading workspace and identify the highest-impact premium upgrades
+- [ ] Fix the current React runtime cleanup error
+- [ ] Upgrade the dashboard and shell into a complete trading terminal experience
+- [ ] Validate desktop and mobile interactions, layout, and runtime behavior
