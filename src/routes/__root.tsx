@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -123,6 +124,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const immersive = pathname === "/auth" || pathname === "/reset-password" || pathname === "/dashboard";
 
@@ -133,7 +135,7 @@ function RootComponent() {
       if (session) queryClient.invalidateQueries();
     });
     return () => data.subscription.unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>

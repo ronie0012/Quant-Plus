@@ -51,7 +51,7 @@ export function TerminalChart() {
           <path d={path} fill="none" className="stroke-primary animate-draw" strokeWidth="1.25" vectorEffect="non-scaling-stroke" />
           {cursor !== null && <line x1={cursor * 100} y1="0" x2={cursor * 100} y2="100" className="stroke-primary-soft/60" strokeWidth=".5" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />}
         </svg>
-        {cursor !== null && cursorValue !== null && <div className="pointer-events-none absolute top-3 rounded-sm border border-border-strong bg-panel-elevated px-2 py-1 font-mono text-[9px] num-tabular" style={{ left: `${Math.min(cursor * 100, 84)}%` }}>₹{(1390 + cursorValue * .7).toFixed(2)}</div>}
+        {cursor !== null && typeof cursorValue === "number" && <div className="pointer-events-none absolute top-3 rounded-sm border border-border-strong bg-panel-elevated px-2 py-1 font-mono text-[9px] num-tabular" style={{ left: `${Math.min(cursor * 100, 84)}%` }}>₹{(1390 + cursorValue * .7).toFixed(2)}</div>}
         <div className="pointer-events-none absolute inset-x-0 bottom-1 flex h-10 items-end gap-px opacity-30" aria-hidden="true">{values.map((value, index) => <span key={`${range}-${index}`} className={cn("flex-1", index && value < (values[index - 1] ?? value) ? "bg-negative" : "bg-primary-soft")} style={{ height: `${15 + (value % 70)}%` }} />)}</div>
       </div>
     </div>
