@@ -14,6 +14,237 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          created_at: string
+          currency: string
+          data_source: string
+          funds_used: number
+          profit: number
+          profit_pct: number
+          total_funds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          data_source?: string
+          funds_used?: number
+          profit?: number
+          profit_pct?: number
+          total_funds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          data_source?: string
+          funds_used?: number
+          profit?: number
+          profit_pct?: number
+          total_funds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analyses: {
+        Row: {
+          conviction: number
+          created_at: string
+          id: string
+          risk: string
+          summary: string | null
+          symbol: string
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          conviction?: number
+          created_at?: string
+          id?: string
+          risk?: string
+          summary?: string | null
+          symbol: string
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          conviction?: number
+          created_at?: string
+          id?: string
+          risk?: string
+          summary?: string | null
+          symbol?: string
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
+      holdings: {
+        Row: {
+          avg_price: number
+          company: string
+          created_at: string
+          id: string
+          last_price: number
+          quantity: number
+          sector: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          avg_price?: number
+          company: string
+          created_at?: string
+          id?: string
+          last_price?: number
+          quantity?: number
+          sector?: string | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          avg_price?: number
+          company?: string
+          created_at?: string
+          id?: string
+          last_price?: number
+          quantity?: number
+          sector?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      market_events: {
+        Row: {
+          data_source: string
+          event: string
+          event_time: string
+          id: string
+          importance: string
+          region: string
+        }
+        Insert: {
+          data_source?: string
+          event: string
+          event_time: string
+          id?: string
+          importance: string
+          region: string
+        }
+        Update: {
+          data_source?: string
+          event?: string
+          event_time?: string
+          id?: string
+          importance?: string
+          region?: string
+        }
+        Relationships: []
+      }
+      market_instruments: {
+        Row: {
+          change_abs: number
+          change_pct: number
+          currency: string
+          data_source: string
+          kind: string
+          name: string
+          sort_order: number
+          symbol: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          change_abs: number
+          change_pct: number
+          currency?: string
+          data_source?: string
+          kind?: string
+          name: string
+          sort_order?: number
+          symbol: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          change_abs?: number
+          change_pct?: number
+          currency?: string
+          data_source?: string
+          kind?: string
+          name?: string
+          sort_order?: number
+          symbol?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      market_news: {
+        Row: {
+          category: string
+          data_source: string
+          headline: string
+          id: string
+          impact: string
+          published_at: string
+          sentiment: string
+          source: string
+        }
+        Insert: {
+          category: string
+          data_source?: string
+          headline: string
+          id?: string
+          impact: string
+          published_at?: string
+          sentiment: string
+          source: string
+        }
+        Update: {
+          category?: string
+          data_source?: string
+          headline?: string
+          id?: string
+          impact?: string
+          published_at?: string
+          sentiment?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      market_sentiment: {
+        Row: {
+          breakdown: Json
+          data_source: string
+          id: string
+          label: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          breakdown?: Json
+          data_source?: string
+          id?: string
+          label: string
+          score: number
+          updated_at?: string
+        }
+        Update: {
+          breakdown?: Json
+          data_source?: string
+          id?: string
+          label?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,6 +275,36 @@ export type Database = {
           preferences?: Json
           updated_at?: string
           workspace_name?: string
+        }
+        Relationships: []
+      }
+      watchlist_items: {
+        Row: {
+          change_pct: number
+          company: string
+          created_at: string
+          id: string
+          price: number
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          change_pct?: number
+          company: string
+          created_at?: string
+          id?: string
+          price?: number
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          change_pct?: number
+          company?: string
+          created_at?: string
+          id?: string
+          price?: number
+          symbol?: string
+          user_id?: string
         }
         Relationships: []
       }

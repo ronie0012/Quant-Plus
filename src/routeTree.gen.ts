@@ -10,19 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AiRouteImport } from './routes/ai'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as ResearchRouteImport } from './routes/research'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app.$section'
+import { Route as AuthenticatedAppDashboardRouteImport } from './routes/_authenticated/app.dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AiRoute = AiRouteImport.update({
   id: '/ai',
   path: '/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketsRoute = MarketsRouteImport.update({
@@ -40,43 +54,104 @@ const ResearchRoute = ResearchRouteImport.update({
   path: '/research',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
+  id: '/app/$section',
+  path: '/app/$section',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppDashboardRoute =
+  AuthenticatedAppDashboardRouteImport.update({
+    id: '/app/dashboard',
+    path: '/app/dashboard',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
+  '/api/chat': typeof ApiChatRoute
+  '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/app/dashboard': typeof AuthenticatedAppDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
+  '/api/chat': typeof ApiChatRoute
+  '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/app/dashboard': typeof AuthenticatedAppDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/ai': typeof AiRoute
+  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
+  '/api/chat': typeof ApiChatRoute
+  '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
+  '/_authenticated/app/dashboard': typeof AuthenticatedAppDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ai' | '/markets' | '/platform' | '/research'
+  fullPaths:
+    | '/'
+    | '/ai'
+    | '/auth'
+    | '/markets'
+    | '/platform'
+    | '/research'
+    | '/api/chat'
+    | '/app/$section'
+    | '/app/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ai' | '/markets' | '/platform' | '/research'
-  id: '__root__' | '/' | '/ai' | '/markets' | '/platform' | '/research'
+  to:
+    | '/'
+    | '/ai'
+    | '/auth'
+    | '/markets'
+    | '/platform'
+    | '/research'
+    | '/api/chat'
+    | '/app/$section'
+    | '/app/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/ai'
+    | '/auth'
+    | '/markets'
+    | '/platform'
+    | '/research'
+    | '/api/chat'
+    | '/_authenticated/app/$section'
+    | '/_authenticated/app/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AiRoute: typeof AiRoute
+  AuthRoute: typeof AuthRoute
   MarketsRoute: typeof MarketsRoute
   PlatformRoute: typeof PlatformRoute
   ResearchRoute: typeof ResearchRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,11 +163,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai': {
       id: '/ai'
       path: '/ai'
       fullPath: '/ai'
       preLoaderRoute: typeof AiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/markets': {
@@ -116,15 +205,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/$section': {
+      id: '/_authenticated/app/$section'
+      path: '/app/$section'
+      fullPath: '/app/$section'
+      preLoaderRoute: typeof AuthenticatedAppSectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/dashboard': {
+      id: '/_authenticated/app/dashboard'
+      path: '/app/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AuthenticatedAppDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAppSectionRoute: typeof AuthenticatedAppSectionRoute
+  AuthenticatedAppDashboardRoute: typeof AuthenticatedAppDashboardRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppSectionRoute: AuthenticatedAppSectionRoute,
+  AuthenticatedAppDashboardRoute: AuthenticatedAppDashboardRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AiRoute: AiRoute,
+  AuthRoute: AuthRoute,
   MarketsRoute: MarketsRoute,
   PlatformRoute: PlatformRoute,
   ResearchRoute: ResearchRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
