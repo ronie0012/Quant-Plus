@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/app/dashboard")({
 
 function DashboardPage() {
   const { session } = useSession();
-  const name = displayNameFrom(session?.user ?? null);
+  const name = displayNameFrom(session);
 
   return (
     <div className="flex flex-col gap-5">
