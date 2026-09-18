@@ -46,7 +46,7 @@ export function WatchlistPanel() {
                   </span>
                   <span className="mt-0.5 block truncate text-[11px] text-subtle">{w.company}</span>
                 </span>
-                <svg viewBox="0 0 60 16" className="hidden h-4 w-14 sm:block" aria-hidden="true">
+                <svg viewBox="0 0 60 16" className="hidden h-4 w-12 shrink-0 2xl:block" aria-hidden="true">
                   <path
                     d={toPath(spark, 60, 16)}
                     fill="none"
