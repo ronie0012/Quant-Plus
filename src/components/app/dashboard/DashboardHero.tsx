@@ -5,6 +5,8 @@ import { displayNameFrom, greetingFor } from "@/hooks/use-session";
 import { useAccount, useAnalyses, useHoldings, useSentiment } from "@/hooks/use-dashboard-data";
 import { series, toPath } from "@/data/market";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useTradingDesk } from "@/components/app/TradingDesk";
 
 const dateLabel = () =>
   new Date().toLocaleDateString("en-IN", {
@@ -23,6 +25,7 @@ export function DashboardHero({ session }: { session: Session | null }) {
   const { data: holdings } = useHoldings();
   const { data: analyses } = useAnalyses();
   const { data: sentiment } = useSentiment();
+  const { openTicket, openCommand } = useTradingDesk();
 
   const name = displayNameFrom(session);
   const profit = account ? Number(account.profit) : null;
@@ -142,20 +145,23 @@ export function DashboardHero({ session }: { session: Session | null }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <button
+            <Button
               type="button"
-              className="flex items-center gap-2 rounded-md border border-border px-3.5 py-2.5 font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground transition-colors duration-300 hover:border-border-strong hover:text-foreground"
+              variant="outline"
+              onClick={openCommand}
+              className="h-10 font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground"
             >
               <Activity className="h-3.5 w-3.5" aria-hidden="true" />
               Live feed
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="sheen group/cta relative flex items-center gap-2 rounded-md border border-primary/60 bg-primary/15 px-4 py-2.5 font-mono text-[10px] tracking-[0.18em] uppercase text-primary-soft shadow-[0_0_40px_-16px_var(--color-primary)] transition-all duration-300 hover:bg-primary/25"
+              onClick={() => openTicket()}
+              className="sheen group/cta h-10 font-mono text-[10px] tracking-[0.18em] uppercase"
             >
               <Sparkles className="h-3.5 w-3.5 transition-transform duration-500 group-hover/cta:rotate-12" aria-hidden="true" />
-              Run analysis
-            </button>
+              Open trade ticket
+            </Button>
           </div>
         </div>
 
