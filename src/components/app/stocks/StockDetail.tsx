@@ -114,6 +114,18 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
   const stats = useMemo(() => stockStats(stock), [stock]);
   const committee = useMemo(() => committeeVerdict(stock), [stock]);
   const views = useMemo(() => agentViews(stock), [stock]);
+  const summary = useMemo(() => {
+    const bulls = views.filter((v) => v.stance === "BULLISH").length;
+    const bears = views.filter((v) => v.stance === "BEARISH").length;
+    const lean =
+      committee.verdict === "BUY"
+        ? "constructive"
+        : committee.verdict === "SELL"
+          ? "cautious"
+          : "balanced";
+    return `Quant AI reads ${stock.symbol} as ${lean}. Weighing fundamentals, price trend, news flow and risk together, ${bulls} of the signal checks lean positive and ${bears} lean negative, giving a demonstrative target of ₹${formatNum(committee.target)}.`;
+  }, [views, committee, stock]);
+  const highlights = useMemo(() => views.slice(0, 3).map((v) => v.note).filter(Boolean), [views]);
   const sentiment = useMemo(() => stockSentiment(stock), [stock]);
   const news = useMemo(() => stockNews(stock), [stock]);
   const depth = useMemo(() => marketDepth(stock), [stock]);
