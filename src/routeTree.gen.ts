@@ -10,32 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AiRouteImport } from './routes/ai'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as ResearchRouteImport } from './routes/research'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AiRoute = AiRouteImport.update({
   id: '/ai',
   path: '/ai',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketsRoute = MarketsRouteImport.update({
@@ -53,92 +40,43 @@ const ResearchRoute = ResearchRouteImport.update({
   path: '/research',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai': typeof AiRoute
-  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai': typeof AiRoute
-  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/ai': typeof AiRoute
-  '/auth': typeof AuthRoute
   '/markets': typeof MarketsRoute
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/ai'
-    | '/auth'
-    | '/markets'
-    | '/platform'
-    | '/research'
-    | '/reset-password'
-    | '/dashboard'
+  fullPaths: '/' | '/ai' | '/markets' | '/platform' | '/research'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/ai'
-    | '/auth'
-    | '/markets'
-    | '/platform'
-    | '/research'
-    | '/reset-password'
-    | '/dashboard'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/ai'
-    | '/auth'
-    | '/markets'
-    | '/platform'
-    | '/research'
-    | '/reset-password'
-    | '/_authenticated/dashboard'
+  to: '/' | '/ai' | '/markets' | '/platform' | '/research'
+  id: '__root__' | '/' | '/ai' | '/markets' | '/platform' | '/research'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AiRoute: typeof AiRoute
-  AuthRoute: typeof AuthRoute
   MarketsRoute: typeof MarketsRoute
   PlatformRoute: typeof PlatformRoute
   ResearchRoute: typeof ResearchRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,25 +88,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/ai': {
       id: '/ai'
       path: '/ai'
       fullPath: '/ai'
       preLoaderRoute: typeof AiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/markets': {
@@ -192,43 +116,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-}
-
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-}
-
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AiRoute: AiRoute,
-  AuthRoute: AuthRoute,
   MarketsRoute: MarketsRoute,
   PlatformRoute: PlatformRoute,
   ResearchRoute: ResearchRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

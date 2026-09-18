@@ -72,14 +72,14 @@ export function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-6 md:flex">
-          <Link
-            to="/auth"
+          <button
+            type="button"
             className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground transition-colors duration-300 hover:text-foreground"
           >
             Log in
-          </Link>
+          </button>
           <Link
-            to="/auth"
+            to="/platform"
             className="group flex items-center gap-2 border border-border-strong px-4 py-2 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors duration-500 hover:border-primary hover:text-primary-soft"
           >
             Get Started
@@ -124,19 +124,18 @@ export function Navbar() {
           </ul>
           <div className="flex flex-col gap-3">
             <Link
-              to="/auth"
+              to="/platform"
               onClick={() => setOpen(false)}
               className="flex items-center justify-center border border-primary bg-primary px-6 py-4 font-mono text-[11px] tracking-[0.2em] uppercase text-primary-foreground"
             >
               Get Started
             </Link>
-            <Link
-              to="/auth"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
               className="border border-border-strong px-6 py-4 font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground"
             >
               Log in
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -85,7 +85,7 @@ export function Hero() {
               step >= 6 ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
           >
-            <PrimaryAction to="/auth">Get Started</PrimaryAction>
+            <PrimaryAction to="/platform">Explore Quant Plus</PrimaryAction>
             <GhostAction to="/markets">View Platform</GhostAction>
           </div>
         </div>
