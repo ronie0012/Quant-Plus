@@ -40,24 +40,36 @@ export function MarketsPage() {
     .reduce((a, c) => a + c.charCodeAt(0), range.length);
   if (isLoading)
     return (
-      <PageIntro
-        eyebrow="Markets desk"
-        title="Market pulse"
-        body="Building a unified view of current market structure."
-      >
-        <Skeleton className="h-24 w-full" />
-      </PageIntro>
+      <div className="flex flex-col gap-5">
+        <PageIntro
+          eyebrow="Markets desk"
+          title="Market pulse"
+          body="Building a unified view of current market structure."
+        >
+          <Skeleton className="h-24 w-full" />
+        </PageIntro>
+        <StockBoard />
+      </div>
     );
   if (isError || !data?.length || !instrument)
     return (
-      <Card>
-        <EmptyState
-          title="No market feed"
-          hint="The market source is temporarily unavailable."
-          onRetry={() => void refetch()}
+      <div className="flex flex-col gap-5">
+        <PageIntro
+          eyebrow="Markets desk"
+          title="Market pulse"
+          body="Index-level context is unavailable, so the constituent board is shown on its own."
         />
-      </Card>
+        <Card>
+          <EmptyState
+            title="No index feed"
+            hint="The index source is temporarily unavailable."
+            onRetry={() => void refetch()}
+          />
+        </Card>
+        <StockBoard />
+      </div>
     );
+
   const up = instrument.change_pct >= 0;
   return (
     <div className="flex flex-col gap-5">
