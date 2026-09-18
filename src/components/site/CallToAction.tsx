@@ -12,8 +12,8 @@ export function CallToAction() {
             <span className="block text-muted-foreground">make sense.</span>
           </h2>
           <div className="mt-12 flex flex-wrap items-center gap-3">
-            <PrimaryAction to="/platform">Explore Quant Plus</PrimaryAction>
-            <GhostAction to="/platform">Join the Waitlist</GhostAction>
+            <PrimaryAction to="/auth">Get Started</PrimaryAction>
+            <GhostAction to="/platform">Explore the platform</GhostAction>
           </div>
         </Reveal>
       </div>
