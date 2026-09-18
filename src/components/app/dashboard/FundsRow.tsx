@@ -83,7 +83,7 @@ function Ring({ pct, tone }: { pct: number; tone?: "positive" | undefined }) {
           tone === "positive" ? "text-positive" : "text-primary-soft",
         )}
       >
-        {clamped.toFixed(0)}
+        {clamped >= 99.5 ? "" : clamped.toFixed(0)}
       </span>
     </span>
   );
