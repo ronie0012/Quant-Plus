@@ -38,12 +38,12 @@ export function useTradingDesk() {
 }
 
 const routes = [
-  ["Dashboard", "/app/dashboard"],
-  ["Markets", "/app/markets"],
-  ["Portfolio", "/app/portfolio"],
-  ["Watchlist", "/app/watchlist"],
-  ["Research", "/app/research"],
-  ["Quant AI", "/app/quant-ai"],
+  { label: "Dashboard", section: "dashboard" },
+  { label: "Markets", section: "markets" },
+  { label: "Portfolio", section: "portfolio" },
+  { label: "Watchlist", section: "watchlist" },
+  { label: "Research", section: "research" },
+  { label: "Quant AI", section: "quant-ai" },
 ] as const;
 
 export function TradingDeskProvider({ children }: { children: ReactNode }) {
@@ -84,11 +84,11 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const pages = routes.map(([label, path]) => ({ label, meta: "Workspace", path }));
+    const pages = routes.map(({ label, section }) => ({ label, meta: "Workspace", section }));
     const symbols = (instruments ?? []).map((item) => ({
       label: item.symbol,
       meta: item.name,
-      path: "/app/markets" as const,
+      section: "markets" as const,
     }));
     return [...pages, ...symbols].filter(
       (item) => !needle || `${item.label} ${item.meta}`.toLowerCase().includes(needle),
@@ -112,7 +112,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
             <div className="max-h-[420px] overflow-y-auto p-2">
               <p className="px-3 py-2 font-mono text-[9px] tracking-[0.18em] uppercase text-subtle">Commands & instruments</p>
               {results.slice(0, 9).map((result) => (
-                <Button key={`${result.path}-${result.label}`} variant="ghost" onClick={() => { setCommandOpen(false); setQuery(""); void navigate({ to: result.path }); }} className="h-auto w-full justify-between rounded px-3 py-3 text-left font-normal">
+                <Button key={`${result.section}-${result.label}`} variant="ghost" onClick={() => { setCommandOpen(false); setQuery(""); if (result.section === "dashboard") void navigate({ to: "/app/dashboard" }); else void navigate({ to: "/app/$section", params: { section: result.section } }); }} className="h-auto w-full justify-between rounded px-3 py-3 text-left font-normal">
                   <span><span className="block font-mono text-xs">{result.label}</span><span className="mt-1 block text-[11px] text-subtle">{result.meta}</span></span>
                   <ArrowRight className="text-subtle" />
                 </Button>
