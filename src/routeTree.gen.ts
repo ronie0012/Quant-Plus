@@ -19,6 +19,7 @@ import { Route as ResearchRouteImport } from './routes/research'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app.$section'
 import { Route as AuthenticatedAppDashboardRouteImport } from './routes/_authenticated/app.dashboard'
+import { Route as AuthenticatedAppStocksSymbolRouteImport } from './routes/_authenticated/app.stocks.$symbol'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,12 @@ const AuthenticatedAppDashboardRoute =
     path: '/app/dashboard',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAppStocksSymbolRoute =
+  AuthenticatedAppStocksSymbolRouteImport.update({
+    id: '/app/stocks/$symbol',
+    path: '/app/stocks/$symbol',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
   '/_authenticated/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/_authenticated/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/app/$section'
     | '/app/dashboard'
+    | '/app/stocks/$symbol'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/app/$section'
     | '/app/dashboard'
+    | '/app/stocks/$symbol'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/_authenticated/app/$section'
     | '/_authenticated/app/dashboard'
+    | '/_authenticated/app/stocks/$symbol'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,17 +239,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/stocks/$symbol': {
+      id: '/_authenticated/app/stocks/$symbol'
+      path: '/app/stocks/$symbol'
+      fullPath: '/app/stocks/$symbol'
+      preLoaderRoute: typeof AuthenticatedAppStocksSymbolRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppSectionRoute: typeof AuthenticatedAppSectionRoute
   AuthenticatedAppDashboardRoute: typeof AuthenticatedAppDashboardRoute
+  AuthenticatedAppStocksSymbolRoute: typeof AuthenticatedAppStocksSymbolRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppSectionRoute: AuthenticatedAppSectionRoute,
   AuthenticatedAppDashboardRoute: AuthenticatedAppDashboardRoute,
+  AuthenticatedAppStocksSymbolRoute: AuthenticatedAppStocksSymbolRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

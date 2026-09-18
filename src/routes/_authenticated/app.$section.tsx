@@ -15,6 +15,7 @@ import {
   QuantAIPage,
 } from "@/components/app/pages/IntelligencePages";
 import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
+import { OrdersPage } from "@/components/app/pages/OrdersPage";
 
 const pageMeta: Record<string, { title: string; description: string }> = {
   markets: {
@@ -24,6 +25,10 @@ const pageMeta: Record<string, { title: string; description: string }> = {
   portfolio: {
     title: "Portfolio — Quant Plus Terminal",
     description: "Portfolio value, holdings, allocation, contribution and risk intelligence.",
+  },
+  orders: {
+    title: "Orders — Quant Plus Terminal",
+    description: "Manage simulated buy and sell orders, statuses and net positions.",
   },
   watchlist: {
     title: "Watchlist — Quant Plus Terminal",
@@ -92,6 +97,7 @@ const pages: Record<string, () => React.JSX.Element> = {
   markets: MarketsPage,
   portfolio: PortfolioPage,
   watchlist: WatchlistPage,
+  orders: OrdersPage,
   research: ResearchPage,
   decisions: DecisionsPage,
   history: HistoryPage,

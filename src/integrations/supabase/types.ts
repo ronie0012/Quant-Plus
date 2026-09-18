@@ -245,6 +245,51 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          company: string
+          created_at: string
+          filled_at: string | null
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          company?: string
+          created_at?: string
+          filled_at?: string | null
+          id?: string
+          limit_price?: number | null
+          order_type?: Database["public"]["Enums"]["order_kind"]
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status?: Database["public"]["Enums"]["order_status"]
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          filled_at?: string | null
+          id?: string
+          limit_price?: number | null
+          order_type?: Database["public"]["Enums"]["order_kind"]
+          price?: number
+          quantity?: number
+          side?: Database["public"]["Enums"]["order_side"]
+          status?: Database["public"]["Enums"]["order_status"]
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -316,7 +361,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      order_kind: "MARKET" | "LIMIT" | "STOP"
+      order_side: "BUY" | "SELL"
+      order_status: "OPEN" | "FILLED" | "CANCELLED" | "REJECTED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -443,6 +490,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_kind: ["MARKET", "LIMIT", "STOP"],
+      order_side: ["BUY", "SELL"],
+      order_status: ["OPEN", "FILLED", "CANCELLED", "REJECTED"],
+    },
   },
 } as const
