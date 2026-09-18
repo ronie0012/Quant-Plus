@@ -6,7 +6,7 @@ export function CalendarPanel() {
   const { data, isLoading, isError, refetch } = useEvents();
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card delay={580} className="flex h-full flex-col">
       <CardHead title="Market calendar" meta="Events that move Indian & global markets" />
 
       {isLoading && (

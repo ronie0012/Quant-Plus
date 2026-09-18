@@ -7,7 +7,7 @@ export function WatchlistPanel() {
   const { data, isLoading, isError, refetch } = useWatchlist();
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card delay={460} className="flex h-full flex-col">
       <CardHead title="Watchlist" meta="Your tracked instruments" />
 
       {isLoading && (

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
 import { FundsRow } from "@/components/app/dashboard/FundsRow";
 import { MarketOverview } from "@/components/app/dashboard/MarketOverview";
 import { SentimentPanel } from "@/components/app/dashboard/SentimentPanel";
@@ -8,7 +7,8 @@ import { WatchlistPanel } from "@/components/app/dashboard/WatchlistPanel";
 import { CalendarPanel } from "@/components/app/dashboard/CalendarPanel";
 import { AnalysesPanel } from "@/components/app/dashboard/AnalysesPanel";
 import { PortfolioSnapshot } from "@/components/app/dashboard/PortfolioSnapshot";
-import { displayNameFrom, greetingFor, useSession } from "@/hooks/use-session";
+import { DashboardHero } from "@/components/app/dashboard/DashboardHero";
+import { useSession } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/app/dashboard")({
   head: () => ({
@@ -34,27 +34,10 @@ export const Route = createFileRoute("/_authenticated/app/dashboard")({
 
 function DashboardPage() {
   const { session } = useSession();
-  const name = displayNameFrom(session);
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="reveal-in flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[clamp(1.3rem,2.4vw,1.75rem)] tracking-tight">
-            {greetingFor()}, {name}
-          </h1>
-          <p className="mt-1.5 text-[13px] text-muted-foreground">
-            Here&apos;s your portfolio and market overview for today.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="group flex items-center gap-2 border border-primary/50 bg-primary/10 px-4 py-2.5 font-mono text-[10px] tracking-[0.18em] uppercase text-primary-soft transition-colors duration-300 hover:bg-primary/20"
-        >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-          Run analysis
-        </button>
-      </header>
+      <DashboardHero session={session} />
 
       <FundsRow />
 

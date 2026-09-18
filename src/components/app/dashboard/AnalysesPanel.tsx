@@ -13,7 +13,7 @@ export function AnalysesPanel() {
   const { data, isLoading, isError, refetch } = useAnalyses();
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card delay={540} className="flex h-full flex-col">
       <CardHead
         title="Recent analyses"
         meta="From the AI investment committee"

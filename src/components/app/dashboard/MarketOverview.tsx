@@ -62,7 +62,7 @@ export function MarketOverview() {
       : null;
 
   return (
-    <Card glow className="flex h-full flex-col">
+    <Card glow delay={180} className="flex h-full flex-col">
       <CardHead
         title="Market overview"
         meta={`Updated ${relativeTime(instrument.updated_at)} · demonstrative data`}

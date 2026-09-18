@@ -1,23 +1,49 @@
-import type { ReactNode } from "react";
+import { useCallback, useRef, type MouseEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Rounded dark surface used for every dashboard module. */
+/** Rounded dark surface used for every dashboard module, with a cursor-follow spotlight. */
 export function Card({
   children,
   className,
   glow,
+  delay = 0,
 }: {
   children: ReactNode;
   className?: string;
   glow?: boolean;
+  /** Entrance stagger in ms. */
+  delay?: number;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
+  const onMove = useCallback((e: MouseEvent<HTMLElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    el.style.setProperty("--my", `${e.clientY - r.top}px`);
+  }, []);
+
   return (
     <section
+      ref={ref}
+      onMouseMove={onMove}
+      style={{ ["--d" as string]: `${delay}ms` }}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border bg-panel/70 backdrop-blur-sm transition-colors duration-500 hover:border-border-strong",
+        "group dash-rise relative overflow-hidden rounded-xl border border-border bg-panel/70 backdrop-blur-sm",
+        "transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-[2px] hover:border-border-strong hover:shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9)]",
         className,
       )}
     >
+      {/* cursor spotlight */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), color-mix(in oklab, var(--color-primary) 12%, transparent), transparent 70%)",
+        }}
+      />
       {glow && (
         <span
           aria-hidden="true"
@@ -31,6 +57,10 @@ export function Card({
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border-strong to-transparent"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/[0.035] to-transparent"
       />
       {children}
     </section>
