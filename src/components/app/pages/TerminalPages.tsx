@@ -1,9 +1,28 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, ChevronRight, Filter, Search, ShieldCheck, Star, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  ChevronRight,
+  Filter,
+  Search,
+  ShieldCheck,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHead, EmptyState, Pill, Skeleton, SourceTag } from "@/components/app/cards";
 import { MetricStrip, PageIntro, ProgressBar, Segmented, SparkChart } from "./workspace";
-import { formatINR, formatNum, relativeTime, useHoldings, useInstruments, useNews, useSentiment, useWatchlist } from "@/hooks/use-dashboard-data";
+import {
+  formatINR,
+  formatNum,
+  relativeTime,
+  useHoldings,
+  useInstruments,
+  useNews,
+  useSentiment,
+  useWatchlist,
+} from "@/hooks/use-dashboard-data";
 import { researchDesks } from "@/data/market";
 import { cn } from "@/lib/utils";
 
@@ -15,47 +34,730 @@ export function MarketsPage() {
   const [selected, setSelected] = useState(0);
   const [range, setRange] = useState<(typeof marketRanges)[number]>("1D");
   const instrument = data?.[selected];
-  const seed = (instrument?.symbol ?? "INDEX").split("").reduce((a,c)=>a+c.charCodeAt(0), range.length);
-  if (isLoading) return <PageIntro eyebrow="Markets desk" title="Market pulse" body="Building a unified view of current market structure."><Skeleton className="h-24 w-full" /></PageIntro>;
-  if (isError || !data?.length || !instrument) return <Card><EmptyState title="No market feed" hint="The market source is temporarily unavailable." onRetry={()=>void refetch()} /></Card>;
-  const up = instrument.change_pct >= 0;
-  return <div className="flex flex-col gap-5">
-    <PageIntro eyebrow="Markets desk · live context" title="Market pulse" body="Price action, regime and cross-market context in one focused workspace." action={<SourceTag label="Demonstrative feed" />}>
-      <MetricStrip items={data.slice(0,4).map(i=>({ label:i.name, value:`${i.kind === "commodity" ? "₹" : ""}${formatNum(i.value, i.kind === "commodity" ? 0 : 2)}`, note:`${i.change_pct >= 0 ? "+" : ""}${formatNum(i.change_pct)}%`, tone:i.change_pct >= 0 ? "positive" : "negative" }))}/>
-    </PageIntro>
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
-      <Card glow delay={180}>
-        <CardHead title={instrument.name} meta={`${instrument.symbol} · updated ${relativeTime(instrument.updated_at)}`} action={<Segmented items={marketRanges} value={range} onChange={setRange} label="Chart range" />} />
-        <div className="border-b border-border px-5 py-5"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-mono text-[clamp(1.8rem,4vw,3rem)] num-tabular">{instrument.kind === "commodity" ? "₹" : ""}{formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}</p><p className={cn("mt-2 font-mono text-sm",up?"text-positive":"text-negative")}>{up?"+":""}{formatNum(instrument.change_abs)} · {up?"+":""}{formatNum(instrument.change_pct)}%</p></div><Pill tone={sentiment?.label === "BULLISH" ? "positive" : "primary"}>{sentiment?.label ?? "Awaiting regime"}</Pill></div></div>
-        <div className="relative overflow-hidden px-3 pt-4"><span aria-hidden className="scan-line pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-primary/35"/><SparkChart key={`${seed}-${range}`} seed={seed} positive={up} height={280} className="h-[280px]" label={`${instrument.name} ${range} trend`} /></div>
-        <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">{[{l:"Momentum",v:up?68:42},{l:"Volatility",v:instrument.kind==="commodity"?31:46},{l:"Breadth",v:sentiment?.score ?? 50}].map((m,i)=><div key={m.l} className="bg-panel/80 p-4"><div className="flex justify-between font-mono text-[9px] tracking-[.16em] uppercase text-subtle"><span>{m.l}</span><span className="text-muted-foreground">{m.v}</span></div><div className="mt-3"><ProgressBar value={m.v} tone={m.v>60?"positive":"primary"} delay={500+i*100}/></div></div>)}</div>
+  const seed = (instrument?.symbol ?? "INDEX")
+    .split("")
+    .reduce((a, c) => a + c.charCodeAt(0), range.length);
+  if (isLoading)
+    return (
+      <PageIntro
+        eyebrow="Markets desk"
+        title="Market pulse"
+        body="Building a unified view of current market structure."
+      >
+        <Skeleton className="h-24 w-full" />
+      </PageIntro>
+    );
+  if (isError || !data?.length || !instrument)
+    return (
+      <Card>
+        <EmptyState
+          title="No market feed"
+          hint="The market source is temporarily unavailable."
+          onRetry={() => void refetch()}
+        />
       </Card>
-      <div className="flex flex-col gap-5">
-        <Card delay={260}><CardHead title="Instrument board" meta={`${data.length} tracked markets`} /><div className="divide-y divide-border">{data.map((item,i)=><Button key={item.symbol} variant="ghost" onClick={()=>setSelected(i)} className={cn("h-auto w-full justify-start rounded-none px-4 py-3 text-left shadow-none", selected===i&&"bg-primary/10")}><span className="min-w-0 flex-1"><span className="block font-mono text-[10px] tracking-[.14em] uppercase">{item.name}</span><span className="mt-1 block text-[11px] text-subtle">{item.symbol}</span></span><span className="text-right font-mono text-[11px] num-tabular"><span className="block">{formatNum(item.value,item.kind==="commodity"?0:2)}</span><span className={item.change_pct>=0?"text-positive":"text-negative"}>{item.change_pct>=0?"+":""}{formatNum(item.change_pct)}%</span></span></Button>)}</div></Card>
-        <Card delay={340}><CardHead title="Market drivers" meta="Latest intelligence" /><ul className="divide-y divide-border">{news?.slice(0,3).map(n=><li key={n.id} className="p-4"><p className="text-[12.5px] leading-relaxed">{n.headline}</p><div className="mt-2 flex items-center justify-between"><span className="font-mono text-[9px] uppercase text-subtle">{n.source}</span><Pill tone={n.impact==="HIGH"?"warning":"neutral"}>{n.impact}</Pill></div></li>)}</ul></Card>
+    );
+  const up = instrument.change_pct >= 0;
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Markets desk · live context"
+        title="Market pulse"
+        body="Price action, regime and cross-market context in one focused workspace."
+        action={<SourceTag label="Demonstrative feed" />}
+      >
+        <MetricStrip
+          items={data
+            .slice(0, 4)
+            .map((i) => ({
+              label: i.name,
+              value: `${i.kind === "commodity" ? "₹" : ""}${formatNum(i.value, i.kind === "commodity" ? 0 : 2)}`,
+              note: `${i.change_pct >= 0 ? "+" : ""}${formatNum(i.change_pct)}%`,
+              tone: i.change_pct >= 0 ? "positive" : "negative",
+            }))}
+        />
+      </PageIntro>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
+        <Card glow delay={180}>
+          <CardHead
+            title={instrument.name}
+            meta={`${instrument.symbol} · updated ${relativeTime(instrument.updated_at)}`}
+            action={
+              <Segmented
+                items={marketRanges}
+                value={range}
+                onChange={setRange}
+                label="Chart range"
+              />
+            }
+          />
+          <div className="border-b border-border px-5 py-5">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-mono text-[clamp(1.8rem,4vw,3rem)] num-tabular">
+                  {instrument.kind === "commodity" ? "₹" : ""}
+                  {formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}
+                </p>
+                <p className={cn("mt-2 font-mono text-sm", up ? "text-positive" : "text-negative")}>
+                  {up ? "+" : ""}
+                  {formatNum(instrument.change_abs)} · {up ? "+" : ""}
+                  {formatNum(instrument.change_pct)}%
+                </p>
+              </div>
+              <Pill tone={sentiment?.label === "BULLISH" ? "positive" : "primary"}>
+                {sentiment?.label ?? "Awaiting regime"}
+              </Pill>
+            </div>
+          </div>
+          <div className="relative overflow-hidden px-3 pt-4">
+            <span
+              aria-hidden
+              className="scan-line pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-primary/35"
+            />
+            <SparkChart
+              key={`${seed}-${range}`}
+              seed={seed}
+              positive={up}
+              height={280}
+              className="h-[280px]"
+              label={`${instrument.name} ${range} trend`}
+            />
+          </div>
+          <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
+            {[
+              { l: "Momentum", v: up ? 68 : 42 },
+              { l: "Volatility", v: instrument.kind === "commodity" ? 31 : 46 },
+              { l: "Breadth", v: sentiment?.score ?? 50 },
+            ].map((m, i) => (
+              <div key={m.l} className="bg-panel/80 p-4">
+                <div className="flex justify-between font-mono text-[9px] tracking-[.16em] uppercase text-subtle">
+                  <span>{m.l}</span>
+                  <span className="text-muted-foreground">{m.v}</span>
+                </div>
+                <div className="mt-3">
+                  <ProgressBar
+                    value={m.v}
+                    tone={m.v > 60 ? "positive" : "primary"}
+                    delay={500 + i * 100}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <div className="flex flex-col gap-5">
+          <Card delay={260}>
+            <CardHead title="Instrument board" meta={`${data.length} tracked markets`} />
+            <div className="divide-y divide-border">
+              {data.map((item, i) => (
+                <Button
+                  key={item.symbol}
+                  variant="ghost"
+                  onClick={() => setSelected(i)}
+                  className={cn(
+                    "h-auto w-full justify-start rounded-none px-4 py-3 text-left shadow-none",
+                    selected === i && "bg-primary/10",
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-mono text-[10px] tracking-[.14em] uppercase">
+                      {item.name}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-subtle">{item.symbol}</span>
+                  </span>
+                  <span className="text-right font-mono text-[11px] num-tabular">
+                    <span className="block">
+                      {formatNum(item.value, item.kind === "commodity" ? 0 : 2)}
+                    </span>
+                    <span className={item.change_pct >= 0 ? "text-positive" : "text-negative"}>
+                      {item.change_pct >= 0 ? "+" : ""}
+                      {formatNum(item.change_pct)}%
+                    </span>
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </Card>
+          <Card delay={340}>
+            <CardHead title="Market drivers" meta="Latest intelligence" />
+            <ul className="divide-y divide-border">
+              {news?.slice(0, 3).map((n) => (
+                <li key={n.id} className="p-4">
+                  <p className="text-[12.5px] leading-relaxed">{n.headline}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="font-mono text-[9px] uppercase text-subtle">{n.source}</span>
+                    <Pill tone={n.impact === "HIGH" ? "warning" : "neutral"}>{n.impact}</Pill>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
-const portfolioViews = ["Holdings","Allocation","Contribution"] as const;
+const portfolioViews = ["Holdings", "Allocation", "Contribution"] as const;
 export function PortfolioPage() {
- const { data, isLoading, isError, refetch }=useHoldings(); const [view,setView]=useState<(typeof portfolioViews)[number]>("Holdings");
- if(isLoading)return <PageIntro eyebrow="Portfolio intelligence" title="Capital, understood." body="Calculating exposure and contribution."><Skeleton className="h-24 w-full"/></PageIntro>;
- if(isError||!data?.length)return <Card><EmptyState title="No portfolio positions" hint="Add positions to unlock portfolio intelligence." onRetry={()=>void refetch()}/></Card>;
- const rows=data.map(h=>{const invested=h.quantity*h.avg_price,current=h.quantity*h.last_price,pnl=current-invested,pct=invested?(pnl/invested)*100:0;return{...h,invested,current,pnl,pct}}); const invested=rows.reduce((s,r)=>s+r.invested,0), current=rows.reduce((s,r)=>s+r.current,0), pnl=current-invested, ret=invested?pnl/invested*100:0; const sectors=Object.entries(rows.reduce<Record<string,number>>((a,r)=>{a[r.sector??"Other"]=(a[r.sector??"Other"]??0)+r.current;return a},{})).sort((a,b)=>b[1]-a[1]);
- return <div className="flex flex-col gap-5"><PageIntro eyebrow="Portfolio intelligence" title="Capital, understood." body="See what drives return, where risk concentrates, and how every position contributes." action={<Button size="sm" className="sheen font-mono text-[10px] tracking-[.14em] uppercase"><ShieldCheck/>Run risk scan</Button>}><MetricStrip items={[{label:"Current value",value:formatINR(current),tone:"primary"},{label:"Invested capital",value:formatINR(invested)},{label:"Unrealised P&L",value:`${pnl>=0?"+":""}${formatINR(pnl)}`,tone:pnl>=0?"positive":"negative"},{label:"Portfolio return",value:`${ret>=0?"+":""}${ret.toFixed(2)}%`,tone:ret>=0?"positive":"negative"}]}/></PageIntro>
- <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.75fr)]"><Card glow><CardHead title="Portfolio ledger" meta={`${rows.length} positions · simulated account`} action={<Segmented items={portfolioViews} value={view} onChange={setView} label="Portfolio view"/>}/>
- {view==="Holdings"&&<div className="overflow-x-auto"><div className="min-w-[720px]"><div className="grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] border-b border-border px-5 py-2 font-mono text-[9px] uppercase tracking-[.16em] text-subtle"><span>Instrument</span><span className="text-right">Invested</span><span className="text-right">Current</span><span className="text-right">P&L</span><span className="text-right">Return</span></div>{rows.map(r=><div key={r.id} className="group grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] items-center border-b border-border px-5 py-4 transition-colors hover:bg-panel-elevated/60"><div><p className="font-mono text-[11px] tracking-[.12em]">{r.symbol}</p><p className="mt-1 text-[11px] text-subtle">{r.quantity} shares · {r.company}</p></div><span className="text-right font-mono text-[11px]">{formatINR(r.invested)}</span><span className="text-right font-mono text-[11px]">{formatINR(r.current)}</span><span className={cn("text-right font-mono text-[11px]",r.pnl>=0?"text-positive":"text-negative")}>{r.pnl>=0?"+":""}{formatINR(r.pnl)}</span><span className={cn("text-right font-mono text-[11px]",r.pct>=0?"text-positive":"text-negative")}>{r.pct>=0?"+":""}{r.pct.toFixed(2)}%</span></div>)}</div></div>}
- {view==="Allocation"&&<div className="p-5"><div className="flex h-3 overflow-hidden rounded-full bg-border">{rows.sort((a,b)=>b.current-a.current).map((r,i)=><span key={r.id} className={cn("grow-bar",i%3===0?"bg-primary":i%3===1?"bg-primary-soft/70":"bg-positive/60")} style={{width:`${r.current/current*100}%`,["--d" as string]:`${i*100}ms`}}/>)}</div><div className="mt-7 grid gap-3 sm:grid-cols-2">{rows.map(r=><div key={r.id} className="border border-border bg-background/20 p-4"><div className="flex justify-between"><span className="font-mono text-[10px]">{r.symbol}</span><span className="font-mono text-[11px] text-primary-soft">{(r.current/current*100).toFixed(1)}%</span></div><div className="mt-3"><ProgressBar value={r.current/current*100}/></div></div>)}</div></div>}
- {view==="Contribution"&&<div className="space-y-4 p-5">{[...rows].sort((a,b)=>b.pnl-a.pnl).map((r,i)=><div key={r.id}><div className="mb-2 flex justify-between text-[12px]"><span>{r.symbol}</span><span className={r.pnl>=0?"text-positive":"text-negative"}>{r.pnl>=0?"+":""}{formatINR(r.pnl)}</span></div><ProgressBar value={Math.max(8,Math.abs(r.pnl)/Math.max(...rows.map(x=>Math.abs(x.pnl)))*100)} tone={r.pnl>=0?"positive":"negative"} delay={i*80}/></div>)}</div>}</Card>
- <div className="flex flex-col gap-5"><Card><CardHead title="Sector exposure" meta="Current market value"/><div className="space-y-5 p-5">{sectors.map(([name,value],i)=><div key={name}><div className="mb-2 flex justify-between font-mono text-[10px]"><span className="uppercase tracking-[.14em] text-muted-foreground">{name}</span><span>{(value/current*100).toFixed(1)}%</span></div><ProgressBar value={value/current*100} delay={i*100}/></div>)}</div></Card><Card><CardHead title="Risk posture" meta="Concentration diagnostic"/><div className="p-5"><p className="text-2xl tracking-tight">{rows[0]&&rows[0].current/current>.35?"Concentrated":"Balanced"}</p><p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">Largest position represents {((Math.max(...rows.map(r=>r.current))/current)*100).toFixed(1)}% of current portfolio value.</p><div className="mt-5"><ProgressBar value={Math.max(...rows.map(r=>r.current))/current*100} tone="warning"/></div></div></Card></div></div></div>;
+  const { data, isLoading, isError, refetch } = useHoldings();
+  const [view, setView] = useState<(typeof portfolioViews)[number]>("Holdings");
+  if (isLoading)
+    return (
+      <PageIntro
+        eyebrow="Portfolio intelligence"
+        title="Capital, understood."
+        body="Calculating exposure and contribution."
+      >
+        <Skeleton className="h-24 w-full" />
+      </PageIntro>
+    );
+  if (isError || !data?.length)
+    return (
+      <Card>
+        <EmptyState
+          title="No portfolio positions"
+          hint="Add positions to unlock portfolio intelligence."
+          onRetry={() => void refetch()}
+        />
+      </Card>
+    );
+  const rows = data.map((h) => {
+    const invested = h.quantity * h.avg_price,
+      current = h.quantity * h.last_price,
+      pnl = current - invested,
+      pct = invested ? (pnl / invested) * 100 : 0;
+    return { ...h, invested, current, pnl, pct };
+  });
+  const invested = rows.reduce((s, r) => s + r.invested, 0),
+    current = rows.reduce((s, r) => s + r.current, 0),
+    pnl = current - invested,
+    ret = invested ? (pnl / invested) * 100 : 0;
+  const sectors = Object.entries(
+    rows.reduce<Record<string, number>>((a, r) => {
+      a[r.sector ?? "Other"] = (a[r.sector ?? "Other"] ?? 0) + r.current;
+      return a;
+    }, {}),
+  ).sort((a, b) => b[1] - a[1]);
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Portfolio intelligence"
+        title="Capital, understood."
+        body="See what drives return, where risk concentrates, and how every position contributes."
+        action={
+          <Button size="sm" className="sheen font-mono text-[10px] tracking-[.14em] uppercase">
+            <ShieldCheck />
+            Run risk scan
+          </Button>
+        }
+      >
+        <MetricStrip
+          items={[
+            { label: "Current value", value: formatINR(current), tone: "primary" },
+            { label: "Invested capital", value: formatINR(invested) },
+            {
+              label: "Unrealised P&L",
+              value: `${pnl >= 0 ? "+" : ""}${formatINR(pnl)}`,
+              tone: pnl >= 0 ? "positive" : "negative",
+            },
+            {
+              label: "Portfolio return",
+              value: `${ret >= 0 ? "+" : ""}${ret.toFixed(2)}%`,
+              tone: ret >= 0 ? "positive" : "negative",
+            },
+          ]}
+        />
+      </PageIntro>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.75fr)]">
+        <Card glow>
+          <CardHead
+            title="Portfolio ledger"
+            meta={`${rows.length} positions · simulated account`}
+            action={
+              <Segmented
+                items={portfolioViews}
+                value={view}
+                onChange={setView}
+                label="Portfolio view"
+              />
+            }
+          />
+          {view === "Holdings" && (
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                <div className="grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] border-b border-border px-5 py-2 font-mono text-[9px] uppercase tracking-[.16em] text-subtle">
+                  <span>Instrument</span>
+                  <span className="text-right">Invested</span>
+                  <span className="text-right">Current</span>
+                  <span className="text-right">P&L</span>
+                  <span className="text-right">Return</span>
+                </div>
+                {rows.map((r) => (
+                  <div
+                    key={r.id}
+                    className="group grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] items-center border-b border-border px-5 py-4 transition-colors hover:bg-panel-elevated/60"
+                  >
+                    <div>
+                      <p className="font-mono text-[11px] tracking-[.12em]">{r.symbol}</p>
+                      <p className="mt-1 text-[11px] text-subtle">
+                        {r.quantity} shares · {r.company}
+                      </p>
+                    </div>
+                    <span className="text-right font-mono text-[11px]">
+                      {formatINR(r.invested)}
+                    </span>
+                    <span className="text-right font-mono text-[11px]">{formatINR(r.current)}</span>
+                    <span
+                      className={cn(
+                        "text-right font-mono text-[11px]",
+                        r.pnl >= 0 ? "text-positive" : "text-negative",
+                      )}
+                    >
+                      {r.pnl >= 0 ? "+" : ""}
+                      {formatINR(r.pnl)}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-right font-mono text-[11px]",
+                        r.pct >= 0 ? "text-positive" : "text-negative",
+                      )}
+                    >
+                      {r.pct >= 0 ? "+" : ""}
+                      {r.pct.toFixed(2)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {view === "Allocation" && (
+            <div className="p-5">
+              <div className="flex h-3 overflow-hidden rounded-full bg-border">
+                {rows
+                  .sort((a, b) => b.current - a.current)
+                  .map((r, i) => (
+                    <span
+                      key={r.id}
+                      className={cn(
+                        "grow-bar",
+                        i % 3 === 0
+                          ? "bg-primary"
+                          : i % 3 === 1
+                            ? "bg-primary-soft/70"
+                            : "bg-positive/60",
+                      )}
+                      style={{
+                        width: `${(r.current / current) * 100}%`,
+                        ["--d" as string]: `${i * 100}ms`,
+                      }}
+                    />
+                  ))}
+              </div>
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {rows.map((r) => (
+                  <div key={r.id} className="border border-border bg-background/20 p-4">
+                    <div className="flex justify-between">
+                      <span className="font-mono text-[10px]">{r.symbol}</span>
+                      <span className="font-mono text-[11px] text-primary-soft">
+                        {((r.current / current) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <ProgressBar value={(r.current / current) * 100} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {view === "Contribution" && (
+            <div className="space-y-4 p-5">
+              {[...rows]
+                .sort((a, b) => b.pnl - a.pnl)
+                .map((r, i) => (
+                  <div key={r.id}>
+                    <div className="mb-2 flex justify-between text-[12px]">
+                      <span>{r.symbol}</span>
+                      <span className={r.pnl >= 0 ? "text-positive" : "text-negative"}>
+                        {r.pnl >= 0 ? "+" : ""}
+                        {formatINR(r.pnl)}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={Math.max(
+                        8,
+                        (Math.abs(r.pnl) / Math.max(...rows.map((x) => Math.abs(x.pnl)))) * 100,
+                      )}
+                      tone={r.pnl >= 0 ? "positive" : "negative"}
+                      delay={i * 80}
+                    />
+                  </div>
+                ))}
+            </div>
+          )}
+        </Card>
+        <div className="flex flex-col gap-5">
+          <Card>
+            <CardHead title="Sector exposure" meta="Current market value" />
+            <div className="space-y-5 p-5">
+              {sectors.map(([name, value], i) => (
+                <div key={name}>
+                  <div className="mb-2 flex justify-between font-mono text-[10px]">
+                    <span className="uppercase tracking-[.14em] text-muted-foreground">{name}</span>
+                    <span>{((value / current) * 100).toFixed(1)}%</span>
+                  </div>
+                  <ProgressBar value={(value / current) * 100} delay={i * 100} />
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Risk posture" meta="Concentration diagnostic" />
+            <div className="p-5">
+              <p className="text-2xl tracking-tight">
+                {rows[0] && rows[0].current / current > 0.35 ? "Concentrated" : "Balanced"}
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Largest position represents{" "}
+                {((Math.max(...rows.map((r) => r.current)) / current) * 100).toFixed(1)}% of current
+                portfolio value.
+              </p>
+              <div className="mt-5">
+                <ProgressBar
+                  value={(Math.max(...rows.map((r) => r.current)) / current) * 100}
+                  tone="warning"
+                />
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-const watchFilters=["All","Gainers","Decliners"] as const;
-export function WatchlistPage(){const{data,isLoading,isError,refetch}=useWatchlist();const[filter,setFilter]=useState<(typeof watchFilters)[number]>("All");const[query,setQuery]=useState("");const[selected,setSelected]=useState(0);const filtered=useMemo(()=>data?.filter(w=>(filter==="All"||(filter==="Gainers"?w.change_pct>=0:w.change_pct<0))&&(w.symbol.toLowerCase().includes(query.toLowerCase())||w.company.toLowerCase().includes(query.toLowerCase())))??[],[data,filter,query]);const focus=filtered[selected]??filtered[0];return <div className="flex flex-col gap-5"><PageIntro eyebrow="Personal market radar" title="Watchlist" body="Track movement, inspect structure and send an instrument directly into analysis." action={<Button size="sm" variant="outline" className="font-mono text-[10px] uppercase tracking-[.14em]"><Star/>Add instrument</Button>}><MetricStrip items={[{label:"Tracked",value:data?.length??0},{label:"Advancing",value:data?.filter(x=>x.change_pct>=0).length??0,tone:"positive"},{label:"Declining",value:data?.filter(x=>x.change_pct<0).length??0,tone:"negative"},{label:"Average move",value:`${data?.length?((data.reduce((s,x)=>s+x.change_pct,0)/data.length)>=0?"+":"")+(data.reduce((s,x)=>s+x.change_pct,0)/data.length).toFixed(2):"0.00"}%`,tone:"primary"}]}/></PageIntro>
- <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.8fr)]"><Card><CardHead title="Tracked instruments" meta="Personal list" action={<Segmented items={watchFilters} value={filter} onChange={v=>{setFilter(v);setSelected(0)}} label="Watchlist filter"/>}/><label className="m-4 flex items-center gap-2 border border-border bg-background/35 px-3 py-2"><Search className="h-3.5 w-3.5 text-subtle"/><input value={query} onChange={e=>{setQuery(e.target.value);setSelected(0)}} className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-subtle" placeholder="Search symbol or company"/></label>{isLoading?<div className="space-y-2 p-4"><Skeleton className="h-14"/><Skeleton className="h-14"/></div>:isError?<EmptyState title="Watchlist unavailable" hint="The source could not be reached." onRetry={()=>void refetch()}/>:<div className="divide-y divide-border">{filtered.map((w,i)=><Button key={w.id} variant="ghost" onClick={()=>setSelected(i)} className={cn("grid h-auto w-full grid-cols-[1fr_90px_70px_20px] rounded-none px-5 py-4 text-left shadow-none",focus?.id===w.id&&"bg-primary/10")}><span><span className="block font-mono text-[11px] tracking-[.12em]">{w.symbol}</span><span className="mt-1 block truncate text-[11px] text-subtle">{w.company}</span></span><SparkChart seed={w.symbol.length*17} positive={w.change_pct>=0} height={26} className="h-7"/><span className={cn("text-right font-mono text-[11px]",w.change_pct>=0?"text-positive":"text-negative")}>{w.change_pct>=0?"+":""}{formatNum(w.change_pct)}%</span><ChevronRight className="h-3.5 w-3.5 text-subtle"/></Button>)}</div>}</Card>
- <Card glow><CardHead title={focus?.symbol??"Instrument inspector"} meta={focus?.company??"Select an instrument"} action={focus&&<Pill tone={focus.change_pct>=0?"positive":"negative"}>{focus.change_pct>=0?"Momentum +":"Momentum −"}</Pill>}/>{focus?<><div className="p-5"><p className="font-mono text-3xl num-tabular">₹{formatNum(focus.price)}</p><p className={cn("mt-2 font-mono text-sm",focus.change_pct>=0?"text-positive":"text-negative")}>{focus.change_pct>=0?"+":""}{formatNum(focus.change_pct)}%</p></div><SparkChart seed={focus.symbol.length*29} positive={focus.change_pct>=0} height={180} className="h-44 px-2"/><div className="grid grid-cols-3 gap-px border-y border-border bg-border">{[["Momentum",focus.change_pct>=0?"68":"42"],["Risk","Moderate"],["Source","Simulated"]].map(x=><div className="bg-panel p-3" key={x[0]}><p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">{x[0]}</p><p className="mt-2 text-[11px]">{x[1]}</p></div>)}</div><div className="p-4"><Button className="w-full font-mono text-[10px] uppercase tracking-[.16em]"><BarChart3/>Analyze {focus.symbol}</Button></div></>:<EmptyState title="No matching instruments" hint="Adjust the search or movement filter."/>}</Card></div></div>}
+const watchFilters = ["All", "Gainers", "Decliners"] as const;
+export function WatchlistPage() {
+  const { data, isLoading, isError, refetch } = useWatchlist();
+  const [filter, setFilter] = useState<(typeof watchFilters)[number]>("All");
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(0);
+  const filtered = useMemo(
+    () =>
+      data?.filter(
+        (w) =>
+          (filter === "All" || (filter === "Gainers" ? w.change_pct >= 0 : w.change_pct < 0)) &&
+          (w.symbol.toLowerCase().includes(query.toLowerCase()) ||
+            w.company.toLowerCase().includes(query.toLowerCase())),
+      ) ?? [],
+    [data, filter, query],
+  );
+  const focus = filtered[selected] ?? filtered[0];
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Personal market radar"
+        title="Watchlist"
+        body="Track movement, inspect structure and send an instrument directly into analysis."
+        action={
+          <Button
+            size="sm"
+            variant="outline"
+            className="font-mono text-[10px] uppercase tracking-[.14em]"
+          >
+            <Star />
+            Add instrument
+          </Button>
+        }
+      >
+        <MetricStrip
+          items={[
+            { label: "Tracked", value: data?.length ?? 0 },
+            {
+              label: "Advancing",
+              value: data?.filter((x) => x.change_pct >= 0).length ?? 0,
+              tone: "positive",
+            },
+            {
+              label: "Declining",
+              value: data?.filter((x) => x.change_pct < 0).length ?? 0,
+              tone: "negative",
+            },
+            {
+              label: "Average move",
+              value: `${data?.length ? (data.reduce((s, x) => s + x.change_pct, 0) / data.length >= 0 ? "+" : "") + (data.reduce((s, x) => s + x.change_pct, 0) / data.length).toFixed(2) : "0.00"}%`,
+              tone: "primary",
+            },
+          ]}
+        />
+      </PageIntro>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.8fr)]">
+        <Card>
+          <CardHead
+            title="Tracked instruments"
+            meta="Personal list"
+            action={
+              <Segmented
+                items={watchFilters}
+                value={filter}
+                onChange={(v) => {
+                  setFilter(v);
+                  setSelected(0);
+                }}
+                label="Watchlist filter"
+              />
+            }
+          />
+          <label className="m-4 flex items-center gap-2 border border-border bg-background/35 px-3 py-2">
+            <Search className="h-3.5 w-3.5 text-subtle" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelected(0);
+              }}
+              className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-subtle"
+              placeholder="Search symbol or company"
+            />
+          </label>
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              <Skeleton className="h-14" />
+              <Skeleton className="h-14" />
+            </div>
+          ) : isError ? (
+            <EmptyState
+              title="Watchlist unavailable"
+              hint="The source could not be reached."
+              onRetry={() => void refetch()}
+            />
+          ) : (
+            <div className="divide-y divide-border">
+              {filtered.map((w, i) => (
+                <Button
+                  key={w.id}
+                  variant="ghost"
+                  onClick={() => setSelected(i)}
+                  className={cn(
+                    "grid h-auto w-full grid-cols-[1fr_90px_70px_20px] rounded-none px-5 py-4 text-left shadow-none",
+                    focus?.id === w.id && "bg-primary/10",
+                  )}
+                >
+                  <span>
+                    <span className="block font-mono text-[11px] tracking-[.12em]">{w.symbol}</span>
+                    <span className="mt-1 block truncate text-[11px] text-subtle">{w.company}</span>
+                  </span>
+                  <SparkChart
+                    seed={w.symbol.length * 17}
+                    positive={w.change_pct >= 0}
+                    height={26}
+                    className="h-7"
+                  />
+                  <span
+                    className={cn(
+                      "text-right font-mono text-[11px]",
+                      w.change_pct >= 0 ? "text-positive" : "text-negative",
+                    )}
+                  >
+                    {w.change_pct >= 0 ? "+" : ""}
+                    {formatNum(w.change_pct)}%
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-subtle" />
+                </Button>
+              ))}
+            </div>
+          )}
+        </Card>
+        <Card glow>
+          <CardHead
+            title={focus?.symbol ?? "Instrument inspector"}
+            meta={focus?.company ?? "Select an instrument"}
+            action={
+              focus && (
+                <Pill tone={focus.change_pct >= 0 ? "positive" : "negative"}>
+                  {focus.change_pct >= 0 ? "Momentum +" : "Momentum −"}
+                </Pill>
+              )
+            }
+          />
+          {focus ? (
+            <>
+              <div className="p-5">
+                <p className="font-mono text-3xl num-tabular">₹{formatNum(focus.price)}</p>
+                <p
+                  className={cn(
+                    "mt-2 font-mono text-sm",
+                    focus.change_pct >= 0 ? "text-positive" : "text-negative",
+                  )}
+                >
+                  {focus.change_pct >= 0 ? "+" : ""}
+                  {formatNum(focus.change_pct)}%
+                </p>
+              </div>
+              <SparkChart
+                seed={focus.symbol.length * 29}
+                positive={focus.change_pct >= 0}
+                height={180}
+                className="h-44 px-2"
+              />
+              <div className="grid grid-cols-3 gap-px border-y border-border bg-border">
+                {[
+                  ["Momentum", focus.change_pct >= 0 ? "68" : "42"],
+                  ["Risk", "Moderate"],
+                  ["Source", "Simulated"],
+                ].map((x) => (
+                  <div className="bg-panel p-3" key={x[0]}>
+                    <p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
+                      {x[0]}
+                    </p>
+                    <p className="mt-2 text-[11px]">{x[1]}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4">
+                <Button className="w-full font-mono text-[10px] uppercase tracking-[.16em]">
+                  <BarChart3 />
+                  Analyze {focus.symbol}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              title="No matching instruments"
+              hint="Adjust the search or movement filter."
+            />
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
 
-const researchFilters=["All","Market","Macro","Risk","AI"] as const;
-export function ResearchPage(){const[filter,setFilter]=useState<(typeof researchFilters)[number]>("All");const[selected,setSelected]=useState(0);const{data:news}=useNews();const desks=researchDesks.filter(d=>filter==="All"||(filter==="Market"&&/Market|Sector|Earnings/.test(d.title))||(filter==="Macro"&&/Macro/.test(d.title))||(filter==="Risk"&&/Volatility/.test(d.title))||(filter==="AI"&&/AI/.test(d.title)));const active=desks[selected]??desks[0]??researchDesks[0];return <div className="flex flex-col gap-5"><PageIntro eyebrow="Structured intelligence" title="Research terminal" body="Evidence-led briefs that separate what changed, why it matters and what remains unconfirmed." action={<Button size="sm" className="font-mono text-[10px] uppercase tracking-[.14em]"><BookOpen/>Generate brief</Button>}><MetricStrip items={[{label:"Research desks",value:researchDesks.length},{label:"Latest updates",value:news?.length??0},{label:"Coverage",value:"Cross-market",tone:"primary"},{label:"Method",value:"Evidence first"}]}/></PageIntro><div className="flex justify-between gap-3"><Segmented items={researchFilters} value={filter} onChange={v=>{setFilter(v);setSelected(0)}} label="Research category"/><Button variant="ghost" size="sm" className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle"><Filter/>Newest first</Button></div><div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]"><div className="grid gap-4 sm:grid-cols-2">{desks.map((d,i)=><button key={d.code} onClick={()=>setSelected(i)} className={cn("dash-rise group relative overflow-hidden rounded-xl border bg-panel/70 p-5 text-left transition-all duration-500 hover:-translate-y-1 hover:border-primary/40",active?.code===d.code?"border-primary/50":"border-border")} style={{["--d" as string]:`${i*70}ms`}}><div className="flex items-center justify-between"><span className="font-mono text-[9px] tracking-[.18em] text-primary-soft">{d.code}</span><ArrowRight className="h-3.5 w-3.5 text-subtle transition-transform group-hover:translate-x-1 group-hover:text-primary-soft"/></div><h2 className="mt-8 text-xl tracking-tight">{d.title}</h2><p className="mt-2 font-mono text-[9px] uppercase tracking-[.14em] text-subtle">{d.meta}</p><p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">{d.body}</p><div className="mt-6 grid grid-cols-2 gap-2">{d.metrics.map(m=><div key={m.label} className="border-t border-border pt-3"><p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">{m.label}</p><p className="mt-1 font-mono text-[12px]">{m.value}</p></div>)}</div></button>)}</div><Card glow className="h-fit xl:sticky xl:top-[88px]"><CardHead title="Report preview" meta={active?.meta}/><div className="p-5"><Pill tone="primary">{active?.code}</Pill><h2 className="mt-5 text-2xl tracking-tight">{active?.title}</h2><p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">{active?.body}</p><SparkChart seed={active?.seed??5} height={120} className="mt-6 h-28"/><div className="mt-6 space-y-4">{["Observed signal","Primary driver","Counter-evidence","Confidence boundary"].map((x,i)=><div key={x} className="flex gap-3 border-t border-border pt-3"><span className="font-mono text-[9px] text-primary-soft">0{i+1}</span><div><p className="text-[12px]">{x}</p><p className="mt-1 text-[11px] leading-relaxed text-subtle">Derived from demonstrative market context. Validate against a live source before acting.</p></div></div>)}</div><Button variant="outline" className="mt-6 w-full font-mono text-[10px] uppercase tracking-[.14em]">Open full report<ChevronRight/></Button></div></Card></div></div>}
+const researchFilters = ["All", "Market", "Macro", "Risk", "AI"] as const;
+export function ResearchPage() {
+  const [filter, setFilter] = useState<(typeof researchFilters)[number]>("All");
+  const [selected, setSelected] = useState(0);
+  const { data: news } = useNews();
+  const desks = researchDesks.filter(
+    (d) =>
+      filter === "All" ||
+      (filter === "Market" && /Market|Sector|Earnings/.test(d.title)) ||
+      (filter === "Macro" && /Macro/.test(d.title)) ||
+      (filter === "Risk" && /Volatility/.test(d.title)) ||
+      (filter === "AI" && /AI/.test(d.title)),
+  );
+  const active = desks[selected] ?? desks[0] ?? researchDesks[0];
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Structured intelligence"
+        title="Research terminal"
+        body="Evidence-led briefs that separate what changed, why it matters and what remains unconfirmed."
+        action={
+          <Button size="sm" className="font-mono text-[10px] uppercase tracking-[.14em]">
+            <BookOpen />
+            Generate brief
+          </Button>
+        }
+      >
+        <MetricStrip
+          items={[
+            { label: "Research desks", value: researchDesks.length },
+            { label: "Latest updates", value: news?.length ?? 0 },
+            { label: "Coverage", value: "Cross-market", tone: "primary" },
+            { label: "Method", value: "Evidence first" },
+          ]}
+        />
+      </PageIntro>
+      <div className="flex justify-between gap-3">
+        <Segmented
+          items={researchFilters}
+          value={filter}
+          onChange={(v) => {
+            setFilter(v);
+            setSelected(0);
+          }}
+          label="Research category"
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle"
+        >
+          <Filter />
+          Newest first
+        </Button>
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {desks.map((d, i) => (
+            <button
+              key={d.code}
+              onClick={() => setSelected(i)}
+              className={cn(
+                "dash-rise group relative overflow-hidden rounded-xl border bg-panel/70 p-5 text-left transition-all duration-500 hover:-translate-y-1 hover:border-primary/40",
+                active?.code === d.code ? "border-primary/50" : "border-border",
+              )}
+              style={{ ["--d" as string]: `${i * 70}ms` }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[9px] tracking-[.18em] text-primary-soft">
+                  {d.code}
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-subtle transition-transform group-hover:translate-x-1 group-hover:text-primary-soft" />
+              </div>
+              <h2 className="mt-8 text-xl tracking-tight">{d.title}</h2>
+              <p className="mt-2 font-mono text-[9px] uppercase tracking-[.14em] text-subtle">
+                {d.meta}
+              </p>
+              <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">{d.body}</p>
+              <div className="mt-6 grid grid-cols-2 gap-2">
+                {d.metrics.map((m) => (
+                  <div key={m.label} className="border-t border-border pt-3">
+                    <p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
+                      {m.label}
+                    </p>
+                    <p className="mt-1 font-mono text-[12px]">{m.value}</p>
+                  </div>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+        <Card glow className="h-fit xl:sticky xl:top-[88px]">
+          <CardHead title="Report preview" meta={active?.meta} />
+          <div className="p-5">
+            <Pill tone="primary">{active?.code}</Pill>
+            <h2 className="mt-5 text-2xl tracking-tight">{active?.title}</h2>
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">{active?.body}</p>
+            <SparkChart seed={active?.seed ?? 5} height={120} className="mt-6 h-28" />
+            <div className="mt-6 space-y-4">
+              {["Observed signal", "Primary driver", "Counter-evidence", "Confidence boundary"].map(
+                (x, i) => (
+                  <div key={x} className="flex gap-3 border-t border-border pt-3">
+                    <span className="font-mono text-[9px] text-primary-soft">0{i + 1}</span>
+                    <div>
+                      <p className="text-[12px]">{x}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-subtle">
+                        Derived from demonstrative market context. Validate against a live source
+                        before acting.
+                      </p>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+            <Button
+              variant="outline"
+              className="mt-6 w-full font-mono text-[10px] uppercase tracking-[.14em]"
+            >
+              Open full report
+              <ChevronRight />
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,18 +1,513 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookMarked, CheckCircle2, ChevronRight, CircleHelp, Database, ExternalLink, Keyboard, LifeBuoy, LockKeyhole, Search, Shield, UserRound } from "lucide-react";
+import {
+  BookMarked,
+  CheckCircle2,
+  ChevronRight,
+  CircleHelp,
+  Database,
+  ExternalLink,
+  Keyboard,
+  LifeBuoy,
+  LockKeyhole,
+  Search,
+  Shield,
+  UserRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Card, CardHead, Pill } from "@/components/app/cards";
 import { MetricStrip, PageIntro, ProgressBar, Segmented } from "./workspace";
 import { useSession, displayNameFrom } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 
-const settingsDefaults={marketAlerts:true,committeeAlerts:true,newsAlerts:false,compact:false,reducedData:false};
-export function SettingsPage(){const{session}=useSession();const[settings,setSettings]=useState(settingsDefaults);const[theme,setTheme]=useState<"Dark"|"System">("Dark");const[risk,setRisk]=useState<"Conservative"|"Balanced"|"Growth">("Balanced");const[saved,setSaved]=useState(false);useEffect(()=>{const raw=window.localStorage.getItem("quant-plus-settings");if(raw)try{const parsed=JSON.parse(raw) as Partial<typeof settingsDefaults>&{theme?:typeof theme;risk?:typeof risk};setSettings(s=>({...s,...parsed}));if(parsed.theme)setTheme(parsed.theme);if(parsed.risk)setRisk(parsed.risk)}catch{/* retain defaults */}},[]);function save(){window.localStorage.setItem("quant-plus-settings",JSON.stringify({...settings,theme,risk}));setSaved(true);window.setTimeout(()=>setSaved(false),1800)}return <div className="flex flex-col gap-5"><PageIntro eyebrow="Workspace preferences" title="Settings" body="Tune the terminal around your attention, risk language and display preferences." status="Saved to this browser" action={<Button size="sm" onClick={save} className="font-mono text-[10px] uppercase tracking-[.14em]">{saved?<CheckCircle2/>:null}{saved?"Saved":"Save changes"}</Button>}/><div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,.8fr)]"><div className="space-y-5"><Card><CardHead title="Profile" meta="Authenticated account"/><div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center"><span className="grid h-14 w-14 place-items-center border border-primary/30 bg-primary/10 text-xl text-primary-soft">{displayNameFrom(session).slice(0,1).toUpperCase()}</span><div className="min-w-0 flex-1"><p className="text-base">{displayNameFrom(session)}</p><p className="mt-1 truncate text-[12px] text-subtle">{session?.user.email??"Authenticated user"}</p></div><Pill tone="positive">Verified session</Pill></div></Card><Card><CardHead title="Notifications" meta="Choose what earns your attention"/><div className="divide-y divide-border">{[["marketAlerts","Market movement","Meaningful movement in tracked instruments"],["committeeAlerts","Committee decisions","Completed analyses and verdict changes"],["newsAlerts","High-impact intelligence","Only events marked high impact"]].map(([k,title,body])=><label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4"><span className="min-w-0 flex-1"><span className="block text-[13px]">{title}</span><span className="mt-1 block text-[11px] text-subtle">{body}</span></span><Switch checked={settings[k as keyof typeof settings] as boolean} onCheckedChange={v=>setSettings(s=>({...s,[k]:v}))}/></label>)}</div></Card><Card><CardHead title="Display" meta="Terminal density and network use"/><div className="divide-y divide-border">{[["compact","Compact data rows","Show more information per screen"],["reducedData","Reduced data mode","Use fewer chart points on limited connections"]].map(([k,title,body])=><label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4"><span className="min-w-0 flex-1"><span className="block text-[13px]">{title}</span><span className="mt-1 block text-[11px] text-subtle">{body}</span></span><Switch checked={settings[k as keyof typeof settings] as boolean} onCheckedChange={v=>setSettings(s=>({...s,[k]:v}))}/></label>)}</div></Card></div><div className="space-y-5"><Card glow><CardHead title="Interface" meta="Appearance"/><div className="p-5"><p className="mb-3 font-mono text-[9px] uppercase tracking-[.16em] text-subtle">Theme</p><Segmented items={["Dark","System"] as const} value={theme} onChange={setTheme} label="Theme"/><p className="mt-5 text-[11px] leading-relaxed text-subtle">Quant Plus uses a low-luminance terminal palette to keep dense market information readable.</p></div></Card><Card><CardHead title="Risk language" meta="Analysis framing"/><div className="p-5"><Segmented items={["Conservative","Balanced","Growth"] as const} value={risk} onChange={setRisk} label="Risk language"/><div className="mt-5"><ProgressBar value={risk==="Conservative"?32:risk==="Balanced"?58:82} tone={risk==="Growth"?"warning":"primary"}/></div><p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">This changes how risk is framed in the workspace. It does not alter data or create recommendations.</p></div></Card><Card><CardHead title="Privacy" meta="Account controls"/><div className="space-y-4 p-5">{[[LockKeyhole,"Private workspace","Account data is scoped to your signed-in session"],[Shield,"Decision boundary","No trade execution or personalised advice"]].map(([Icon,title,body])=><div key={String(title)} className="flex gap-3"><Icon className="mt-0.5 h-4 w-4 text-primary-soft"/><div><p className="text-[12px]">{title}</p><p className="mt-1 text-[11px] leading-relaxed text-subtle">{body}</p></div></div>)}</div></Card></div></div></div>}
+const settingsDefaults = {
+  marketAlerts: true,
+  committeeAlerts: true,
+  newsAlerts: false,
+  compact: false,
+  reducedData: false,
+};
+export function SettingsPage() {
+  const { session } = useSession();
+  const [settings, setSettings] = useState(settingsDefaults);
+  const [theme, setTheme] = useState<"Dark" | "System">("Dark");
+  const [risk, setRisk] = useState<"Conservative" | "Balanced" | "Growth">("Balanced");
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    const raw = window.localStorage.getItem("quant-plus-settings");
+    if (raw)
+      try {
+        const parsed = JSON.parse(raw) as Partial<typeof settingsDefaults> & {
+          theme?: typeof theme;
+          risk?: typeof risk;
+        };
+        setSettings((s) => ({ ...s, ...parsed }));
+        if (parsed.theme) setTheme(parsed.theme);
+        if (parsed.risk) setRisk(parsed.risk);
+      } catch {
+        /* retain defaults */
+      }
+  }, []);
+  function save() {
+    window.localStorage.setItem(
+      "quant-plus-settings",
+      JSON.stringify({ ...settings, theme, risk }),
+    );
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1800);
+  }
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Workspace preferences"
+        title="Settings"
+        body="Tune the terminal around your attention, risk language and display preferences."
+        status="Saved to this browser"
+        action={
+          <Button
+            size="sm"
+            onClick={save}
+            className="font-mono text-[10px] uppercase tracking-[.14em]"
+          >
+            {saved ? <CheckCircle2 /> : null}
+            {saved ? "Saved" : "Save changes"}
+          </Button>
+        }
+      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,.8fr)]">
+        <div className="space-y-5">
+          <Card>
+            <CardHead title="Profile" meta="Authenticated account" />
+            <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
+              <span className="grid h-14 w-14 place-items-center border border-primary/30 bg-primary/10 text-xl text-primary-soft">
+                {displayNameFrom(session).slice(0, 1).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-base">{displayNameFrom(session)}</p>
+                <p className="mt-1 truncate text-[12px] text-subtle">
+                  {session?.user.email ?? "Authenticated user"}
+                </p>
+              </div>
+              <Pill tone="positive">Verified session</Pill>
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Notifications" meta="Choose what earns your attention" />
+            <div className="divide-y divide-border">
+              {[
+                ["marketAlerts", "Market movement", "Meaningful movement in tracked instruments"],
+                [
+                  "committeeAlerts",
+                  "Committee decisions",
+                  "Completed analyses and verdict changes",
+                ],
+                ["newsAlerts", "High-impact intelligence", "Only events marked high impact"],
+              ].map(([k, title, body]) => (
+                <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px]">{title}</span>
+                    <span className="mt-1 block text-[11px] text-subtle">{body}</span>
+                  </span>
+                  <Switch
+                    checked={settings[k as keyof typeof settings] as boolean}
+                    onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
+                  />
+                </label>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Display" meta="Terminal density and network use" />
+            <div className="divide-y divide-border">
+              {[
+                ["compact", "Compact data rows", "Show more information per screen"],
+                [
+                  "reducedData",
+                  "Reduced data mode",
+                  "Use fewer chart points on limited connections",
+                ],
+              ].map(([k, title, body]) => (
+                <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px]">{title}</span>
+                    <span className="mt-1 block text-[11px] text-subtle">{body}</span>
+                  </span>
+                  <Switch
+                    checked={settings[k as keyof typeof settings] as boolean}
+                    onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
+                  />
+                </label>
+              ))}
+            </div>
+          </Card>
+        </div>
+        <div className="space-y-5">
+          <Card glow>
+            <CardHead title="Interface" meta="Appearance" />
+            <div className="p-5">
+              <p className="mb-3 font-mono text-[9px] uppercase tracking-[.16em] text-subtle">
+                Theme
+              </p>
+              <Segmented
+                items={["Dark", "System"] as const}
+                value={theme}
+                onChange={setTheme}
+                label="Theme"
+              />
+              <p className="mt-5 text-[11px] leading-relaxed text-subtle">
+                Quant Plus uses a low-luminance terminal palette to keep dense market information
+                readable.
+              </p>
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Risk language" meta="Analysis framing" />
+            <div className="p-5">
+              <Segmented
+                items={["Conservative", "Balanced", "Growth"] as const}
+                value={risk}
+                onChange={setRisk}
+                label="Risk language"
+              />
+              <div className="mt-5">
+                <ProgressBar
+                  value={risk === "Conservative" ? 32 : risk === "Balanced" ? 58 : 82}
+                  tone={risk === "Growth" ? "warning" : "primary"}
+                />
+              </div>
+              <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+                This changes how risk is framed in the workspace. It does not alter data or create
+                recommendations.
+              </p>
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Privacy" meta="Account controls" />
+            <div className="space-y-4 p-5">
+              {[
+                [
+                  LockKeyhole,
+                  "Private workspace",
+                  "Account data is scoped to your signed-in session",
+                ],
+                [Shield, "Decision boundary", "No trade execution or personalised advice"],
+              ].map(([Icon, title, body]) => (
+                <div key={String(title)} className="flex gap-3">
+                  <Icon className="mt-0.5 h-4 w-4 text-primary-soft" />
+                  <div>
+                    <p className="text-[12px]">{title}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-subtle">{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const sources=[{name:"Market instruments",type:"Market data",status:"Simulated",coverage:"4 indices & commodities",freshness:"Cached snapshot",health:94},{name:"Market intelligence",type:"News",status:"Simulated",coverage:"6 contextual items",freshness:"Demonstrative",health:88},{name:"Portfolio ledger",type:"Private account",status:"Connected",coverage:"User holdings",freshness:"On request",health:100},{name:"Committee analyses",type:"AI output",status:"Connected",coverage:"Stored verdicts",freshness:"On request",health:100},{name:"Broker account",type:"Execution",status:"Not connected",coverage:"Unavailable",freshness:"—",health:0},{name:"Options surface",type:"Derivatives",status:"Coming soon",coverage:"Unavailable",freshness:"—",health:0}];
-export function DataSourcesPage(){const[selected,setSelected]=useState(sources[0]);return <div className="flex flex-col gap-5"><PageIntro eyebrow="Data provenance" title="Data sources" body="Know what is connected, how fresh it is, and which parts of the workspace are demonstrative." status="No broker connected"><MetricStrip items={[{label:"Available sources",value:sources.filter(s=>s.health>0).length,tone:"positive"},{label:"Private sources",value:2,tone:"primary"},{label:"External brokers",value:0,tone:"warning"},{label:"Overall health",value:"Healthy",tone:"positive"}]}/></PageIntro><div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]"><Card><CardHead title="Source registry" meta="Coverage and availability"/><div className="divide-y divide-border">{sources.map((s,i)=><button key={s.name} onClick={()=>setSelected(s)} className={cn("dash-rise grid w-full gap-3 px-5 py-4 text-left transition-colors hover:bg-panel-elevated/60 sm:grid-cols-[1.2fr_.7fr_.65fr_24px] sm:items-center",selected.name===s.name&&"bg-primary/10")} style={{["--d" as string]:`${i*60}ms`}}><span><span className="block text-[13px]">{s.name}</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.14em] text-subtle">{s.type}</span></span><Pill tone={s.status==="Connected"?"positive":s.status==="Simulated"?"primary":"neutral"}>{s.status}</Pill><span className="font-mono text-[9px] text-subtle">{s.freshness}</span><ChevronRight className="hidden h-3.5 w-3.5 text-subtle sm:block"/></button>)}</div></Card><Card glow className="h-fit xl:sticky xl:top-[88px]"><CardHead title={selected.name} meta="Source inspector"/><div className="p-5"><div className="relative mx-auto grid h-36 w-36 place-items-center rounded-full" style={{background:`conic-gradient(var(--color-primary) ${selected.health*3.6}deg,var(--color-border) 0)`}}><div className="grid h-28 w-28 place-items-center rounded-full bg-panel"><div className="text-center"><p className="font-mono text-3xl">{selected.health}</p><p className="font-mono text-[8px] uppercase tracking-[.16em] text-subtle">health</p></div></div></div><dl className="mt-7 space-y-4">{[["Status",selected.status],["Coverage",selected.coverage],["Freshness",selected.freshness],["Access",selected.type==="Private account"||selected.type==="AI output"?"Authenticated":"Workspace-wide"]].map(([l,v])=><div key={l} className="flex justify-between gap-4 border-b border-border pb-3"><dt className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle">{l}</dt><dd className="text-right text-[11px]">{v}</dd></div>)}</dl>{selected.health===0&&<Button variant="outline" disabled className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]">Integration unavailable</Button>}<p className="mt-5 text-[10px] leading-relaxed text-subtle">Simulated sources are demonstrative and must not be interpreted as a live exchange feed.</p></div></Card></div></div>}
+const sources = [
+  {
+    name: "Market instruments",
+    type: "Market data",
+    status: "Simulated",
+    coverage: "4 indices & commodities",
+    freshness: "Cached snapshot",
+    health: 94,
+  },
+  {
+    name: "Market intelligence",
+    type: "News",
+    status: "Simulated",
+    coverage: "6 contextual items",
+    freshness: "Demonstrative",
+    health: 88,
+  },
+  {
+    name: "Portfolio ledger",
+    type: "Private account",
+    status: "Connected",
+    coverage: "User holdings",
+    freshness: "On request",
+    health: 100,
+  },
+  {
+    name: "Committee analyses",
+    type: "AI output",
+    status: "Connected",
+    coverage: "Stored verdicts",
+    freshness: "On request",
+    health: 100,
+  },
+  {
+    name: "Broker account",
+    type: "Execution",
+    status: "Not connected",
+    coverage: "Unavailable",
+    freshness: "—",
+    health: 0,
+  },
+  {
+    name: "Options surface",
+    type: "Derivatives",
+    status: "Coming soon",
+    coverage: "Unavailable",
+    freshness: "—",
+    health: 0,
+  },
+];
+export function DataSourcesPage() {
+  const [selected, setSelected] = useState(sources[0]);
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Data provenance"
+        title="Data sources"
+        body="Know what is connected, how fresh it is, and which parts of the workspace are demonstrative."
+        status="No broker connected"
+      >
+        <MetricStrip
+          items={[
+            {
+              label: "Available sources",
+              value: sources.filter((s) => s.health > 0).length,
+              tone: "positive",
+            },
+            { label: "Private sources", value: 2, tone: "primary" },
+            { label: "External brokers", value: 0, tone: "warning" },
+            { label: "Overall health", value: "Healthy", tone: "positive" },
+          ]}
+        />
+      </PageIntro>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
+        <Card>
+          <CardHead title="Source registry" meta="Coverage and availability" />
+          <div className="divide-y divide-border">
+            {sources.map((s, i) => (
+              <button
+                key={s.name}
+                onClick={() => setSelected(s)}
+                className={cn(
+                  "dash-rise grid w-full gap-3 px-5 py-4 text-left transition-colors hover:bg-panel-elevated/60 sm:grid-cols-[1.2fr_.7fr_.65fr_24px] sm:items-center",
+                  selected.name === s.name && "bg-primary/10",
+                )}
+                style={{ ["--d" as string]: `${i * 60}ms` }}
+              >
+                <span>
+                  <span className="block text-[13px]">{s.name}</span>
+                  <span className="mt-1 block font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
+                    {s.type}
+                  </span>
+                </span>
+                <Pill
+                  tone={
+                    s.status === "Connected"
+                      ? "positive"
+                      : s.status === "Simulated"
+                        ? "primary"
+                        : "neutral"
+                  }
+                >
+                  {s.status}
+                </Pill>
+                <span className="font-mono text-[9px] text-subtle">{s.freshness}</span>
+                <ChevronRight className="hidden h-3.5 w-3.5 text-subtle sm:block" />
+              </button>
+            ))}
+          </div>
+        </Card>
+        <Card glow className="h-fit xl:sticky xl:top-[88px]">
+          <CardHead title={selected.name} meta="Source inspector" />
+          <div className="p-5">
+            <div
+              className="relative mx-auto grid h-36 w-36 place-items-center rounded-full"
+              style={{
+                background: `conic-gradient(var(--color-primary) ${selected.health * 3.6}deg,var(--color-border) 0)`,
+              }}
+            >
+              <div className="grid h-28 w-28 place-items-center rounded-full bg-panel">
+                <div className="text-center">
+                  <p className="font-mono text-3xl">{selected.health}</p>
+                  <p className="font-mono text-[8px] uppercase tracking-[.16em] text-subtle">
+                    health
+                  </p>
+                </div>
+              </div>
+            </div>
+            <dl className="mt-7 space-y-4">
+              {[
+                ["Status", selected.status],
+                ["Coverage", selected.coverage],
+                ["Freshness", selected.freshness],
+                [
+                  "Access",
+                  selected.type === "Private account" || selected.type === "AI output"
+                    ? "Authenticated"
+                    : "Workspace-wide",
+                ],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between gap-4 border-b border-border pb-3">
+                  <dt className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle">
+                    {l}
+                  </dt>
+                  <dd className="text-right text-[11px]">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            {selected.health === 0 && (
+              <Button
+                variant="outline"
+                disabled
+                className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]"
+              >
+                Integration unavailable
+              </Button>
+            )}
+            <p className="mt-5 text-[10px] leading-relaxed text-subtle">
+              Simulated sources are demonstrative and must not be interpreted as a live exchange
+              feed.
+            </p>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
-const faqs=[{q:"Are the prices and portfolio values live?",a:"No. Current figures are clearly marked as demonstrative simulated data. Connect a supported source when live integrations become available."},{q:"Does a committee verdict recommend a trade?",a:"No. Verdicts demonstrate structured analytical reasoning. They are educational context, not personalised investment advice."},{q:"What does Quant AI use as context?",a:"It can discuss market structure, volatility, breadth, stored analyses and general portfolio risk using the context available in this workspace."},{q:"How are my account records protected?",a:"Private portfolio, watchlist and analysis records are scoped to your authenticated account."},{q:"Why can an agent disagree with consensus?",a:"Independent perspectives preserve useful disagreement. The committee shows limiting evidence rather than hiding it inside one score."}];
-export function HelpPage(){const[query,setQuery]=useState("");const filtered=useMemo(()=>faqs.filter(f=>(f.q+f.a).toLowerCase().includes(query.toLowerCase())),[query]);return <div className="flex flex-col gap-5"><PageIntro eyebrow="Product guidance" title="Help centre" body="Understand the workspace, its analytical boundaries and the fastest path through common workflows." status="Self-service guidance"><label className="mt-1 flex max-w-2xl items-center gap-3 rounded-md border border-border bg-background/40 px-4 py-3 focus-within:border-primary/50"><Search className="h-4 w-4 text-subtle"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search help and common questions" className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"/></label></PageIntro><div className="grid gap-5 lg:grid-cols-3">{[[BookMarked,"Getting started","Navigate markets, portfolio and research"],[Keyboard,"Keyboard & workflow","Search quickly and review efficiently"],[Shield,"Risk & disclosure","Understand analytical boundaries"]].map(([Icon,title,body],i)=><Card key={String(title)} delay={120+i*80}><div className="p-5"><span className="grid h-10 w-10 place-items-center border border-border bg-primary/10 text-primary-soft"><Icon className="h-4 w-4"/></span><h2 className="mt-5 text-base">{title}</h2><p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{body}</p><Button variant="ghost" className="mt-5 h-auto p-0 font-mono text-[9px] uppercase tracking-[.14em] text-primary-soft">Explore guide<ChevronRight/></Button></div></Card>)}</div><div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,.6fr)]"><Card><CardHead title="Common questions" meta={`${filtered.length} answers`}/><div className="px-5"><Accordion type="single" collapsible>{filtered.map((f,i)=><AccordionItem key={f.q} value={`q-${i}`} className="border-border"><AccordionTrigger className="text-[13px] hover:no-underline">{f.q}</AccordionTrigger><AccordionContent className="max-w-2xl text-[12.5px] leading-relaxed text-muted-foreground">{f.a}</AccordionContent></AccordionItem>)}</Accordion></div></Card><div className="space-y-5"><Card glow><CardHead title="Workflow shortcuts" meta="Fast paths"/><div className="divide-y divide-border">{[["/","Search the terminal"],["Markets","Inspect regime"],["Committee","Review disagreement"],["Quant AI","Ask in plain language"]].map(([k,v])=><div key={k} className="flex items-center gap-3 px-5 py-3"><kbd className="min-w-14 border border-border bg-background/40 px-2 py-1 text-center font-mono text-[9px] text-primary-soft">{k}</kbd><span className="text-[11px] text-muted-foreground">{v}</span></div>)}</div></Card><Card><CardHead title="Need more help?" meta="Support"/><div className="p-5"><LifeBuoy className="h-5 w-5 text-primary-soft"/><p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">A direct support channel has not been configured yet. Use the in-product guidance while support access is prepared.</p><Button variant="outline" disabled className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]">Support coming soon</Button></div></Card></div></div></div>}
+const faqs = [
+  {
+    q: "Are the prices and portfolio values live?",
+    a: "No. Current figures are clearly marked as demonstrative simulated data. Connect a supported source when live integrations become available.",
+  },
+  {
+    q: "Does a committee verdict recommend a trade?",
+    a: "No. Verdicts demonstrate structured analytical reasoning. They are educational context, not personalised investment advice.",
+  },
+  {
+    q: "What does Quant AI use as context?",
+    a: "It can discuss market structure, volatility, breadth, stored analyses and general portfolio risk using the context available in this workspace.",
+  },
+  {
+    q: "How are my account records protected?",
+    a: "Private portfolio, watchlist and analysis records are scoped to your authenticated account.",
+  },
+  {
+    q: "Why can an agent disagree with consensus?",
+    a: "Independent perspectives preserve useful disagreement. The committee shows limiting evidence rather than hiding it inside one score.",
+  },
+];
+export function HelpPage() {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(
+    () => faqs.filter((f) => (f.q + f.a).toLowerCase().includes(query.toLowerCase())),
+    [query],
+  );
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="Product guidance"
+        title="Help centre"
+        body="Understand the workspace, its analytical boundaries and the fastest path through common workflows."
+        status="Self-service guidance"
+      >
+        <label className="mt-1 flex max-w-2xl items-center gap-3 rounded-md border border-border bg-background/40 px-4 py-3 focus-within:border-primary/50">
+          <Search className="h-4 w-4 text-subtle" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search help and common questions"
+            className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+          />
+        </label>
+      </PageIntro>
+      <div className="grid gap-5 lg:grid-cols-3">
+        {[
+          [BookMarked, "Getting started", "Navigate markets, portfolio and research"],
+          [Keyboard, "Keyboard & workflow", "Search quickly and review efficiently"],
+          [Shield, "Risk & disclosure", "Understand analytical boundaries"],
+        ].map(([Icon, title, body], i) => (
+          <Card key={String(title)} delay={120 + i * 80}>
+            <div className="p-5">
+              <span className="grid h-10 w-10 place-items-center border border-border bg-primary/10 text-primary-soft">
+                <Icon className="h-4 w-4" />
+              </span>
+              <h2 className="mt-5 text-base">{title}</h2>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{body}</p>
+              <Button
+                variant="ghost"
+                className="mt-5 h-auto p-0 font-mono text-[9px] uppercase tracking-[.14em] text-primary-soft"
+              >
+                Explore guide
+                <ChevronRight />
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,.6fr)]">
+        <Card>
+          <CardHead title="Common questions" meta={`${filtered.length} answers`} />
+          <div className="px-5">
+            <Accordion type="single" collapsible>
+              {filtered.map((f, i) => (
+                <AccordionItem key={f.q} value={`q-${i}`} className="border-border">
+                  <AccordionTrigger className="text-[13px] hover:no-underline">
+                    {f.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="max-w-2xl text-[12.5px] leading-relaxed text-muted-foreground">
+                    {f.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </Card>
+        <div className="space-y-5">
+          <Card glow>
+            <CardHead title="Workflow shortcuts" meta="Fast paths" />
+            <div className="divide-y divide-border">
+              {[
+                ["/", "Search the terminal"],
+                ["Markets", "Inspect regime"],
+                ["Committee", "Review disagreement"],
+                ["Quant AI", "Ask in plain language"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center gap-3 px-5 py-3">
+                  <kbd className="min-w-14 border border-border bg-background/40 px-2 py-1 text-center font-mono text-[9px] text-primary-soft">
+                    {k}
+                  </kbd>
+                  <span className="text-[11px] text-muted-foreground">{v}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Need more help?" meta="Support" />
+            <div className="p-5">
+              <LifeBuoy className="h-5 w-5 text-primary-soft" />
+              <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+                A direct support channel has not been configured yet. Use the in-product guidance
+                while support access is prepared.
+              </p>
+              <Button
+                variant="outline"
+                disabled
+                className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]"
+              >
+                Support coming soon
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
