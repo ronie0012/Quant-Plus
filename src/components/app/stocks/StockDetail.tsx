@@ -36,7 +36,7 @@ function PriceChart({ stock, range }: { stock: Nifty50Stock; range: (typeof rang
   const priceAt = (index: number) => stock.price + ((points[index] ?? 0.5) - 0.5) * spread * 2;
 
   return (
-    <div className="relative px-2 pb-2">
+    <div className="relative min-w-0 px-2 pb-2">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
@@ -186,8 +186,8 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
         </div>
       </header>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(320px,.8fr)]">
-        <div className="flex flex-col gap-5">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(320px,.8fr)]">
+        <div className="flex min-w-0 flex-col gap-5">
           <Card glow delay={160}>
             <CardHead
               title={`${stock.symbol} price action`}
@@ -322,7 +322,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
                 meta="Five levels · demonstrative"
                 action={<Layers className="h-4 w-4 text-primary-soft" />}
               />
-              <table className="w-full border-collapse">
+              <table className="w-full min-w-0 border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-background/30 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
                     <th scope="col" className="px-4 py-2 text-left font-normal">Bid qty</th>
