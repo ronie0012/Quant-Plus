@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { AppTopbar } from "@/components/app/AppTopbar";
 import { QuantAIDock } from "@/components/app/QuantAIDock";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -37,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <QuantAIDock />
+      {pathname !== "/app/quant-ai" && <QuantAIDock />}
     </div>
   );
 }

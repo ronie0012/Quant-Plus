@@ -1,59 +1,125 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { Card, CardHead } from "@/components/app/cards";
+import { createFileRoute } from "@tanstack/react-router";
+import { Card } from "@/components/app/cards";
+import { EmptyModule, PageIntro } from "@/components/app/pages/workspace";
+import {
+  MarketsPage,
+  PortfolioPage,
+  ResearchPage,
+  WatchlistPage,
+} from "@/components/app/pages/TerminalPages";
+import {
+  AgentActivityPage,
+  CommitteePage,
+  DecisionsPage,
+  HistoryPage,
+  QuantAIPage,
+} from "@/components/app/pages/IntelligencePages";
+import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
+
+const pageMeta: Record<string, { title: string; description: string }> = {
+  markets: {
+    title: "Markets — Quant Plus Terminal",
+    description: "Interactive market structure, price action and cross-market context.",
+  },
+  portfolio: {
+    title: "Portfolio — Quant Plus Terminal",
+    description: "Portfolio value, holdings, allocation, contribution and risk intelligence.",
+  },
+  watchlist: {
+    title: "Watchlist — Quant Plus Terminal",
+    description: "Track instruments, inspect movement and begin structured analysis.",
+  },
+  research: {
+    title: "Research — Quant Plus Terminal",
+    description: "Evidence-led market briefs across macro, risk, sectors and AI analysis.",
+  },
+  decisions: {
+    title: "Decisions — Quant Plus Terminal",
+    description: "Review committee verdicts, conviction, risk and supporting rationale.",
+  },
+  history: {
+    title: "History — Quant Plus Terminal",
+    description: "A private chronological record of completed analyses and decisions.",
+  },
+  "quant-ai": {
+    title: "Quant AI — Quant Plus Terminal",
+    description: "A grounded market copilot for market structure and portfolio risk questions.",
+  },
+  committee: {
+    title: "Committee — Quant Plus Terminal",
+    description: "Inspect multi-agent investment reasoning, consensus and disagreement.",
+  },
+  "agent-activity": {
+    title: "Agent Activity — Quant Plus Terminal",
+    description: "Observe analytical agent status, processing traces and recent tasks.",
+  },
+  settings: {
+    title: "Settings — Quant Plus Terminal",
+    description: "Manage terminal display, notification and risk-language preferences.",
+  },
+  "data-sources": {
+    title: "Data Sources — Quant Plus Terminal",
+    description: "Inspect source coverage, freshness, health and connection status.",
+  },
+  help: {
+    title: "Help — Quant Plus Terminal",
+    description: "Guidance for Quant Plus workflows, data boundaries and common questions.",
+  },
+};
 
 export const Route = createFileRoute("/_authenticated/app/$section")({
-  head: () => ({
-    meta: [
-      { title: "Workspace — Quant Plus Terminal" },
-      {
-        name: "description",
-        content: "A Quant Plus terminal workspace module.",
-      },
-      { property: "og:title", content: "Workspace — Quant Plus Terminal" },
-      { property: "og:description", content: "A Quant Plus terminal workspace module." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: ({ params }) => {
+    const meta = pageMeta[params.section] ?? {
+      title: "Workspace — Quant Plus Terminal",
+      description: "A private Quant Plus terminal workspace.",
+    };
+    return {
+      meta: [
+        { title: meta.title },
+        { name: "description", content: meta.description },
+        { property: "og:title", content: meta.title },
+        { property: "og:description", content: meta.description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "robots", content: "noindex" },
+      ],
+    };
+  },
   component: SectionPage,
 });
 
-function titleOf(slug: string) {
-  return slug
-    .split("-")
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(" ");
-}
+const pages: Record<string, () => React.JSX.Element> = {
+  markets: MarketsPage,
+  portfolio: PortfolioPage,
+  watchlist: WatchlistPage,
+  research: ResearchPage,
+  decisions: DecisionsPage,
+  history: HistoryPage,
+  "quant-ai": QuantAIPage,
+  committee: CommitteePage,
+  "agent-activity": AgentActivityPage,
+  settings: SettingsPage,
+  "data-sources": DataSourcesPage,
+  help: HelpPage,
+};
 
 function SectionPage() {
   const { section } = Route.useParams();
+  const Page = pages[section];
+  if (Page) return <Page />;
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="reveal-in">
-        <h1 className="text-[clamp(1.3rem,2.4vw,1.75rem)] tracking-tight">{titleOf(section)}</h1>
-        <p className="mt-1.5 text-[13px] text-muted-foreground">
-          This workspace module is being built out next.
-        </p>
-      </header>
-
-      <Card glow>
-        <CardHead title={titleOf(section)} meta="Coming soon" />
-        <div className="flex flex-col items-start gap-4 px-5 py-10">
-          <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-            The dashboard is live with funds, market overview, sentiment, intelligence, watchlist,
-            calendar, analyses and portfolio. This module will follow the same design language.
-          </p>
-          <Link
-            to="/app/dashboard"
-            className="flex items-center gap-2 border border-border-strong px-4 py-2.5 font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Back to dashboard
-          </Link>
-        </div>
+      <PageIntro
+        eyebrow="Workspace"
+        title="Module not found"
+        body="This destination is not part of the Quant Plus terminal."
+      />
+      <Card>
+        <EmptyModule
+          title="Unknown destination"
+          body="Choose a workspace from the sidebar to continue."
+        />
       </Card>
     </div>
   );
