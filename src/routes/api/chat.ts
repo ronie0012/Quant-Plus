@@ -12,8 +12,11 @@ export const Route = createFileRoute("/api/chat")({
         const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!token) return new Response("Unauthorized", { status: 401 });
 
-        const supabaseUrl = process.env["SUPABASE_URL"];
-        const anonKey = process.env["SUPABASE_ANON_KEY"];
+        const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
+        const anonKey =
+          process.env["SUPABASE_PUBLISHABLE_KEY"] ??
+          process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
+          process.env["SUPABASE_ANON_KEY"];
         if (!supabaseUrl || !anonKey) return new Response("Not configured", { status: 500 });
 
         const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
