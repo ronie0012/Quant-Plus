@@ -7,6 +7,8 @@ export type Account = {
   funds_used: number;
   profit: number;
   profit_pct: number;
+  wallet_balance: number;
+  onboarded: boolean;
   updated_at: string;
 };
 
@@ -85,7 +87,7 @@ export function useAccount() {
     queryFn: async (): Promise<Account | null> => {
       const { data, error } = await supabase
         .from("accounts")
-        .select("currency,total_funds,funds_used,profit,profit_pct,updated_at")
+        .select("currency,total_funds,funds_used,profit,profit_pct,wallet_balance,onboarded,updated_at")
         .maybeSingle();
       if (error) throw error;
       return (data as Account | null) ?? null;
