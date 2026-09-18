@@ -114,6 +114,18 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
   const stats = useMemo(() => stockStats(stock), [stock]);
   const committee = useMemo(() => committeeVerdict(stock), [stock]);
   const views = useMemo(() => agentViews(stock), [stock]);
+  const summary = useMemo(() => {
+    const bulls = views.filter((v) => v.stance === "BULLISH").length;
+    const bears = views.filter((v) => v.stance === "BEARISH").length;
+    const lean =
+      committee.verdict === "BUY"
+        ? "constructive"
+        : committee.verdict === "SELL"
+          ? "cautious"
+          : "balanced";
+    return `Quant AI reads ${stock.symbol} as ${lean}. Weighing fundamentals, price trend, news flow and risk together, ${bulls} of the signal checks lean positive and ${bears} lean negative, giving a demonstrative target of ₹${formatNum(committee.target)}.`;
+  }, [views, committee, stock]);
+  const highlights = useMemo(() => views.slice(0, 3).map((v) => v.note).filter(Boolean), [views]);
   const sentiment = useMemo(() => stockSentiment(stock), [stock]);
   const news = useMemo(() => stockNews(stock), [stock]);
   const depth = useMemo(() => marketDepth(stock), [stock]);
@@ -220,54 +232,57 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
 
           <Card delay={220}>
             <CardHead
-              title="Agent prediction"
-              meta={`Consensus ${committee.verdict} · target ₹${formatNum(committee.target)}`}
+              title="Quant AI view"
+              meta={`Target ₹${formatNum(committee.target)}`}
               action={
                 <span className="flex items-center gap-2 font-mono text-[9px] tracking-[0.16em] uppercase text-primary-soft">
-                  <Bot className="h-3.5 w-3.5" /> 6 agents
+                  <Bot className="h-3.5 w-3.5" /> Single analysis
                 </span>
               }
             />
-            <ul className="grid gap-px bg-border sm:grid-cols-2">
-              {views.map((view, index) => (
-                <li
-                  key={view.agent}
-                  className="dash-rise bg-panel/80 p-4"
-                  style={{ ["--d" as string]: `${240 + index * 60}ms` }}
+            <div className="p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <Pill
+                  tone={
+                    committee.verdict === "BUY"
+                      ? "positive"
+                      : committee.verdict === "SELL"
+                        ? "negative"
+                        : "neutral"
+                  }
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-mono text-[10px] tracking-[0.14em] uppercase">{view.agent}</p>
-                    <Pill
-                      tone={
-                        view.stance === "BULLISH"
-                          ? "positive"
-                          : view.stance === "BEARISH"
-                            ? "negative"
-                            : "neutral"
-                      }
-                    >
-                      {view.stance}
-                    </Pill>
-                  </div>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
-                    {view.note}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <ProgressBar
-                      value={view.conviction}
-                      tone={view.stance === "BEARISH" ? "negative" : "primary"}
-                      delay={320 + index * 60}
-                    />
-                    <span className="font-mono text-[10px] num-tabular text-subtle">
-                      {view.conviction}%
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  {committee.verdict}
+                </Pill>
+                <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-subtle">
+                  Conviction {committee.conviction}%
+                </span>
+              </div>
+              <div className="mt-3">
+                <ProgressBar
+                  value={committee.conviction}
+                  tone={committee.verdict === "SELL" ? "negative" : "primary"}
+                  delay={320}
+                />
+              </div>
+              <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
+                {summary}
+              </p>
+              <ul className="mt-4 grid gap-2">
+                {highlights.map((point, index) => (
+                  <li
+                    key={point}
+                    className="dash-rise flex gap-2 text-[12.5px] leading-relaxed text-muted-foreground"
+                    style={{ ["--d" as string]: `${300 + index * 70}ms` }}
+                  >
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-primary-soft" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <p className="border-t border-border px-5 py-4 text-[11.5px] leading-relaxed text-subtle">
-              Agent reasoning is generated over demonstrative data for educational illustration. It is
-              not investment advice or a recommendation to transact.
+              This view is generated over demonstrative data for educational illustration. It is not
+              investment advice or a recommendation to transact.
             </p>
           </Card>
 
