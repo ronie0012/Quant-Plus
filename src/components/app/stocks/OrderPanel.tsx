@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Check, Loader2 } from "lucide-react";
 import { Card, CardHead, Pill } from "@/components/app/cards";
 import { Button } from "@/components/ui/button";
-import { formatINR, formatNum } from "@/hooks/use-dashboard-data";
+import { formatINR, formatNum, useAccount } from "@/hooks/use-dashboard-data";
+import { tradingErrorMessage } from "@/hooks/use-wallet";
 import {
   netPosition,
   useOrders,
@@ -23,29 +24,37 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
   const [quantity, setQuantity] = useState(10);
   const [triggerPrice, setTriggerPrice] = useState(stock.price.toFixed(2));
   const [placedId, setPlacedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: orders } = useOrders(stock.symbol);
+  const { data: account } = useAccount();
   const place = usePlaceOrder();
   const update = useUpdateOrder();
 
   const limitValue = Number(triggerPrice) || stock.price;
   const execPrice = orderType === "MARKET" ? stock.price : limitValue;
   const estimate = execPrice * quantity;
+  const walletBalance = Number(account?.wallet_balance ?? 0);
   const position = netPosition(orders, stock.symbol);
   const pnl = position.qty ? (stock.price - position.avgPrice) * position.qty : 0;
 
   async function submit() {
     setPlacedId(null);
-    const result = await place.mutateAsync({
-      symbol: stock.symbol,
-      company: stock.company,
-      side,
-      order_type: orderType,
-      quantity,
-      price: Number(execPrice.toFixed(2)),
-      limit_price: orderType === "MARKET" ? null : Number(limitValue.toFixed(2)),
-    });
-    setPlacedId(result.id);
+    setError(null);
+    try {
+      const result = await place.mutateAsync({
+        symbol: stock.symbol,
+        company: stock.company,
+        side,
+        order_type: orderType,
+        quantity,
+        price: Number(execPrice.toFixed(2)),
+        limit_price: orderType === "MARKET" ? null : Number(limitValue.toFixed(2)),
+      });
+      setPlacedId(result.id);
+    } catch (err) {
+      setError(tradingErrorMessage(err));
+    }
   }
 
   return (
@@ -154,6 +163,17 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
               <dd className="font-mono num-tabular">{formatINR(estimate)}</dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-muted-foreground">Wallet balance</dt>
+              <dd
+                className={cn(
+                  "font-mono num-tabular",
+                  side === "BUY" && estimate > walletBalance && "text-negative",
+                )}
+              >
+                {formatINR(walletBalance)}
+              </dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-muted-foreground">Product · validity</dt>
               <dd className="font-mono text-[12px]">DELIVERY · DAY</dd>
             </div>
@@ -175,9 +195,9 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
             )}
           </dl>
 
-          {place.isError && (
+          {error && (
             <p className="mt-4 border border-negative/40 bg-negative/10 px-3 py-2 text-[11.5px] text-negative">
-              Order could not be placed. Please try again.
+              {error}
             </p>
           )}
           {placedId && (
@@ -246,7 +266,11 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => update.mutate({ id: order.id, status: "CANCELLED" })}
+                      onClick={() => {
+                        void update
+                          .mutateAsync({ id: order.id, status: "CANCELLED" })
+                          .catch((err: unknown) => setError(tradingErrorMessage(err)));
+                      }}
                       className="font-mono text-[9px] tracking-[0.14em] uppercase"
                     >
                       Cancel

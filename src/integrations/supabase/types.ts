@@ -20,33 +20,39 @@ export type Database = {
           currency: string
           data_source: string
           funds_used: number
+          onboarded: boolean
           profit: number
           profit_pct: number
           total_funds: number
           updated_at: string
           user_id: string
+          wallet_balance: number
         }
         Insert: {
           created_at?: string
           currency?: string
           data_source?: string
           funds_used?: number
+          onboarded?: boolean
           profit?: number
           profit_pct?: number
           total_funds?: number
           updated_at?: string
           user_id: string
+          wallet_balance?: number
         }
         Update: {
           created_at?: string
           currency?: string
           data_source?: string
           funds_used?: number
+          onboarded?: boolean
           profit?: number
           profit_pct?: number
           total_funds?: number
           updated_at?: string
           user_id?: string
+          wallet_balance?: number
         }
         Relationships: []
       }
@@ -323,6 +329,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          kind: string
+          note?: string | null
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlist_items: {
         Row: {
           change_pct: number
@@ -358,7 +394,116 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cancel_open_order: {
+        Args: { p_order_id: string }
+        Returns: {
+          company: string
+          created_at: string
+          filled_at: string | null
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          symbol: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fill_open_order: {
+        Args: { p_order_id: string }
+        Returns: {
+          company: string
+          created_at: string
+          filled_at: string | null
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          symbol: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fund_wallet: {
+        Args: { p_amount: number; p_kind?: string }
+        Returns: {
+          created_at: string
+          currency: string
+          data_source: string
+          funds_used: number
+          onboarded: boolean
+          profit: number
+          profit_pct: number
+          total_funds: number
+          updated_at: string
+          user_id: string
+          wallet_balance: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      place_simulated_order: {
+        Args: {
+          p_company: string
+          p_limit?: number
+          p_price: number
+          p_qty: number
+          p_side: Database["public"]["Enums"]["order_side"]
+          p_symbol: string
+          p_type: Database["public"]["Enums"]["order_kind"]
+        }
+        Returns: {
+          company: string
+          created_at: string
+          filled_at: string | null
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          price: number
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          symbol: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      settle_fill: {
+        Args: {
+          p_company: string
+          p_price: number
+          p_qty: number
+          p_side: Database["public"]["Enums"]["order_side"]
+          p_symbol: string
+          p_uid: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       order_kind: "MARKET" | "LIMIT" | "STOP"

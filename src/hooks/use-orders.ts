@@ -54,48 +54,39 @@ export function usePlaceOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (order: NewOrder): Promise<Order> => {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth.user?.id;
-      if (!userId) throw new Error("Sign in to place an order.");
-      const immediate = order.order_type === "MARKET";
-      const { data, error } = await supabase
-        .from("orders")
-        .insert({
-          user_id: userId,
-          symbol: order.symbol,
-          company: order.company ?? "",
-          side: order.side,
-          order_type: order.order_type,
-          quantity: order.quantity,
-          price: order.price,
-          limit_price: order.limit_price ?? null,
-          status: immediate ? "FILLED" : "OPEN",
-          filled_at: immediate ? new Date().toISOString() : null,
-        })
-        .select(SELECT)
-        .single();
-      if (error) throw error;
+      const { data, error } = await supabase.rpc("place_simulated_order", {
+        p_symbol: order.symbol,
+        p_company: order.company ?? order.symbol,
+        p_side: order.side,
+        p_type: order.order_type,
+        p_qty: order.quantity,
+        p_price: order.price,
+        ...(order.limit_price == null ? {} : { p_limit: order.limit_price }),
+      });
+      if (error) throw new Error(error.message);
       return data as unknown as Order;
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orders"] }),
+    onSuccess: () => invalidateTrading(queryClient),
   });
 }
 
+/** Fills a resting order (settling cash and holdings) or cancels it. */
 export function useUpdateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status,
-          filled_at: status === "FILLED" ? new Date().toISOString() : null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+      const fn = status === "FILLED" ? "fill_open_order" : "cancel_open_order";
+      const { error } = await supabase.rpc(fn, { p_order_id: id });
+      if (error) throw new Error(error.message);
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orders"] }),
+    onSuccess: () => invalidateTrading(queryClient),
   });
+}
+
+function invalidateTrading(queryClient: ReturnType<typeof useQueryClient>) {
+  for (const key of [["orders"], ["account"], ["holdings"], ["wallet-transactions"]]) {
+    void queryClient.invalidateQueries({ queryKey: key });
+  }
 }
 
 export function orderStats(orders: Order[] | undefined) {

@@ -17,9 +17,10 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatINR, useWatchlist } from "@/hooks/use-dashboard-data";
+import { formatINR, useAccount, useWatchlist } from "@/hooks/use-dashboard-data";
+import { tradingErrorMessage } from "@/hooks/use-wallet";
 import { usePlaceOrder } from "@/hooks/use-orders";
-import { nifty50 } from "@/data/nifty50";
+import { nifty50, stockBySymbol } from "@/data/nifty50";
 import { cn } from "@/lib/utils";
 
 type Side = "BUY" | "SELL";
@@ -52,6 +53,8 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const place = usePlaceOrder();
   const { data: watchlist } = useWatchlist();
+  const { data: account } = useAccount();
+  const [ticketError, setTicketError] = useState<string | null>(null);
   const first = watchlist?.[0];
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [orderType, setOrderType] = useState<OrderType>("MARKET");
@@ -62,6 +65,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
 
   const openTicket = (next?: Partial<Ticket>) => {
     setConfirmed(false);
+    setTicketError(null);
     setTicket({
       symbol: next?.symbol ?? first?.symbol ?? "RELIANCE",
       price: next?.price ?? Number(first?.price ?? 0),
@@ -98,6 +102,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   }, [query]);
 
   const estimate = (ticket?.price ?? 0) * quantity;
+  const walletBalance = Number(account?.wallet_balance ?? 0);
 
   return (
     <TradingDeskContext.Provider value={{ openTicket, openCommand: () => setCommandOpen(true) }}>
@@ -139,7 +144,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                 <span className="grid h-14 w-14 place-items-center rounded-full border border-positive/30 bg-positive/10 text-positive"><Check className="h-6 w-6" /></span>
                 <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.2em] text-positive">Simulated order accepted</p>
                 <h3 className="mt-3 text-2xl">{ticket.side} {quantity} {ticket.symbol}</h3>
-                <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">Recorded in your simulated order book. No funds or securities moved.</p>
+                <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">{orderType === "MARKET" ? `Settled against your wallet — balance is now ${formatINR(walletBalance)}.` : "Resting in your simulated order book until it is filled or cancelled."}</p>
                 <div className="mt-7 flex gap-2"><Button variant="outline" onClick={() => { setTicket(null); void navigate({ to: "/app/$section", params: { section: "orders" } }); }}>View orders</Button><Button onClick={() => setTicket(null)}>Return to terminal</Button></div>
               </div>
             ) : (
@@ -165,8 +170,10 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                   <div className="flex justify-between"><dt className="text-muted-foreground">Estimated value</dt><dd className="font-mono num-tabular">{formatINR(estimate)}</dd></div>
                   <div className="flex justify-between"><dt className="text-muted-foreground">Product</dt><dd className="font-mono">DELIVERY</dd></div>
                   <div className="flex justify-between"><dt className="text-muted-foreground">Validity</dt><dd className="font-mono">DAY</dd></div>
+                  <div className="flex justify-between"><dt className="text-muted-foreground">Wallet balance</dt><dd className={cn("font-mono num-tabular", estimate > walletBalance && ticket.side === "BUY" ? "text-negative" : undefined)}>{formatINR(walletBalance)}</dd></div>
                 </dl>
-                <div className="mt-auto pt-6"><p className="mb-3 text-[11px] leading-relaxed text-subtle">Simulation only. No funds or securities will move.</p><Button disabled={place.isPending} onClick={() => { void place.mutateAsync({ symbol: ticket.symbol, side: ticket.side, order_type: orderType, quantity, price: Number(ticket.price.toFixed(2)), limit_price: orderType === "MARKET" ? null : Number(ticket.price.toFixed(2)) }).then(() => setConfirmed(true)); }} className={cn("h-12 w-full font-mono text-xs tracking-[0.16em]", ticket.side === "SELL" && "bg-negative text-foreground hover:bg-negative/90")}>Place {ticket.side.toLowerCase()} order</Button></div>
+                {ticketError && <p className="mt-4 border border-negative/40 bg-negative/10 px-3 py-2 text-[11.5px] text-negative">{ticketError}</p>}
+                <div className="mt-auto pt-6"><p className="mb-3 text-[11px] leading-relaxed text-subtle">Simulation only. No funds or securities will move.</p><Button disabled={place.isPending} onClick={() => { setTicketError(null); void place.mutateAsync({ symbol: ticket.symbol, company: stockBySymbol(ticket.symbol)?.company ?? ticket.symbol, side: ticket.side, order_type: orderType, quantity, price: Number(ticket.price.toFixed(2)), limit_price: orderType === "MARKET" ? null : Number(ticket.price.toFixed(2)) }).then(() => setConfirmed(true)).catch((error: unknown) => setTicketError(tradingErrorMessage(error))); }} className={cn("h-12 w-full font-mono text-xs tracking-[0.16em]", ticket.side === "SELL" && "bg-negative text-foreground hover:bg-negative/90")}>Place {ticket.side.toLowerCase()} order</Button></div>
               </div>
             )}
           </aside>

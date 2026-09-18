@@ -17,6 +17,7 @@ import {
   Settings,
   Star,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +35,7 @@ const groups = [
       { label: "Portfolio", to: "/app/portfolio", icon: PieChart },
       { label: "Watchlist", to: "/app/watchlist", icon: Star },
       { label: "Orders", to: "/app/orders", icon: Receipt },
+      { label: "Wallet", to: "/app/wallet", icon: Wallet },
       { label: "Research", to: "/app/research", icon: BookOpen },
       { label: "Decisions", to: "/app/decisions", icon: Gauge },
       { label: "History", to: "/app/history", icon: History },
