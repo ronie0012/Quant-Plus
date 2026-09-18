@@ -266,7 +266,11 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => update.mutate({ id: order.id, status: "CANCELLED" })}
+                      onClick={() => {
+                        void update
+                          .mutateAsync({ id: order.id, status: "CANCELLED" })
+                          .catch((err: unknown) => setError(tradingErrorMessage(err)));
+                      }}
                       className="font-mono text-[9px] tracking-[0.14em] uppercase"
                     >
                       Cancel

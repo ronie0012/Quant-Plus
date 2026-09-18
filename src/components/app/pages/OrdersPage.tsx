@@ -6,6 +6,8 @@ import { Card, CardHead, EmptyState, Pill, Skeleton, SourceTag } from "@/compone
 import { MetricStrip, PageIntro, Segmented } from "@/components/app/pages/workspace";
 import { formatINR, formatNum } from "@/hooks/use-dashboard-data";
 import { orderStats, useOrders, useUpdateOrder, type Order } from "@/hooks/use-orders";
+import { tradingErrorMessage } from "@/hooks/use-wallet";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const filters = ["ALL", "OPEN", "FILLED", "CANCELLED"] as const;
@@ -31,6 +33,15 @@ function positionsFrom(orders: Order[]) {
 export function OrdersPage() {
   const { data, isLoading, isError, refetch } = useOrders();
   const update = useUpdateOrder();
+
+  async function act(id: string, status: "FILLED" | "CANCELLED") {
+    try {
+      await update.mutateAsync({ id, status });
+      toast.success(status === "FILLED" ? "Order filled and settled" : "Order cancelled");
+    } catch (error) {
+      toast.error(tradingErrorMessage(error));
+    }
+  }
   const [filter, setFilter] = useState<(typeof filters)[number]>("ALL");
 
   const stats = orderStats(data);
