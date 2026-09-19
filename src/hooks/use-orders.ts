@@ -17,6 +17,13 @@ export type Order = {
   status: OrderStatus;
   filled_at: string | null;
   created_at: string;
+  product: string;
+  validity: string;
+  filled_quantity: number;
+  estimated_charges: number;
+  stop_loss: number | null;
+  target_price: number | null;
+  trailing_stop: number | null;
 };
 
 export type NewOrder = {
@@ -27,9 +34,14 @@ export type NewOrder = {
   quantity: number;
   price: number;
   limit_price?: number | null;
+  product?: string;
+  validity?: string;
+  stop_loss?: number | null;
+  target_price?: number | null;
+  trailing_stop?: number | null;
 };
 
-const SELECT = "id,symbol,company,side,order_type,quantity,limit_price,price,status,filled_at,created_at";
+const SELECT = "id,symbol,company,side,order_type,quantity,limit_price,price,status,filled_at,created_at,product,validity,filled_quantity,estimated_charges,stop_loss,target_price,trailing_stop";
 
 export function useOrders(symbol?: string) {
   return useQuery({
@@ -54,7 +66,7 @@ export function usePlaceOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (order: NewOrder): Promise<Order> => {
-      const { data, error } = await supabase.rpc("place_simulated_order", {
+      const { data, error } = await supabase.rpc("place_advanced_order", {
         p_symbol: order.symbol,
         p_company: order.company ?? order.symbol,
         p_side: order.side,
@@ -62,6 +74,11 @@ export function usePlaceOrder() {
         p_qty: order.quantity,
         p_price: order.price,
         ...(order.limit_price == null ? {} : { p_limit: order.limit_price }),
+        p_product: order.product ?? "DELIVERY",
+        p_validity: order.validity ?? "DAY",
+        ...(order.stop_loss == null ? {} : { p_stop_loss: order.stop_loss }),
+        ...(order.target_price == null ? {} : { p_target: order.target_price }),
+        ...(order.trailing_stop == null ? {} : { p_trailing: order.trailing_stop }),
       });
       if (error) throw new Error(error.message);
       return data as unknown as Order;

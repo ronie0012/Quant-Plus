@@ -121,6 +121,11 @@
     text-rendering: optimizeLegibility;
   }
 
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary-soft);
+    outline-offset: 3px;
+  }
+
   ::selection {
     background-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
     color: var(--color-foreground);
@@ -199,6 +204,7 @@
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

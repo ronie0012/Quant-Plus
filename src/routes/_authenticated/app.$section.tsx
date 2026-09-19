@@ -17,6 +17,7 @@ import {
 import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
 import { OrdersPage } from "@/components/app/pages/OrdersPage";
 import { WalletPage } from "@/components/app/pages/WalletPage";
+import { AlertsPage, JournalPage, ReplayPage, RiskPage } from "@/components/app/pages/ProductPages";
 
 const pageMeta: Record<string, { title: string; description: string }> = {
   markets: {
@@ -35,6 +36,10 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     title: "Wallet — Quant Plus Terminal",
     description: "Simulated cash balance, funding controls and a full cash ledger.",
   },
+  risk: { title: "Risk Centre — Quant Plus Terminal", description: "Portfolio stress testing, concentration diagnostics and trading guardrails." },
+  alerts: { title: "Alerts — Quant Plus Terminal", description: "Manage explainable price and market movement alerts." },
+  journal: { title: "Decision Journal — Quant Plus Terminal", description: "Record trade theses, risks, invalidation rules and outcomes." },
+  replay: { title: "Market Replay — Quant Plus Terminal", description: "Practice decisions with a bar-by-bar synthetic market replay." },
   watchlist: {
     title: "Watchlist — Quant Plus Terminal",
     description: "Track instruments, inspect movement and begin structured analysis.",
@@ -104,6 +109,10 @@ const pages: Record<string, () => React.JSX.Element> = {
   watchlist: WatchlistPage,
   orders: OrdersPage,
   wallet: WalletPage,
+  risk: RiskPage,
+  alerts: AlertsPage,
+  journal: JournalPage,
+  replay: ReplayPage,
   research: ResearchPage,
   decisions: DecisionsPage,
   history: HistoryPage,

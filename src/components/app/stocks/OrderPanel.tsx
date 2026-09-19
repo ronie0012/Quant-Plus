@@ -23,6 +23,8 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
   const [orderType, setOrderType] = useState<OrderType>("MARKET");
   const [quantity, setQuantity] = useState(10);
   const [triggerPrice, setTriggerPrice] = useState(stock.price.toFixed(2));
+  const [stopLoss, setStopLoss] = useState("");
+  const [target, setTarget] = useState("");
   const [placedId, setPlacedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +52,8 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
         quantity,
         price: Number(execPrice.toFixed(2)),
         limit_price: orderType === "MARKET" ? null : Number(limitValue.toFixed(2)),
+        stop_loss: stopLoss ? Number(stopLoss) : null,
+        target_price: target ? Number(target) : null,
       });
       setPlacedId(result.id);
     } catch (err) {
@@ -162,6 +166,8 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
               <dt className="text-muted-foreground">Estimated value</dt>
               <dd className="font-mono num-tabular">{formatINR(estimate)}</dd>
             </div>
+            <div className="flex justify-between"><dt className="text-muted-foreground">Estimated charges</dt><dd className="font-mono num-tabular">{formatINR(estimate * 0.00035)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted-foreground">Cash after trade</dt><dd className={cn("font-mono num-tabular", side === "BUY" && walletBalance-estimate < 0 && "text-negative")}>{formatINR(side === "BUY" ? walletBalance-estimate : walletBalance+estimate)}</dd></div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Wallet balance</dt>
               <dd
@@ -194,6 +200,7 @@ export function OrderPanel({ stock }: { stock: Nifty50Stock }) {
               </div>
             )}
           </dl>
+          <div className="mt-5 grid grid-cols-2 gap-3"><label className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle">Stop loss<input type="number" value={stopLoss} onChange={e=>setStopLoss(e.target.value)} placeholder="Optional" className="mt-2 w-full border border-border bg-background/35 p-2.5 font-mono text-foreground outline-none"/></label><label className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle">Target<input type="number" value={target} onChange={e=>setTarget(e.target.value)} placeholder="Optional" className="mt-2 w-full border border-border bg-background/35 p-2.5 font-mono text-foreground outline-none"/></label></div>
 
           {error && (
             <p className="mt-4 border border-negative/40 bg-negative/10 px-3 py-2 text-[11.5px] text-negative">
