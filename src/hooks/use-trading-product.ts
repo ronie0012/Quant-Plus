@@ -117,9 +117,9 @@ export function useSaveJournalEntry() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (entry: { id?: string; symbol: string; thesis: string; evidence?: string[]; risks?: string[]; invalidation?: string; planned_exit?: string; reflection?: string; outcome?: JournalEntry["outcome"]; order_id?: string | null }) => {
-      const values = { ...entry, id: undefined };
+      const { id, ...values } = entry;
       const query = entry.id
-        ? supabase.from("trade_journal").update(values).eq("id", entry.id)
+        ? supabase.from("trade_journal").update(values).eq("id", id ?? "")
         : supabase.from("trade_journal").insert(values);
       const { error } = await query;
       if (error) throw error;
