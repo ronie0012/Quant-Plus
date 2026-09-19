@@ -6,16 +6,18 @@ import { QuantAIDock } from "@/components/app/QuantAIDock";
 import { TradingDeskProvider } from "@/components/app/TradingDesk";
 import { WalletGate } from "@/components/app/WalletGate";
 import { cn } from "@/lib/utils";
+import { useTradingPreferences } from "@/hooks/use-trading-product";
 
 /** Sidebar + topbar application shell for every authenticated screen. */
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { data: preferences } = useTradingPreferences();
 
   return (
     <TradingDeskProvider>
-    <div className="relative min-h-screen bg-background">
+    <div className={cn("relative min-h-screen bg-background", preferences?.calm_mode && "calm-mode", preferences?.density === "COMPACT" && "compact-mode")}>
       {/* ambient lighting */}
       <div
         aria-hidden="true"
@@ -36,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <AppTopbar onOpenMobile={() => setMobileOpen(true)} />
-          <main className={cn("min-w-0 flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8")}>
+          <main id="terminal-content" className={cn("min-w-0 flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8")}>
             <div className="mx-auto w-full max-w-[1600px]">{children}</div>
           </main>
         </div>

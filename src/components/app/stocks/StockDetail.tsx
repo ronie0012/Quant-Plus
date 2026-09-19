@@ -4,6 +4,7 @@ import { ArrowLeft, Bot, Gauge, Layers, Newspaper } from "lucide-react";
 import { Card, CardHead, Pill, SourceTag } from "@/components/app/cards";
 import { MetricStrip, ProgressBar, Segmented } from "@/components/app/pages/workspace";
 import { OrderPanel } from "@/components/app/stocks/OrderPanel";
+import { ProfessionalChart } from "@/components/app/stocks/ProfessionalChart";
 import { AnimatedNumber } from "@/components/site/AnimatedNumber";
 import { series, toPath } from "@/data/market";
 import {
@@ -183,7 +184,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
               { label: "Day range", value: `₹${formatNum(stats.low)} – ₹${formatNum(stats.high)}` },
               { label: "Volume", value: `${(stats.volume / 1e6).toFixed(2)}M` },
               {
-                label: "Committee verdict",
+                label: "Quant AI verdict",
                 value: committee.verdict,
                 note: `${committee.conviction}% conviction`,
                 tone:
@@ -206,7 +207,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
               meta={`${range} · demonstrative series`}
               action={<Segmented items={ranges} value={range} onChange={setRange} label="Chart range" />}
             />
-            <PriceChart stock={stock} range={range} />
+            <ProfessionalChart stock={stock} />
             <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
               {[
                 { label: "Momentum", value: stats.momentum },
@@ -233,7 +234,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
           <Card delay={220}>
             <CardHead
               title="Quant AI view"
-              meta={`Target ₹${formatNum(committee.target)}`}
+              meta={`Target ₹${formatNum(committee.target)} · updated now`}
               action={
                 <span className="flex items-center gap-2 font-mono text-[9px] tracking-[0.16em] uppercase text-primary-soft">
                   <Bot className="h-3.5 w-3.5" /> Single analysis
@@ -281,8 +282,7 @@ export function StockDetail({ stock }: { stock: Nifty50Stock }) {
               </ul>
             </div>
             <p className="border-t border-border px-5 py-4 text-[11.5px] leading-relaxed text-subtle">
-              This view is generated over demonstrative data for educational illustration. It is not
-              investment advice or a recommendation to transact.
+               Evidence: synthetic price structure, demonstrative fundamentals and labelled contextual news. Invalidation: the conclusion should be reconsidered if momentum reverses or the stated risk case materialises. Educational only; not investment advice.
             </p>
           </Card>
 

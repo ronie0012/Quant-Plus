@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Bell, Command, Menu, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTradingDesk } from "@/components/app/TradingDesk";
+import { usePriceAlerts } from "@/hooks/use-trading-product";
 
 function marketOpen(now: Date) {
   const day = now.getDay();
@@ -15,6 +16,9 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [now, setNow] = useState<Date | null>(null);
   const { openCommand, openTicket } = useTradingDesk();
+  const navigate = useNavigate();
+  const { data: alerts } = usePriceAlerts();
+  const triggered = alerts?.filter((alert) => alert.triggered_at).length ?? 0;
 
   useEffect(() => {
     setNow(new Date());
@@ -67,11 +71,13 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
 
         <button
           type="button"
-          aria-label="Notifications — no new notifications"
-          title="No new notifications"
+          aria-label={`Notifications — ${triggered} triggered alerts`}
+          title={`${triggered} triggered alerts`}
+          onClick={() => void navigate({ to: "/app/$section", params: { section: "alerts" } })}
           className="flex h-9 w-9 items-center justify-center border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
         >
           <Bell className="h-3.5 w-3.5" />
+          {triggered > 0 && <span className="absolute mt-[-22px] ml-[22px] h-2 w-2 rounded-full bg-negative" />}
         </button>
       </div>
     </header>

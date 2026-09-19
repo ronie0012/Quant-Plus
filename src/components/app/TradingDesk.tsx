@@ -47,6 +47,10 @@ const routes = [
   { label: "Watchlist", section: "watchlist" },
   { label: "Research", section: "research" },
   { label: "Quant AI", section: "quant-ai" },
+  { label: "Risk centre", section: "risk" },
+  { label: "Alerts", section: "alerts" },
+  { label: "Decision journal", section: "journal" },
+  { label: "Market replay", section: "replay" },
 ] as const;
 
 export function TradingDeskProvider({ children }: { children: ReactNode }) {
