@@ -115,6 +115,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <a href="#terminal-content" className="fixed top-2 left-2 z-[100] -translate-y-20 bg-primary px-4 py-2 text-primary-foreground transition-transform focus:translate-y-0">Skip to workspace</a>
         {children}
         <Scripts />
       </body>

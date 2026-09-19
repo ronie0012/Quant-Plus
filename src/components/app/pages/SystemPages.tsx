@@ -22,6 +22,7 @@ import { Card, CardHead, Pill } from "@/components/app/cards";
 import { MetricStrip, PageIntro, ProgressBar, Segmented } from "./workspace";
 import { useSession, displayNameFrom } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
+import { useSaveTradingPreferences, useTradingPreferences, type TradingPreferences } from "@/hooks/use-trading-product";
 
 const settingsDefaults = {
   marketAlerts: true,
@@ -50,6 +51,10 @@ export function SettingsPage() {
   const [theme, setTheme] = useState<"Dark" | "System">("Dark");
   const [risk, setRisk] = useState<"Conservative" | "Balanced" | "Growth">("Balanced");
   const [saved, setSaved] = useState(false);
+  const { data: tradingPreferences } = useTradingPreferences();
+  const saveTradingPreferences = useSaveTradingPreferences();
+  const [calmMode, setCalmMode] = useState(false);
+  useEffect(() => { if (tradingPreferences) setCalmMode(tradingPreferences.calm_mode); }, [tradingPreferences]);
   useEffect(() => {
     const raw = window.localStorage.getItem("quant-plus-settings");
     if (raw)
@@ -72,6 +77,8 @@ export function SettingsPage() {
     );
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
+    const current: TradingPreferences = tradingPreferences ?? { density: "COMFORTABLE", calm_mode: false, default_order_type: "MARKET", default_product: "DELIVERY", default_quantity: 10, chart_type: "CANDLE", show_volume: true, notifications: { orders: true, alerts: true, news: false } };
+    void saveTradingPreferences.mutateAsync({ ...current, calm_mode: calmMode, density: settings.compact ? "COMPACT" : "COMFORTABLE" });
   }
   return (
     <div className="flex flex-col gap-5">
@@ -140,6 +147,7 @@ export function SettingsPage() {
                   />
                 </label>
               ))}
+              <label className="flex cursor-pointer items-center gap-4 px-5 py-4"><span className="min-w-0 flex-1"><span className="block text-[13px]">Calm mode</span><span className="mt-1 block text-[11px] text-subtle">Stops ambient motion and reduces visual urgency</span></span><Switch checked={calmMode} onCheckedChange={setCalmMode}/></label>
             </div>
           </Card>
         </div>
