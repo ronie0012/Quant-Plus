@@ -255,43 +255,117 @@ export type Database = {
         Row: {
           company: string
           created_at: string
+          estimated_charges: number
           filled_at: string | null
+          filled_quantity: number
           id: string
           limit_price: number | null
           order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
           price: number
+          product: string
           quantity: number
           side: Database["public"]["Enums"]["order_side"]
           status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
           symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
           user_id: string
+          validity: string
         }
         Insert: {
           company?: string
           created_at?: string
+          estimated_charges?: number
           filled_at?: string | null
+          filled_quantity?: number
           id?: string
           limit_price?: number | null
           order_type?: Database["public"]["Enums"]["order_kind"]
+          parent_order_id?: string | null
           price: number
+          product?: string
           quantity: number
           side: Database["public"]["Enums"]["order_side"]
           status?: Database["public"]["Enums"]["order_status"]
+          stop_loss?: number | null
           symbol: string
+          target_price?: number | null
+          trailing_stop?: number | null
+          updated_at?: string
           user_id?: string
+          validity?: string
         }
         Update: {
           company?: string
           created_at?: string
+          estimated_charges?: number
           filled_at?: string | null
+          filled_quantity?: number
           id?: string
           limit_price?: number | null
           order_type?: Database["public"]["Enums"]["order_kind"]
+          parent_order_id?: string | null
           price?: number
+          product?: string
           quantity?: number
           side?: Database["public"]["Enums"]["order_side"]
           status?: Database["public"]["Enums"]["order_status"]
+          stop_loss?: number | null
           symbol?: string
+          target_price?: number | null
+          trailing_stop?: number | null
+          updated_at?: string
+          user_id?: string
+          validity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          enabled: boolean
+          id: string
+          note: string
+          symbol: string
+          threshold: number | null
+          triggered_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          note?: string
+          symbol: string
+          threshold?: number | null
+          triggered_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          note?: string
+          symbol?: string
+          threshold?: number | null
+          triggered_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -326,6 +400,161 @@ export type Database = {
           preferences?: Json
           updated_at?: string
           workspace_name?: string
+        }
+        Relationships: []
+      }
+      risk_limits: {
+        Row: {
+          confirmation_above: number
+          daily_loss_limit: number
+          max_order_value: number
+          max_position_pct: number
+          trading_paused: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confirmation_above?: number
+          daily_loss_limit?: number
+          max_order_value?: number
+          max_position_pct?: number
+          trading_paused?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confirmation_above?: number
+          daily_loss_limit?: number
+          max_order_value?: number
+          max_position_pct?: number
+          trading_paused?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          layout: Json
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          layout?: Json
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          layout?: Json
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_journal: {
+        Row: {
+          created_at: string
+          evidence: string[]
+          id: string
+          invalidation: string
+          order_id: string | null
+          outcome: string
+          planned_exit: string
+          reflection: string
+          risks: string[]
+          symbol: string
+          thesis: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evidence?: string[]
+          id?: string
+          invalidation?: string
+          order_id?: string | null
+          outcome?: string
+          planned_exit?: string
+          reflection?: string
+          risks?: string[]
+          symbol: string
+          thesis?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          evidence?: string[]
+          id?: string
+          invalidation?: string
+          order_id?: string | null
+          outcome?: string
+          planned_exit?: string
+          reflection?: string
+          risks?: string[]
+          symbol?: string
+          thesis?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_journal_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trading_preferences: {
+        Row: {
+          calm_mode: boolean
+          chart_type: string
+          default_order_type: Database["public"]["Enums"]["order_kind"]
+          default_product: string
+          default_quantity: number
+          density: string
+          notifications: Json
+          show_volume: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calm_mode?: boolean
+          chart_type?: string
+          default_order_type?: Database["public"]["Enums"]["order_kind"]
+          default_product?: string
+          default_quantity?: number
+          density?: string
+          notifications?: Json
+          show_volume?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calm_mode?: boolean
+          chart_type?: string
+          default_order_type?: Database["public"]["Enums"]["order_kind"]
+          default_product?: string
+          default_quantity?: number
+          density?: string
+          notifications?: Json
+          show_volume?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -399,16 +628,25 @@ export type Database = {
         Returns: {
           company: string
           created_at: string
+          estimated_charges: number
           filled_at: string | null
+          filled_quantity: number
           id: string
           limit_price: number | null
           order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
           price: number
+          product: string
           quantity: number
           side: Database["public"]["Enums"]["order_side"]
           status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
           symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
           user_id: string
+          validity: string
         }
         SetofOptions: {
           from: "*"
@@ -422,16 +660,25 @@ export type Database = {
         Returns: {
           company: string
           created_at: string
+          estimated_charges: number
           filled_at: string | null
+          filled_quantity: number
           id: string
           limit_price: number | null
           order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
           price: number
+          product: string
           quantity: number
           side: Database["public"]["Enums"]["order_side"]
           status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
           symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
           user_id: string
+          validity: string
         }
         SetofOptions: {
           from: "*"
@@ -462,6 +709,89 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      modify_open_order: {
+        Args: {
+          p_limit: number
+          p_order_id: string
+          p_qty: number
+          p_stop_loss?: number
+          p_target?: number
+        }
+        Returns: {
+          company: string
+          created_at: string
+          estimated_charges: number
+          filled_at: string | null
+          filled_quantity: number
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
+          price: number
+          product: string
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
+          symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
+          user_id: string
+          validity: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      place_advanced_order: {
+        Args: {
+          p_company: string
+          p_limit?: number
+          p_price: number
+          p_product?: string
+          p_qty: number
+          p_side: Database["public"]["Enums"]["order_side"]
+          p_stop_loss?: number
+          p_symbol: string
+          p_target?: number
+          p_trailing?: number
+          p_type: Database["public"]["Enums"]["order_kind"]
+          p_validity?: string
+        }
+        Returns: {
+          company: string
+          created_at: string
+          estimated_charges: number
+          filled_at: string | null
+          filled_quantity: number
+          id: string
+          limit_price: number | null
+          order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
+          price: number
+          product: string
+          quantity: number
+          side: Database["public"]["Enums"]["order_side"]
+          status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
+          symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
+          user_id: string
+          validity: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       place_simulated_order: {
         Args: {
           p_company: string
@@ -475,16 +805,25 @@ export type Database = {
         Returns: {
           company: string
           created_at: string
+          estimated_charges: number
           filled_at: string | null
+          filled_quantity: number
           id: string
           limit_price: number | null
           order_type: Database["public"]["Enums"]["order_kind"]
+          parent_order_id: string | null
           price: number
+          product: string
           quantity: number
           side: Database["public"]["Enums"]["order_side"]
           status: Database["public"]["Enums"]["order_status"]
+          stop_loss: number | null
           symbol: string
+          target_price: number | null
+          trailing_stop: number | null
+          updated_at: string
           user_id: string
+          validity: string
         }
         SetofOptions: {
           from: "*"
