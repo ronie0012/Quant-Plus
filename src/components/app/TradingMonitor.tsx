@@ -45,7 +45,7 @@ export function TradingMonitor() {
       busy.current = true;
       const { alerts, orders, holdings, prefs } = state.current;
       const now = Date.now();
-      const sound = prefs?.notifications?.alerts !== false;
+      const sound = prefs?.notifications?.["alerts"] !== false;
       try {
         for (const a of alerts ?? []) {
           if (!a.enabled || a.triggered_at) continue;
@@ -66,8 +66,9 @@ export function TradingMonitor() {
           const held = holdings?.find((h) => h.symbol === o.symbol);
           if (!held || held.quantity <= 0) { done.add(o.id); continue; }
           const price = simulatedPrice(o.symbol, now, o.price);
-          peaks[o.id] = Math.max(peaks[o.id] ?? o.price, price);
-          const reason = bracketExit(o, price, peaks[o.id]);
+          const peak = Math.max(peaks[o.id] ?? o.price, price);
+          peaks[o.id] = peak;
+          const reason = bracketExit(o, price, peak);
           if (!reason) continue;
           const qty = Math.min(o.quantity, Number(held.quantity));
           const { error } = await supabase.rpc("place_advanced_order", {

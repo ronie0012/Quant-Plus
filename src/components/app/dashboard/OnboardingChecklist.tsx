@@ -40,7 +40,7 @@ export function OnboardingChecklist() {
       <ol className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((s, i) => (
           <li key={s.label}>
-            <Link to={s.to} className={cn("flex items-center gap-3 border border-border px-3 py-3 text-sm transition-colors hover:border-border-strong", s.done && "border-positive/30 text-muted-foreground")}>
+            <Link to="/app/$section" params={{ section: s.to.replace("/app/", "") }} className={cn("flex items-center gap-3 border border-border px-3 py-3 text-sm transition-colors hover:border-border-strong", s.done && "border-positive/30 text-muted-foreground")}>
               <span className={cn("grid h-6 w-6 shrink-0 place-items-center border font-mono text-[10px]", s.done ? "border-positive/50 bg-positive/10 text-positive" : "border-border text-subtle")}>{s.done ? <Check className="h-3 w-3" /> : i + 1}</span>
               <span className={cn(s.done && "line-through")}>{s.label}</span>
             </Link>
