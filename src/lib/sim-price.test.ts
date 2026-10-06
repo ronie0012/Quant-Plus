@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with `bun test`
 import { describe, expect, it } from "bun:test";
 import { alertHit, bracketExit } from "./sim-price";
 
