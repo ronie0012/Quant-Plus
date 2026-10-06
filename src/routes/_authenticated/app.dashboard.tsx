@@ -9,6 +9,7 @@ import { AnalysesPanel } from "@/components/app/dashboard/AnalysesPanel";
 import { PortfolioSnapshot } from "@/components/app/dashboard/PortfolioSnapshot";
 import { DashboardHero } from "@/components/app/dashboard/DashboardHero";
 import { useSession } from "@/hooks/use-session";
+import { OnboardingChecklist } from "@/components/app/dashboard/OnboardingChecklist";
 
 export const Route = createFileRoute("/_authenticated/app/dashboard")({
   head: () => ({
@@ -43,6 +44,7 @@ function DashboardPage() {
         </div>
       </div>
       <DashboardHero session={session} />
+      <OnboardingChecklist />
 
       <FundsRow />
 

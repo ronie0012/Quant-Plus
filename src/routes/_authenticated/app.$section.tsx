@@ -17,7 +17,10 @@ import {
 import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
 import { OrdersPage } from "@/components/app/pages/OrdersPage";
 import { WalletPage } from "@/components/app/pages/WalletPage";
-import { AlertsPage, JournalPage, ReplayPage, RiskPage } from "@/components/app/pages/ProductPages";
+import { AlertsPage, JournalPage as JournalBase, ReplayPage, RiskPage } from "@/components/app/pages/ProductPages";
+import { ScreenerPage } from "@/components/app/pages/ScreenerPage";
+import { TradeReviewPanel } from "@/components/app/TradeReviewPanel";
+function JournalPage() { return <><JournalBase /><TradeReviewPanel /></>; }
 
 const pageMeta: Record<string, { title: string; description: string }> = {
   markets: {
@@ -39,6 +42,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
   risk: { title: "Risk Centre — Quant Plus Terminal", description: "Portfolio stress testing, concentration diagnostics and trading guardrails." },
   alerts: { title: "Alerts — Quant Plus Terminal", description: "Manage explainable price and market movement alerts." },
   journal: { title: "Decision Journal — Quant Plus Terminal", description: "Record trade theses, risks, invalidation rules and outcomes." },
+  screener: { title: "Stock Screener — Quant Plus Terminal", description: "Filter NIFTY 50 stocks by momentum, RSI, volume and Quant AI conviction." },
   replay: { title: "Market Replay — Quant Plus Terminal", description: "Practice decisions with a bar-by-bar synthetic market replay." },
   watchlist: {
     title: "Watchlist — Quant Plus Terminal",
@@ -113,6 +117,7 @@ const pages: Record<string, () => React.JSX.Element> = {
   alerts: AlertsPage,
   journal: JournalPage,
   replay: ReplayPage,
+  screener: ScreenerPage,
   research: ResearchPage,
   decisions: DecisionsPage,
   history: HistoryPage,

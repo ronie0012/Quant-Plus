@@ -5,6 +5,7 @@ import { AppTopbar } from "@/components/app/AppTopbar";
 import { QuantAIDock } from "@/components/app/QuantAIDock";
 import { TradingDeskProvider } from "@/components/app/TradingDesk";
 import { WalletGate } from "@/components/app/WalletGate";
+import { TradingMonitor } from "@/components/app/TradingMonitor";
 import { cn } from "@/lib/utils";
 import { useTradingPreferences } from "@/hooks/use-trading-product";
 
@@ -46,6 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {pathname !== "/app/quant-ai" && <QuantAIDock />}
       <WalletGate />
+      <TradingMonitor />
     </div>
     </TradingDeskProvider>
   );
