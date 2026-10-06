@@ -15,7 +15,7 @@ import {
   PieChart,
   BellRing,
   BookText,
-  Rewind,
+  Rewind, Filter,
   ShieldAlert,
   Receipt,
   Settings,
@@ -47,6 +47,7 @@ const groups = [
       { label: "History", to: "/app/history", icon: History },
       { label: "Journal", to: "/app/journal", icon: BookText },
       { label: "Replay", to: "/app/replay", icon: Rewind },
+      { label: "Screener", to: "/app/screener", icon: Filter },
     ],
   },
   {

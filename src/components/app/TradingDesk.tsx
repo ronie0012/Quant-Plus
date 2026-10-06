@@ -51,6 +51,7 @@ const routes = [
   { label: "Alerts", section: "alerts" },
   { label: "Decision journal", section: "journal" },
   { label: "Market replay", section: "replay" },
+  { label: "Stock screener", section: "screener" },
 ] as const;
 
 export function TradingDeskProvider({ children }: { children: ReactNode }) {
