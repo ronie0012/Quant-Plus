@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+// @ts-nocheck -- run with `bun test`
+import { describe, expect, it } from "bun:test";
 import { blackScholes, payoffAt } from "./options";
 
 describe("options maths", () => {
