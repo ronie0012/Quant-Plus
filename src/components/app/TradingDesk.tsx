@@ -81,20 +81,43 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const [helpOpen, setHelpOpen] = useState(false);
+  const openRef = useRef(openTicket);
+  openRef.current = openTicket;
+
   useEffect(() => {
+    const go: Record<string, string> = { "1": "dashboard", "2": "markets", "3": "portfolio", "4": "orders", "5": "wallet", "6": "alerts", "7": "screener", "8": "options", "9": "basket" };
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCommandOpen((open) => !open);
+        return;
       }
       if (event.key === "Escape") {
         setCommandOpen(false);
         setTicket(null);
+        setHelpOpen(false);
+        return;
+      }
+      const el = event.target as HTMLElement | null;
+      if (event.metaKey || event.ctrlKey || event.altKey || el?.closest("input,textarea,select,[contenteditable=true]")) return;
+      const key = event.key.toLowerCase();
+      const stockMatch = window.location.pathname.match(/\/app\/stocks\/([^/]+)/);
+      if (key === "b" || key === "s") {
+        const sym = stockMatch ? decodeURIComponent(stockMatch[1]) : undefined;
+        const stock = sym ? stockBySymbol(sym) : undefined;
+        openRef.current({ side: key === "b" ? "BUY" : "SELL", ...(stock ? { symbol: stock.symbol, price: stock.price } : {}) });
+      } else if (event.key === "?") setHelpOpen((v) => !v);
+      else if (event.key === "/") { event.preventDefault(); setCommandOpen(true); }
+      else if (go[event.key]) {
+        const section = go[event.key];
+        if (section === "dashboard") void navigate({ to: "/app/dashboard" });
+        else void navigate({ to: "/app/$section", params: { section } });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
