@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -52,6 +53,9 @@ const routes = [
   { label: "Decision journal", section: "journal" },
   { label: "Market replay", section: "replay" },
   { label: "Stock screener", section: "screener" },
+  { label: "Options lab", section: "options" },
+  { label: "Basket orders", section: "basket" },
+  { label: "Portfolio X-ray", section: "xray" },
 ] as const;
 
 export function TradingDeskProvider({ children }: { children: ReactNode }) {
@@ -78,20 +82,43 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const [helpOpen, setHelpOpen] = useState(false);
+  const openRef = useRef(openTicket);
+  openRef.current = openTicket;
+
   useEffect(() => {
+    const go: Record<string, string> = { "1": "dashboard", "2": "markets", "3": "portfolio", "4": "orders", "5": "wallet", "6": "alerts", "7": "screener", "8": "options", "9": "basket" };
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCommandOpen((open) => !open);
+        return;
       }
       if (event.key === "Escape") {
         setCommandOpen(false);
         setTicket(null);
+        setHelpOpen(false);
+        return;
+      }
+      const el = event.target as HTMLElement | null;
+      if (event.metaKey || event.ctrlKey || event.altKey || el?.closest("input,textarea,select,[contenteditable=true]")) return;
+      const key = event.key.toLowerCase();
+      const stockMatch = window.location.pathname.match(/\/app\/stocks\/([^/]+)/);
+      if (key === "b" || key === "s") {
+        const sym = stockMatch ? decodeURIComponent(stockMatch[1] ?? "") : undefined;
+        const stock = sym ? stockBySymbol(sym) : undefined;
+        openRef.current({ side: key === "b" ? "BUY" : "SELL", ...(stock ? { symbol: stock.symbol, price: stock.price } : {}) });
+      } else if (event.key === "?") setHelpOpen((v) => !v);
+      else if (event.key === "/") { event.preventDefault(); setCommandOpen(true); }
+      else if (go[event.key]) {
+        const section = go[event.key];
+        if (section === "dashboard") void navigate({ to: "/app/dashboard" });
+        else void navigate({ to: "/app/$section", params: { section: section ?? "markets" } });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -112,6 +139,15 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   return (
     <TradingDeskContext.Provider value={{ openTicket, openCommand: () => setCommandOpen(true) }}>
       {children}
+
+      {helpOpen && (
+        <div className="fixed inset-0 z-[85] grid place-items-center bg-background/80 px-4 backdrop-blur-md" onMouseDown={() => setHelpOpen(false)}>
+          <section role="dialog" aria-label="Keyboard shortcuts" className="dash-rise w-full max-w-md rounded-lg border border-border-strong bg-panel p-5 shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+            <h2 className="text-lg">Keyboard shortcuts</h2>
+            <dl className="mt-4 space-y-2 text-sm">{[["B / S", "Buy / sell (current stock)"], ["⌘K or /", "Command palette"], ["1–9", "Dashboard, Markets, Portfolio, Orders, Wallet, Alerts, Screener, Options, Basket"], ["?", "Toggle this help"], ["Esc", "Close any panel"]].map(([k, v]) => <div key={k} className="flex justify-between gap-4"><dt className="shrink-0 border border-border px-2 py-0.5 font-mono text-[11px]">{k}</dt><dd className="text-right text-muted-foreground">{v}</dd></div>)}</dl>
+          </section>
+        </div>
+      )}
 
       {commandOpen && (
         <div className="fixed inset-0 z-[80] flex items-start justify-center bg-background/80 px-4 pt-[12vh] backdrop-blur-md" onMouseDown={() => setCommandOpen(false)}>

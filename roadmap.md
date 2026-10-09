@@ -6,3 +6,7 @@
 - [x] Quant AI trade review + Trading IQ on Journal
 - [x] Stock screener
 - [x] Onboarding checklist on dashboard
+- [x] Options lab (chain, Greeks, payoff, presets)
+- [x] Basket orders
+- [x] Keyboard hotkeys (B/S, 1–9, /, ?, Esc)
+- [x] Portfolio X-ray

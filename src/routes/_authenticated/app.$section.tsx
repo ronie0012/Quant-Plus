@@ -19,6 +19,7 @@ import { OrdersPage } from "@/components/app/pages/OrdersPage";
 import { WalletPage } from "@/components/app/pages/WalletPage";
 import { AlertsPage, JournalPage as JournalBase, ReplayPage, RiskPage } from "@/components/app/pages/ProductPages";
 import { ScreenerPage } from "@/components/app/pages/ScreenerPage";
+import { BasketPage, OptionsPage, XrayPage } from "@/components/app/pages/NextPages";
 import { TradeReviewPanel } from "@/components/app/TradeReviewPanel";
 function JournalPage() { return <><JournalBase /><TradeReviewPanel /></>; }
 
@@ -42,6 +43,9 @@ const pageMeta: Record<string, { title: string; description: string }> = {
   risk: { title: "Risk Centre — Quant Plus Terminal", description: "Portfolio stress testing, concentration diagnostics and trading guardrails." },
   alerts: { title: "Alerts — Quant Plus Terminal", description: "Manage explainable price and market movement alerts." },
   journal: { title: "Decision Journal — Quant Plus Terminal", description: "Record trade theses, risks, invalidation rules and outcomes." },
+  options: { title: "Options Lab — Quant Plus Terminal", description: "Simulated option chain, Greeks, strategy builder and payoff diagrams." },
+  basket: { title: "Basket Orders — Quant Plus Terminal", description: "Build and execute a basket of simulated NIFTY 50 orders in one click." },
+  xray: { title: "Portfolio X-ray — Quant Plus Terminal", description: "See which holdings drove today's portfolio move." },
   screener: { title: "Stock Screener — Quant Plus Terminal", description: "Filter NIFTY 50 stocks by momentum, RSI, volume and Quant AI conviction." },
   replay: { title: "Market Replay — Quant Plus Terminal", description: "Practice decisions with a bar-by-bar synthetic market replay." },
   watchlist: {
@@ -118,6 +122,9 @@ const pages: Record<string, () => React.JSX.Element> = {
   journal: JournalPage,
   replay: ReplayPage,
   screener: ScreenerPage,
+  options: OptionsPage,
+  basket: BasketPage,
+  xray: XrayPage,
   research: ResearchPage,
   decisions: DecisionsPage,
   history: HistoryPage,

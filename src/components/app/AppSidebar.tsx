@@ -15,7 +15,7 @@ import {
   PieChart,
   BellRing,
   BookText,
-  Rewind, Filter,
+  Rewind, Filter, Sigma, ShoppingBasket, ScanLine,
   ShieldAlert,
   Receipt,
   Settings,
@@ -48,6 +48,9 @@ const groups = [
       { label: "Journal", to: "/app/journal", icon: BookText },
       { label: "Replay", to: "/app/replay", icon: Rewind },
       { label: "Screener", to: "/app/screener", icon: Filter },
+      { label: "Options lab", to: "/app/options", icon: Sigma },
+      { label: "Basket", to: "/app/basket", icon: ShoppingBasket },
+      { label: "Portfolio X-ray", to: "/app/xray", icon: ScanLine },
     ],
   },
   {
