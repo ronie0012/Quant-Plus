@@ -139,6 +139,15 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
     <TradingDeskContext.Provider value={{ openTicket, openCommand: () => setCommandOpen(true) }}>
       {children}
 
+      {helpOpen && (
+        <div className="fixed inset-0 z-[85] grid place-items-center bg-background/80 px-4 backdrop-blur-md" onMouseDown={() => setHelpOpen(false)}>
+          <section role="dialog" aria-label="Keyboard shortcuts" className="dash-rise w-full max-w-md rounded-lg border border-border-strong bg-panel p-5 shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+            <h2 className="text-lg">Keyboard shortcuts</h2>
+            <dl className="mt-4 space-y-2 text-sm">{[["B / S", "Buy / sell (current stock)"], ["⌘K or /", "Command palette"], ["1–9", "Dashboard, Markets, Portfolio, Orders, Wallet, Alerts, Screener, Options, Basket"], ["?", "Toggle this help"], ["Esc", "Close any panel"]].map(([k, v]) => <div key={k} className="flex justify-between gap-4"><dt className="shrink-0 border border-border px-2 py-0.5 font-mono text-[11px]">{k}</dt><dd className="text-right text-muted-foreground">{v}</dd></div>)}</dl>
+          </section>
+        </div>
+      )}
+
       {commandOpen && (
         <div className="fixed inset-0 z-[80] flex items-start justify-center bg-background/80 px-4 pt-[12vh] backdrop-blur-md" onMouseDown={() => setCommandOpen(false)}>
           <section className="dash-rise w-full max-w-2xl overflow-hidden rounded-lg border border-border-strong bg-panel shadow-2xl" onMouseDown={(event) => event.stopPropagation()} aria-label="Command palette">

@@ -178,7 +178,7 @@ export function XrayPage() {
       <Card className="p-5">
         <CardHead title="Contribution to today's move" />
         {isLoading ? <p className="mt-4 text-sm text-subtle">Loading holdings…</p> : rows.length === 0 ? (
-          <div className="mt-4"><EmptyModule title="No holdings yet" body="Buy a stock to see what drives your portfolio." /><Link to="/app/markets" className="mt-3 inline-block text-sm text-primary-soft underline">Browse markets</Link></div>
+          <div className="mt-4"><EmptyModule title="No holdings yet" body="Buy a stock to see what drives your portfolio." /><Link to="/app/$section" params={{ section: "markets" }} className="mt-3 inline-block text-sm text-primary-soft underline">Browse markets</Link></div>
         ) : (<>
           {top && <p className="mt-3 text-sm text-muted-foreground"><span className="text-foreground">{top.h.symbol}</span> was the biggest driver, contributing {formatINR(top.today)} ({move ? Math.round((top.today / move) * 100) : 0}% of the day's move).</p>}
           <ul className="mt-5 space-y-3">{rows.map((r) => (
