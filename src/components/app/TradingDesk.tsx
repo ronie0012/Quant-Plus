@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -104,7 +105,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
       const key = event.key.toLowerCase();
       const stockMatch = window.location.pathname.match(/\/app\/stocks\/([^/]+)/);
       if (key === "b" || key === "s") {
-        const sym = stockMatch ? decodeURIComponent(stockMatch[1]) : undefined;
+        const sym = stockMatch ? decodeURIComponent(stockMatch[1] ?? "") : undefined;
         const stock = sym ? stockBySymbol(sym) : undefined;
         openRef.current({ side: key === "b" ? "BUY" : "SELL", ...(stock ? { symbol: stock.symbol, price: stock.price } : {}) });
       } else if (event.key === "?") setHelpOpen((v) => !v);
@@ -112,7 +113,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
       else if (go[event.key]) {
         const section = go[event.key];
         if (section === "dashboard") void navigate({ to: "/app/dashboard" });
-        else void navigate({ to: "/app/$section", params: { section } });
+        else void navigate({ to: "/app/$section", params: { section: section ?? "markets" } });
       }
     };
     window.addEventListener("keydown", onKey);
