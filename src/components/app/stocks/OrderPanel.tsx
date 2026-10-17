@@ -23,6 +23,8 @@ import {
 } from "@/hooks/use-orders";
 import type { Nifty50Stock } from "@/data/nifty50";
 import { cn } from "@/lib/utils";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useSession } from "@/hooks/use-session";
 
 const orderTypes: OrderType[] = ["MARKET", "LIMIT", "STOP"];
 
@@ -51,13 +53,16 @@ export function OrderPanel({
   const [planId, setPlanId] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
   const [whyDifferent, setWhyDifferent] = useState("");
+  const online = useOnlineStatus();
+  const { session } = useSession();
   // One intent per distinct ticket: a retry after a lost response replays, never duplicates.
   const intent = useRef<{ key: string; id: string } | null>(null);
   const { data: limits } = useRiskLimits();
   const { data: preferences } = useTradingPreferences();
   // Closed-session practice: explicit, market-only, settled in the separate practice book.
   const [practice, setPractice] = useState(false);
-  const practising = practice && marketClosed;
+  const practiceEnabled = session?.mode === "local";
+  const practising = practiceEnabled && practice && marketClosed;
   const activeQuoteError = practising ? practiceQuoteError : quoteError;
   // Apply the saved ticket defaults once they load, unless the user already changed them.
   const touched = useRef(false);
@@ -115,11 +120,13 @@ export function OrderPanel({
   const needsWhy = side === "BUY" && (guard.protection?.prompts.length ?? 0) > 0;
   const gateMessage = guard.blocks.length
     ? guard.blocks[0]
-    : warnings.length && !acknowledged
-      ? "Read the risk warnings and confirm you understand them."
-      : needsWhy && whyDifferent.trim().length < 15
-        ? "Explain why this trade is different (at least 15 characters)."
-        : null;
+    : !online
+      ? "Offline mode is read-only. Reconnect before placing or practising a paper order."
+      : warnings.length && !acknowledged
+        ? "Read the risk warnings and confirm you understand them."
+        : needsWhy && whyDifferent.trim().length < 15
+          ? "Explain why this trade is different (at least 15 characters)."
+          : null;
 
   async function submit() {
     setPlaced(null);
@@ -234,9 +241,9 @@ export function OrderPanel({
             ))}
           </div>
 
-          <p className="mt-3 text-[11px] text-warning">
-            Stops and targets are checked only while this terminal is open and connected. Closing
-            the tab stops protection; unattended server monitoring is not available yet.
+          <p className="mt-3 text-[11px] text-primary-soft">
+            Paper protections and alerts are evaluated by the server-side worker. They continue
+            after this tab closes; the terminal only displays the resulting event.
           </p>
           <p className="mt-6 font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
             Order type
@@ -520,21 +527,23 @@ export function OrderPanel({
               <p className="text-warning">
                 Market closed. Ordinary paper fills require an open exchange session.
               </p>
-              <label className="flex cursor-pointer items-start gap-2 text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={practice}
-                  onChange={(event) => {
-                    setPractice(event.target.checked);
-                    if (event.target.checked) setOrderType("MARKET");
-                  }}
-                />
-                <span>
-                  Practise at the last-session price. Settles in the separate practice account
-                  (Wallet → Practice account), never in your main paper book.
-                </span>
-              </label>
+              {practiceEnabled && (
+                <label className="flex cursor-pointer items-start gap-2 text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={practice}
+                    onChange={(event) => {
+                      setPractice(event.target.checked);
+                      if (event.target.checked) setOrderType("MARKET");
+                    }}
+                  />
+                  <span>
+                    Practise at the last-session price. Settles in the separate practice account
+                    (Wallet → Practice account), never in your main paper book.
+                  </span>
+                </label>
+              )}
             </div>
           )}
           {activeQuoteError && (
@@ -550,6 +559,7 @@ export function OrderPanel({
           <Button
             onClick={() => void submit()}
             disabled={
+              !online ||
               place.isPending ||
               !!activeQuoteError ||
               !validQuantity ||
@@ -565,8 +575,8 @@ export function OrderPanel({
             {confirming
               ? `Confirm ${side.toLowerCase()} · ${formatINR(estimate)}`
               : side === "BUY"
-                ? "Place buy order"
-                : "Place sell order"}
+                ? "Paper trade · buy"
+                : "Paper trade · sell"}
           </Button>
         </div>
       </Card>

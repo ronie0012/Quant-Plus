@@ -1,13 +1,56 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Command, Menu, Search } from "lucide-react";
+import { Bell, Command, Crosshair, Menu, Search, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTradingDesk } from "@/components/app/trading-desk-context";
 import { usePriceAlerts } from "@/hooks/use-trading-product";
+import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
 import { regularNseSession } from "@/lib/market-session";
-import { ModeToggles } from "@/components/app/ShellExtras";
-import { WORKSPACE_ROUTES } from "@/components/app/workspace-routes";
+import { workspaceLocationForPathname } from "@/components/app/workspace-routes";
+
+/** The shell keeps the review-mode control, but gives it a distinct action label. */
+function TopbarModeToggles() {
+  const { workspace, save } = useWorkspacePrefs();
+  const toggles = [
+    {
+      key: "focus_mode" as const,
+      label: "Focus",
+      icon: Crosshair,
+      on: workspace.focus_mode,
+      title: "Focus mode hides non-essential panels (F)",
+    },
+    {
+      key: "review_mode" as const,
+      label: "Plan gate",
+      icon: ShieldCheck,
+      on: workspace.review_mode,
+      title: "Plan gate blocks new entries until a decision plan is complete (V)",
+    },
+  ];
+
+  return (
+    <span className="hidden items-center gap-1 md:flex">
+      {toggles.map(({ key, label, icon: Icon, on, title }) => (
+        <button
+          key={key}
+          type="button"
+          title={title}
+          aria-pressed={on}
+          onClick={() => save.mutate({ [key]: !on })}
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors",
+            on
+              ? "border-primary/60 bg-primary/10 text-primary-soft"
+              : "border-border text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" aria-hidden="true" /> {label}
+        </button>
+      ))}
+    </span>
+  );
+}
 
 export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -23,12 +66,7 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
     return () => clearInterval(id);
   }, []);
 
-  const slug = pathname.split("/")[2] ?? "dashboard";
-  const section =
-    slug === "stocks"
-      ? `Stock · ${decodeURIComponent(pathname.split("/")[3] ?? "")}`
-      : (WORKSPACE_ROUTES.find((route) => route.section === slug)?.label ??
-        slug.replace(/-/g, " "));
+  const location = workspaceLocationForPathname(pathname);
   const open = now ? regularNseSession(now) : false;
 
   return (
@@ -43,11 +81,15 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
       </button>
 
       <div className="hidden min-w-0 items-center gap-2 text-[13px] sm:flex">
-        <span className="text-subtle">Terminal</span>
-        <span aria-hidden="true" className="text-subtle">
-          /
-        </span>
-        <span className="truncate font-medium text-foreground">{section}</span>
+        <span className="truncate font-medium text-foreground">{location.area}</span>
+        {location.label !== location.area && (
+          <>
+            <span aria-hidden="true" className="text-subtle">
+              /
+            </span>
+            <span className="truncate text-muted-foreground">{location.label}</span>
+          </>
+        )}
       </div>
 
       <button
@@ -78,7 +120,7 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
           />
           {open ? "NSE open" : "NSE closed"}
         </span>
-        <ModeToggles />
+        <TopbarModeToggles />
         <button
           type="button"
           aria-label={`Notifications — ${triggered} triggered alerts`}
@@ -96,7 +138,7 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
           onClick={() => openTicket()}
           className="hidden h-8 rounded-md px-4 text-[13px] font-semibold sm:inline-flex"
         >
-          Trade
+          Paper trade
         </Button>
       </div>
     </header>

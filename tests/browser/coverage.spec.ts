@@ -25,6 +25,8 @@ const SECTIONS = [
   "settings",
   "data-sources",
   "help",
+  "more",
+  "review",
 ];
 const ROUTES = [
   "/",
@@ -137,7 +139,7 @@ test("unavailable providers produce honest states, not invented prices", async (
   const errors = await watchErrors(page);
   await page.goto("/app/stocks/RELIANCE");
   // With the market-data service unreachable no price can be shown or traded.
-  await expect(page.getByRole("button", { name: /Place buy order/ })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Paper trade · buy/ })).toBeDisabled();
   await expect(
     page
       .getByRole("status")
@@ -145,6 +147,27 @@ test("unavailable providers produce honest states, not invented prices", async (
       .first(),
   ).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("primary navigation exposes the five-area information architecture", async ({ page }) => {
+  await page.goto("/app/dashboard");
+  const nav = page.getByRole("navigation", { name: "Primary areas" });
+  const primaryLinks = nav.locator('ul[aria-label="Primary areas"] a');
+  await expect(primaryLinks).toHaveCount(5);
+  await expect(primaryLinks.allTextContents()).resolves.toEqual([
+    "Home",
+    "Discover",
+    "Portfolio",
+    "Review",
+    "More",
+  ]);
+  await expect(nav.getByText("Options", { exact: true })).toHaveCount(0);
+  await page.goto("/app/review");
+  await expect(
+    page.getByRole("heading", { name: "Turn outcomes into better decisions." }),
+  ).toBeVisible();
+  await page.goto("/app/more");
+  await expect(page.getByRole("heading", { name: "Advanced workspace tools" })).toBeVisible();
 });
 
 test("paper API refuses execution without an eligible quote and keeps the book reconciled", async ({

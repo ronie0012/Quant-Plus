@@ -26,6 +26,7 @@ export type CompilerInput = {
   limit_price: number | null;
   quote: {
     price: number;
+    as_of?: string | null;
     bid: number | null;
     ask: number | null;
     bid_size: number | null;
@@ -73,6 +74,8 @@ export type Violation = {
 
 export type RiskPreview = {
   side: "BUY" | "SELL";
+  /** Provider observation used to compile this preview; never the browser clock. */
+  observed_at: string | null;
   reference_price: number;
   fill_range: { best: number; worst: number; basis: string };
   turnover: number;
@@ -398,6 +401,7 @@ export function compileRisk(input: CompilerInput): RiskPreview {
 
   return {
     side: input.side,
+    observed_at: input.at || null,
     reference_price: round(reference, 2),
     fill_range: fillRange,
     turnover: round(turnover, 2),

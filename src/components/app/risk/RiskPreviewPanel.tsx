@@ -35,7 +35,7 @@ export function RiskPreviewPanel({
     );
   const observed = {
     provider: "Live quote + 1Y provider history",
-    as_of: new Date().toISOString(),
+    as_of: preview.observed_at,
   };
   const rows: {
     label: string;

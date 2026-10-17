@@ -142,9 +142,9 @@ export function FlightSimulatorPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
-        eyebrow="Market flight simulator"
-        title={MODES.find((m) => m.id === mode)!.question}
-        body="Replay the whole information environment: provider bars at daily or intraday resolution, news released only at its original time, gaps and halts, spread and liquidity, order latency and partial fills. Future information is hidden by construction. The replay wallet and risk profile are separate from your paper book."
+        eyebrow="Replay"
+        title="Replay"
+        body={`${MODES.find((m) => m.id === mode)!.question} Replay the whole information environment: provider bars at daily or intraday resolution, news released only at its original time, gaps and halts, spread and liquidity, order latency and partial fills. Future information is hidden by construction. The replay wallet and risk profile are separate from your paper book.`}
         status="Separate replay wallet"
       >
         <MetricStrip

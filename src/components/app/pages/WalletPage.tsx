@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-wallet";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
 
 const presets = [100_000, 1_000_000, 5_000_000, 10_000_000];
 
@@ -36,6 +37,7 @@ const PAGE_SIZE = 20;
 
 /** Wallet: simulated cash balance, funding controls and the full cash ledger. */
 export function WalletPage() {
+  const { session } = useSession();
   const { data: account, isLoading, isError, refetch } = useAccount();
   const { data: holdings } = useMarkedHoldings();
   const [kind, setKind] = useState<(typeof ledgerKinds)[number]>("ALL");
@@ -344,7 +346,7 @@ export function WalletPage() {
             </div>
           </Card>
 
-          <PracticeAccountCard />
+          {session?.mode === "local" && <PracticeAccountCard />}
 
           <Card delay={260}>
             <CardHead title="Capital usage" meta="Cash versus deployed capital" />

@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/app/cards";
 import { EmptyModule, PageIntro } from "@/components/app/pages/workspace";
 import {
@@ -32,10 +34,17 @@ import { FlightSimulatorPage } from "@/components/app/pages/FlightSimulatorPage"
 import { TrustControlRoom } from "@/components/app/pages/TrustControlRoom";
 import { ResearchNetworkPage } from "@/components/app/pages/ResearchNetworkPage";
 import { CapabilitiesPage } from "@/components/app/pages/CapabilitiesPage";
+import { ReviewHub } from "@/components/app/pages/ReviewHub";
+import {
+  SECONDARY_WORKSPACE_ROUTES,
+  WORKSPACE_AREAS,
+  resolveWorkspaceRoute,
+} from "@/components/app/workspace-routes";
 
 function JournalPage() {
   return (
     <>
+      <ReviewHub />
       <DecisionLifecyclePage />
       <TradeReviewPanel />
     </>
@@ -60,9 +69,59 @@ function TrustPage() {
   );
 }
 
+function MorePage() {
+  const groups = WORKSPACE_AREAS.filter((area) => area !== "Home").map((area) => ({
+    area,
+    routes: SECONDARY_WORKSPACE_ROUTES.filter((route) => route.area === area),
+  }));
+
+  return (
+    <div className="flex flex-col gap-5">
+      <PageIntro
+        eyebrow="More"
+        title="Advanced workspace tools"
+        body="Keep the primary loop focused while every deeper route remains one click away."
+      />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {groups.map((group) => (
+          <Card key={group.area} className="h-full">
+            <div className="border-b border-border px-5 py-4">
+              <h2 className="text-[14px] font-semibold">{group.area}</h2>
+              <p className="mt-1 text-[12px] text-subtle">Secondary routes</p>
+            </div>
+            <ul className="divide-y divide-border">
+              {group.routes.map((route) => (
+                <li key={route.section}>
+                  <Link
+                    to="/app/$section"
+                    params={{ section: route.section }}
+                    className="group flex items-center gap-3 px-5 py-3 text-[13px] transition-colors hover:bg-panel-elevated"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-foreground">{route.label}</span>
+                      {route.available === false && (
+                        <span className="mt-0.5 block text-[11px] text-warning">Unavailable</span>
+                      )}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary-soft" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const pageMeta: Record<string, { title: string; description: string }> = {
+  dashboard: {
+    title: "Home — Quant Plus Terminal",
+    description: "Money, market context and next actions in one workspace.",
+  },
   markets: {
-    title: "Markets — Quant Plus Terminal",
+    title: "Discover — Quant Plus Terminal",
     description: "Interactive market structure, price action and cross-market context.",
   },
   portfolio: {
@@ -78,7 +137,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Simulated cash balance, funding controls and a full cash ledger.",
   },
   risk: {
-    title: "Risk Centre — Quant Plus Terminal",
+    title: "Risk — Quant Plus Terminal",
     description: "Portfolio stress testing, concentration diagnostics and trading guardrails.",
   },
   alerts: {
@@ -86,12 +145,12 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Manage explainable price and market movement alerts.",
   },
   journal: {
-    title: "Decision Plans — Quant Plus Terminal",
+    title: "Review — Quant Plus Terminal",
     description:
       "One connected decision lifecycle: snapshot, evidence, thesis, risk plan, order and outcome attribution.",
   },
   behavior: {
-    title: "Behavioural Risk — Quant Plus Terminal",
+    title: "Trading Habits — Quant Plus Terminal",
     description:
       "Consent-based analysis of your own trading patterns, with configurable protections.",
   },
@@ -100,7 +159,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Calibrated, matured-forecast track records instead of a single confidence score.",
   },
   regime: {
-    title: "Market Regime — Quant Plus Terminal",
+    title: "Market Context — Quant Plus Terminal",
     description: "Observable market features and historical analogs shown as distributions.",
   },
   "strategy-lab": {
@@ -108,19 +167,19 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Compile a plain-language hypothesis and run a falsification pipeline.",
   },
   events: {
-    title: "Event Radar — Quant Plus Terminal",
+    title: "Events — Quant Plus Terminal",
     description: "Corporate, macro, expiry and settlement events with source and knowability.",
   },
   "research-network": {
-    title: "Research Network — Quant Plus Terminal",
+    title: "Research Review — Quant Plus Terminal",
     description: "Versioned memos, review workflow and hash-verified research bundles.",
   },
   capabilities: {
-    title: "Market Roadmap — Quant Plus Terminal",
+    title: "Roadmap — Quant Plus Terminal",
     description: "Capability gates for broader markets, in order.",
   },
   options: {
-    title: "Options Lab — Quant Plus Terminal",
+    title: "Options — Quant Plus Terminal",
     description:
       "Unavailable until observed option chains and verified contract rules are connected.",
   },
@@ -129,7 +188,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Build and execute a basket of simulated NIFTY 50 orders in one click.",
   },
   xray: {
-    title: "Portfolio X-ray — Quant Plus Terminal",
+    title: "Exposure — Quant Plus Terminal",
     description:
       "What moved today, and what can hurt the portfolio next: exposures, stress and a digital twin.",
   },
@@ -138,7 +197,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Filter NIFTY 50 stocks by measured momentum, RSI, volume and agent opinion.",
   },
   replay: {
-    title: "Flight Simulator — Quant Plus Terminal",
+    title: "Replay — Quant Plus Terminal",
     description:
       "Replay the information environment with no future information, partial fills and a separate replay wallet.",
   },
@@ -151,7 +210,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Evidence-led market briefs across macro, risk, sectors and AI analysis.",
   },
   decisions: {
-    title: "Decisions — Quant Plus Terminal",
+    title: "Verdict Details — Quant Plus Terminal",
     description: "Review committee verdicts, opinion strength, risks and supporting rationale.",
   },
   history: {
@@ -159,15 +218,15 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "A private chronological record of completed analyses and decisions.",
   },
   "quant-ai": {
-    title: "Quant AI — Quant Plus Terminal",
+    title: "AI Assistant — Quant Plus Terminal",
     description: "A grounded market copilot for market structure and portfolio risk questions.",
   },
   committee: {
-    title: "Committee — Quant Plus Terminal",
+    title: "AI Debate — Quant Plus Terminal",
     description: "Inspect multi-agent investment reasoning, consensus and disagreement.",
   },
   "agent-activity": {
-    title: "Agent Activity — Quant Plus Terminal",
+    title: "Research Trace — Quant Plus Terminal",
     description: "Observe analytical agent status, processing traces and recent tasks.",
   },
   settings: {
@@ -175,18 +234,23 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Manage terminal display, notification and risk-language preferences.",
   },
   "data-sources": {
-    title: "Trust Control Room — Quant Plus Terminal",
+    title: "Data Status — Quant Plus Terminal",
     description: "Live data quality, a decomposable trust score and every degraded capability.",
   },
   help: {
     title: "Help — Quant Plus Terminal",
     description: "Guidance for Quant Plus workflows, data boundaries and common questions.",
   },
+  more: {
+    title: "More — Quant Plus Terminal",
+    description: "Advanced Quant Plus tools, settings, data status and help.",
+  },
 };
 
 export const Route = createFileRoute("/_authenticated/app/$section")({
   head: ({ params }) => {
-    const meta = pageMeta[params.section] ?? {
+    const canonical = resolveWorkspaceRoute(params.section)?.section ?? params.section;
+    const meta = pageMeta[canonical] ?? {
       title: "Workspace — Quant Plus Terminal",
       description: "A private Quant Plus terminal workspace.",
     };
@@ -235,11 +299,28 @@ const pages: Record<string, () => React.JSX.Element> = {
   "research-network": ResearchNetworkPage,
   capabilities: CapabilitiesPage,
   help: HelpPage,
+  more: MorePage,
 };
 
 function SectionPage() {
   const { section } = Route.useParams();
-  const Page = pages[section];
+  const navigate = useNavigate();
+  const route = resolveWorkspaceRoute(section);
+  const canonical = route?.section ?? section;
+
+  // The dashboard has its own file route. Aliases still work, but land on the
+  // canonical Home URL so browser history and metadata stay consistent.
+  useEffect(() => {
+    if (canonical === "dashboard" && section !== canonical) {
+      void navigate({ to: "/app/dashboard", replace: true });
+    }
+  }, [canonical, navigate, section]);
+
+  if (canonical === "dashboard" && section !== canonical) {
+    return <p className="text-sm text-muted-foreground">Opening Home…</p>;
+  }
+
+  const Page = pages[canonical];
   if (Page) return <Page />;
 
   return (

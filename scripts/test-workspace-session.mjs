@@ -37,6 +37,7 @@ const session = (name, seconds = 120) => ({
 let current = session("Owner");
 let sessions = 0;
 let refreshes = 0;
+let protectedCalls = 0;
 globalThis.fetch = async (path, options = {}) => {
   if (path === "/api/auth/session") {
     sessions++;
@@ -56,6 +57,12 @@ globalThis.fetch = async (path, options = {}) => {
   if (path === "/api/auth/sign-out") {
     current = null;
     return Response.json({ ok: true });
+  }
+  if (path === "/api/local") {
+    protectedCalls++;
+    return protectedCalls === 1
+      ? new Response("expired", { status: 401 })
+      : Response.json({ ok: true });
   }
   throw new Error(`Unexpected request ${path}`);
 };
@@ -104,11 +111,14 @@ try {
     "Third",
     "another tab's account change clears the old cached owner",
   );
+  const retried = await module.authenticatedFetch("/api/local", { method: "POST" }, "Sign in");
+  assert.equal(retried.status, 200, "a revoked access token is refreshed and retried once");
+  assert.equal(protectedCalls, 2);
   await module.signOutWorkspace();
   assert.equal(await module.getWorkspaceSession(), null);
   assert.equal(await module.signUpHosted("New@example.com", "password", "New"), null);
   console.log(
-    "Workspace session checks passed: coalesced reads, caching, proactive refresh, account switches, cross-tab invalidation, logout and verification-required signup.",
+    "Workspace session checks passed: coalesced reads, caching, proactive refresh, account switches, cross-tab invalidation, refresh-and-retry, logout and verification-required signup.",
   );
 } finally {
   globalThis.fetch = previous.fetch;

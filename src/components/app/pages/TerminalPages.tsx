@@ -33,6 +33,10 @@ import { StockBoard } from "@/components/app/stocks/StockBoard";
 import { cn } from "@/lib/utils";
 import { useStockMetrics, useStockQuotes } from "@/hooks/use-agent-stock";
 import { useMarketIntelligence } from "@/hooks/use-intelligence";
+import { useCalendar } from "@/hooks/use-quant-data";
+import { useJournal } from "@/hooks/use-trading-product";
+import { useOrders } from "@/hooks/use-orders";
+import { PortfolioIntelligence } from "@/components/app/pages/PortfolioIntelligence";
 
 const marketRanges = ["1D", "1W", "1M", "3M", "1Y"] as const;
 
@@ -296,6 +300,9 @@ export function MarketsPage() {
 const portfolioViews = ["Holdings", "Allocation", "Contribution"] as const;
 export function PortfolioPage() {
   const { data, isLoading, isError, refetch } = useMarkedHoldings();
+  const calendar = useCalendar();
+  const journal = useJournal();
+  const orders = useOrders();
   const [view, setView] = useState<(typeof portfolioViews)[number]>("Holdings");
   if (isLoading)
     return (
@@ -334,6 +341,30 @@ export function PortfolioPage() {
       return a;
     }, {}),
   ).sort((a, b) => b[1] - a[1]);
+  const degraded = rows.filter((row) => row.quote_missing || row.quote_stale || row.quote_delayed);
+  const coveredSymbols = new Set(rows.map((row) => row.symbol));
+  const upcoming = (calendar.data?.events ?? [])
+    .filter((event) => {
+      const symbol = event.symbol ?? event.event.split(":")[0]?.trim();
+      const at = Date.parse(event.event_time);
+      return Boolean(
+        symbol &&
+        coveredSymbols.has(symbol) &&
+        Number.isFinite(at) &&
+        at >= Date.now() - 86_400_000 &&
+        at <= Date.now() + 30 * 86_400_000,
+      );
+    })
+    .slice(0, 6);
+  const protectedSymbols = new Set(
+    (orders.data ?? [])
+      .filter(
+        (order) =>
+          order.status === "OPEN" && (order.stop_loss != null || order.target_price != null),
+      )
+      .map((order) => order.symbol),
+  );
+  const unprotected = rows.filter((row) => !protectedSymbols.has(row.symbol));
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
@@ -370,7 +401,7 @@ export function PortfolioPage() {
         <Card glow>
           <CardHead
             title="Portfolio ledger"
-            meta={`${rows.length} positions · live marks · paper account`}
+            meta={`${rows.length} positions · ${rows.length - degraded.length}/${rows.length} fresh marks · paper account`}
             action={
               <Segmented
                 items={portfolioViews}
@@ -399,6 +430,25 @@ export function PortfolioPage() {
                       <p className="font-mono text-[11px] tracking-[0.04em]">{r.symbol}</p>
                       <p className="mt-1 text-[11px] text-subtle">
                         {r.quantity} shares · {r.company}
+                      </p>
+                      <p
+                        className={cn(
+                          "mt-1 text-[10px]",
+                          r.quote_missing || r.quote_stale || r.quote_delayed
+                            ? "text-warning"
+                            : "text-subtle",
+                        )}
+                      >
+                        {r.quote_missing
+                          ? "No fresh provider mark"
+                          : r.quote_stale
+                            ? "Stale carried-forward mark"
+                            : r.quote_delayed
+                              ? "Delayed provider mark"
+                              : `Fresh ${r.quote_source ?? "provider"} mark`}
+                        {r.quote_as_of
+                          ? ` · ${new Date(r.quote_as_of).toLocaleString("en-IN")}`
+                          : ""}
                       </p>
                     </div>
                     <span className="text-right font-mono text-[11px]">
@@ -532,6 +582,89 @@ export function PortfolioPage() {
           </Card>
         </div>
       </div>
+      {degraded.length > 0 && (
+        <Card className="border-warning/40 bg-warning/5">
+          <CardHead
+            title="Data quality needs attention"
+            meta="Portfolio totals include the last stored mark where a fresh quote is unavailable"
+          />
+          <ul className="divide-y divide-border">
+            {degraded.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-[12px]">
+                <span className="font-mono">{row.symbol}</span>
+                <span className="min-w-0 flex-1 text-subtle">
+                  {row.quote_missing
+                    ? "No current provider mark; valuation is unavailable for a fresh decision."
+                    : row.quote_stale
+                      ? "Carried-forward mark is stale."
+                      : "Provider mark is delayed."}
+                </span>
+                <Link
+                  to="/app/stocks/$symbol"
+                  params={{ symbol: row.symbol }}
+                  className="text-primary-soft hover:text-foreground"
+                >
+                  Inspect data
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      <Card>
+        <CardHead title="Portfolio attention" meta="Events, protection and decision continuity" />
+        <div className="grid gap-px bg-border sm:grid-cols-3">
+          <div className="bg-panel p-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-subtle">
+              Upcoming holding events
+            </p>
+            <p className="mt-2 font-mono text-xl">{upcoming.length}</p>
+            <div className="mt-2 space-y-1 text-[11px] text-subtle">
+              {upcoming.slice(0, 3).map((event) => (
+                <p key={event.id}>
+                  {event.symbol ?? event.event.split(":")[0]} · {event.event}
+                </p>
+              ))}
+              {!upcoming.length && <p>No connected events in the next 30 days.</p>}
+            </div>
+          </div>
+          <div className="bg-panel p-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-subtle">
+              Holdings without protection
+            </p>
+            <p className="mt-2 font-mono text-xl">{unprotected.length}</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-subtle">
+              Protection is optional, but every unprotected holding should be an explicit decision.
+            </p>
+            <Link
+              to="/app/$section"
+              params={{ section: "orders" }}
+              className="mt-2 inline-block text-[11px] text-primary-soft"
+            >
+              Inspect orders
+            </Link>
+          </div>
+          <div className="bg-panel p-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-subtle">
+              Open decision plans
+            </p>
+            <p className="mt-2 font-mono text-xl">
+              {(journal.data ?? []).filter((entry) => entry.outcome === "OPEN").length}
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-subtle">
+              Follow each holding back to its evidence, plan, order and review record.
+            </p>
+            <Link
+              to="/app/$section"
+              params={{ section: "journal" }}
+              className="mt-2 inline-block text-[11px] text-primary-soft"
+            >
+              Open Review
+            </Link>
+          </div>
+        </div>
+      </Card>
+      <PortfolioIntelligence />
     </div>
   );
 }

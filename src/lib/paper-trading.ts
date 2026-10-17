@@ -1,13 +1,19 @@
 import { agentFetch, type MarketQuote } from "@/lib/agent-api";
-import { workspaceAuthorization } from "./workspace-session";
+import { authenticatedFetch } from "./workspace-session";
 import { executionQuoteError, type ExecutionMode } from "./quote-eligibility";
 
 /** Authenticated server boundary for paper-order mutations. */
 export async function paperOrderFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
+  if (method !== "GET" && typeof navigator !== "undefined" && navigator.onLine === false)
+    throw new Error("OFFLINE_READ_ONLY: reconnect before changing the paper book");
   const headers = new Headers(options.headers);
-  headers.set("Authorization", await workspaceAuthorization("Sign in to access paper trading"));
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const response = await fetch(`/api/paper/${path}`, { ...options, headers });
+  const response = await authenticatedFetch(
+    `/api/paper/${path}`,
+    { ...options, headers },
+    "Sign in to access paper trading",
+  );
   if (!response.ok) {
     const raw = await response.text();
     throw new Error(raw || `Paper order request failed (${response.status})`);

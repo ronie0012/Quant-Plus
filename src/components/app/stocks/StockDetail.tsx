@@ -21,6 +21,7 @@ import {
 import { AgentPrediction } from "@/components/app/stocks/AgentPrediction";
 import { StockMarketData } from "@/components/app/stocks/StockMarketData";
 import { StockNewsIntelligence } from "@/components/app/stocks/StockNewsIntelligence";
+import { DecisionCanvas } from "@/components/app/stocks/DecisionCanvas";
 import { paperQuoteError } from "@/lib/paper-trading";
 
 const ranges = ["1D", "1W", "1M", "6M", "1Y"] as const;
@@ -249,6 +250,15 @@ export function StockDetail({
           </p>
         )}
       </section>
+
+      <DecisionCanvas
+        symbol={reference.symbol}
+        quote={
+          quote?.price != null
+            ? { price: quote.price, source: quote.source ?? null, as_of: quote.as_of ?? null }
+            : null
+        }
+      />
 
       <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(320px,.8fr)]">
         <div className="flex min-w-0 flex-col gap-5">

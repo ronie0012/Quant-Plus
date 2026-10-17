@@ -22,6 +22,16 @@ const load = () => ({
   worker: localTestModule("@/lib/paper-worker.server"),
 });
 let { store, engine, worker } = load();
+assert.equal(
+  worker.shouldRunLocalWorker({ QUANT_PLUS_BOOK_PROVIDER: "insforge" }),
+  false,
+  "hosted mode must not mutate the preserved local book",
+);
+assert.equal(
+  worker.shouldRunLocalWorker({ QUANT_PLUS_BOOK_PROVIDER: "local" }),
+  true,
+  "local mode keeps the local worker active",
+);
 let index = 0;
 const fresh = (amount = 100000, maxPositionPct = 100) => {
   process.env.LOCAL_DATA_FILE = join(directory, `${index++}.json`);

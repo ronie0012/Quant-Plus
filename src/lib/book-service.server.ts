@@ -26,7 +26,10 @@ export type BookService = {
 export async function resolveBookService(request: Request): Promise<BookService> {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) throw new BookAccessError("Unauthorized", 401);
+  const hosted = await import("./insforge-book.server");
   if (token === LOCAL_TOKEN) {
+    if (hosted.insforgeProviderEnabled())
+      throw new BookAccessError("Hosted mode requires an InsForge account session.", 503);
     if (!isLocalRequest(request))
       throw new BookAccessError("Local workspace requires localhost", 403);
     const local = await import("./local-store.server");
@@ -40,8 +43,12 @@ export async function resolveBookService(request: Request): Promise<BookService>
       preflight: async (legs) => basket.preflightBasket(legs),
     };
   }
-  const hosted = await import("./insforge-book.server");
   const config = hosted.insforgeBookConfig();
+  if (!config && hosted.insforgeProviderEnabled())
+    throw new BookAccessError(
+      "Hosted paper accounts are misconfigured. Contact the workspace administrator.",
+      503,
+    );
   if (!config)
     throw new BookAccessError(
       "Hosted paper accounts are not enabled yet. Use the local workspace on localhost.",

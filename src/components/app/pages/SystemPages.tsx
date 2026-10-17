@@ -52,7 +52,7 @@ const notificationRows: Array<["orders" | "alerts", string, string]> = [
 
 /** Every control here is saved to the workspace book and read by the terminal. */
 export function SettingsPage() {
-  const { session } = useSession();
+  const { session, loading: sessionLoading } = useSession();
   const { data: stored } = useTradingPreferences();
   const save = useSaveTradingPreferences();
   const [draft, setDraft] = useState<TradingPreferences | null>(null);
@@ -71,6 +71,7 @@ export function SettingsPage() {
     }
   }
   const hosted = session?.mode === "hosted";
+  const local = !sessionLoading && session?.mode === "local";
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
@@ -110,7 +111,7 @@ export function SettingsPage() {
                 {hosted ? "Signed in" : "Loopback only"}
               </Pill>
             </div>
-            {!hosted && (
+            {local && (
               <label className="block border-t border-border px-5 py-4">
                 <span className="text-[13px]">Your name</span>
                 <input
@@ -271,7 +272,7 @@ export function SettingsPage() {
           </Card>
         </div>
       </div>
-      {!hosted && <HostedAccountSetup initialName={prefs.display_name ?? ""} />}
+      {local && <HostedAccountSetup initialName={prefs.display_name ?? ""} />}
     </div>
   );
 }

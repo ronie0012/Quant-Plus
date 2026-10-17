@@ -10,7 +10,7 @@ import { useResearchSessions } from "@/hooks/use-quant-data";
 import { agentFetch, type Prediction } from "@/lib/agent-api";
 import { paperOrderFetch } from "@/lib/paper-trading";
 import { workspaceRpc } from "@/lib/workspace-api";
-import { workspaceAuthorization } from "@/lib/workspace-session";
+import { authenticatedFetch } from "@/lib/workspace-session";
 import { median } from "@/lib/quant/stats";
 import {
   fieldCompleteness,
@@ -71,9 +71,7 @@ export function TrustControlRoom() {
     staleTime: 60_000,
     retry: false,
     queryFn: async () => {
-      const response = await fetch("/api/chat", {
-        headers: { Authorization: await workspaceAuthorization("Sign in") },
-      });
+      const response = await authenticatedFetch("/api/chat", {}, "Sign in");
       if (!response.ok) throw new Error(await response.text());
       return (await response.json()) as {
         configured: boolean;

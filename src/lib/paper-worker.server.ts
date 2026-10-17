@@ -124,6 +124,10 @@ export type BookRunner = <T>(
   write: boolean,
 ) => T | Promise<T>;
 
+export function shouldRunLocalWorker(env = process.env) {
+  return env["QUANT_PLUS_BOOK_PROVIDER"] !== "insforge";
+}
+
 export function runWorkerTick(
   owner: string,
   source: QuoteSource = (symbol) => fetchProviderQuote(symbol),
@@ -278,8 +282,31 @@ export function startPaperWorker() {
     if (handle.running) return;
     handle.running = true;
     try {
-      handle.last = await runWorkerTick(handle.owner);
-      handle.hosted = await runHostedTicks(handle.owner);
+      if (shouldRunLocalWorker()) {
+        handle.last = await runWorkerTick(handle.owner);
+        handle.hosted = null;
+      } else {
+        // Hosted mode has its own authority. Do not keep mutating the preserved
+        // local file after cutover; that would create a second live book and
+        // spend provider quota on a rollback snapshot.
+        handle.last = {
+          owner: handle.owner,
+          skipped: true,
+          reason: "HOSTED_BOOK_MODE",
+          at: new Date().toISOString(),
+          symbols: 0,
+          quotes: 0,
+          quote_errors: {},
+          fills: 0,
+          rejected: 0,
+          protections_triggered: 0,
+          protection_errors: 0,
+          alerts: 0,
+          expired: 0,
+          marks: 0,
+        };
+        handle.hosted = await runHostedTicks(handle.owner);
+      }
     } catch (error) {
       // Busy locks and transient I/O are retried on the next interval.
       handle.last = {

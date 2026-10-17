@@ -127,6 +127,11 @@
 .focus-mode .marquee-track {
   animation: none !important;
 }
+.focus-mode .dash-rise,
+.low-bandwidth .dash-rise {
+  opacity: 1 !important;
+  transform: none !important;
+}
 /* Low-bandwidth mode: no animation, blur or ambient lighting. */
 .low-bandwidth *,
 .low-bandwidth *::before,

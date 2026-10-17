@@ -1,4 +1,4 @@
-import { workspaceAuthorization } from "@/lib/workspace-session";
+import { authenticatedFetch } from "@/lib/workspace-session";
 
 export type DataQuality = "GOOD" | "PARTIAL" | "DEGRADED";
 export type Quality = { data_quality: DataQuality; confidence: number; updated_at: string };
@@ -149,11 +149,13 @@ export type SentimentSnapshot = {
 export type SentimentHistory = { range: string; interval: string; snapshots: SentimentSnapshot[] };
 
 export async function intelligenceFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const authorization = await workspaceAuthorization("Sign in to access market intelligence");
-  const response = await fetch(`/api/${path}`, {
-    headers: { Authorization: authorization },
-    ...(signal ? { signal } : {}),
-  });
+  const response = await authenticatedFetch(
+    `/api/${path}`,
+    {
+      ...(signal ? { signal } : {}),
+    },
+    "Sign in to access market intelligence",
+  );
   if (!response.ok) throw new Error(`Intelligence unavailable (${response.status}). Please retry.`);
   return response.json() as Promise<T>;
 }

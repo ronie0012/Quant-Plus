@@ -100,6 +100,25 @@ No application tables, users, migrations or deployed functions were created by t
   Any local writes after the import must be reconciled before cutover; the
   migration tool deliberately refuses to overwrite or merge an existing book.
 
+## Hosted cutover hardening (2026-10-17)
+
+- Hosted mode is now fail-closed when its browser or server credentials are only partially
+  configured; it cannot silently fall back to the loopback profile.
+- The built-server launcher forwards `INSFORGE_ANON_KEY`, and the hosted worker no longer
+  mutates the preserved local book after hosted mode is selected. Hosted-book enumeration is
+  paginated, loaded states are reconciled before use, and history-prefix changes are rejected.
+- Local-only last-session practice controls are hidden for hosted users. The public auth flow
+  persists pending email verification across reloads, preserves the provider-selected code/link
+  method, and no longer advertises an unimplemented Google sign-in button.
+- The linked project contains the explicitly selected verified migration owner and one imported,
+  reconciled hosted book. This is an operator/readback fact, not a claim that the frontend has
+  been cut over.
+
+The activation flags remain unset in the ignored local environment until the fresh live
+two-user/worker check and final hosted readback are approved. Do not enable hosted writes while
+the local book is still changing; after the first hosted write, rollback requires reconciliation
+of both histories.
+
 Provider activation requires both `QUANT_PLUS_BOOK_PROVIDER=insforge` and
 `VITE_QUANT_PLUS_AUTH=insforge`, followed by a frontend restart. Keep these flags
 unset until the remaining checks pass. Rollback before hosted writes is to leave

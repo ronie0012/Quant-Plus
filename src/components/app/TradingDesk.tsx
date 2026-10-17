@@ -21,6 +21,7 @@ import { useTradeGuard } from "@/hooks/use-trade-guard";
 import { useUniversalSearch } from "@/hooks/use-universal-search";
 import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
 import { WORKSPACE_ROUTES } from "@/components/app/workspace-routes";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 type OrderType = "MARKET" | "LIMIT" | "STOP";
 
@@ -32,6 +33,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const { data: watchlist } = useWatchlist();
   const { data: account } = useAccount();
   const [ticketError, setTicketError] = useState<string | null>(null);
+  const online = useOnlineStatus();
   const first = watchlist?.[0];
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
@@ -56,8 +58,9 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const [triggerPrice, setTriggerPrice] = useState("");
   const feed = useStockQuote(ticket?.symbol ?? "", !!ticket && !confirmed);
   const marketPrice = feed.quote?.symbol === ticket?.symbol ? (feed.quote?.price ?? 0) : 0;
-  const quoteError =
-    !feed.connected || feed.quote?.symbol !== ticket?.symbol
+  const quoteError = !online
+    ? "Offline mode is read-only. Reconnect before placing a paper order."
+    : !feed.connected || feed.quote?.symbol !== ticket?.symbol
       ? "Connecting to live market prices…"
       : paperQuoteError(feed.quote);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -581,7 +584,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                     </p>
                   )}
                   <Button
-                    disabled={place.isPending || !!quoteError || !!ticketGate}
+                    disabled={!online || place.isPending || !!quoteError || !!ticketGate}
                     onClick={() => {
                       setTicketError(null);
                       if (

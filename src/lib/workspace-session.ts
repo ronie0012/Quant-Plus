@@ -45,6 +45,11 @@ function announceSessionChange() {
   }
 }
 
+export function forgetWorkspaceSession() {
+  clearSessionCache();
+  if (typeof window !== "undefined") announceSessionChange();
+}
+
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event: StorageEvent) => {
     if (event.key !== WORKSPACE_SESSION_CHANGED) return;
@@ -55,9 +60,15 @@ if (typeof window !== "undefined") {
 
 type HostedConfig = { url: string; anonKey: string };
 
+/** Whether this frontend was explicitly built for InsForge authentication. */
+export function hostedAuthEnabled() {
+  const env = import.meta.env as Record<string, string | undefined>;
+  return env["VITE_QUANT_PLUS_AUTH"] === "insforge";
+}
+
 export function hostedAuthConfig(): HostedConfig | null {
   const env = import.meta.env as Record<string, string | undefined>;
-  if (env["VITE_QUANT_PLUS_AUTH"] !== "insforge") return null;
+  if (!hostedAuthEnabled()) return null;
   const url = env["VITE_INSFORGE_URL"];
   const anonKey = env["VITE_INSFORGE_ANON_KEY"];
   return url && anonKey ? { url, anonKey } : null;
@@ -93,7 +104,9 @@ function readHostedSession(): WorkspaceSession | null {
 }
 
 export async function getWorkspaceSession(): Promise<WorkspaceSession | null> {
-  if (!hostedAuthConfig()) return LOCAL_WORKSPACE_SESSION;
+  if (!hostedAuthEnabled()) return LOCAL_WORKSPACE_SESSION;
+  if (!hostedAuthConfig())
+    throw new Error("Hosted authentication is misconfigured; contact the workspace administrator.");
   if (typeof window === "undefined") return null;
   const cached = readHostedSession();
   if (cached) return cached;
@@ -151,8 +164,53 @@ export async function workspaceAuthorization(message = "Sign in to continue") {
   return `Bearer ${session.access_token}`;
 }
 
+/** Refresh once after a server-side 401, then let the caller retry its request. */
+export async function refreshWorkspaceSession() {
+  if (!hostedAuthEnabled()) return null;
+  clearSessionCache();
+  try {
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    if (response.status === 401 || response.status === 403) {
+      forgetWorkspaceSession();
+      return null;
+    }
+    if (!response.ok) throw new Error("Authentication service unavailable");
+    const session = await getWorkspaceSession();
+    if (!session) forgetWorkspaceSession();
+    return session;
+  } catch (error) {
+    if (error instanceof Error && error.message === "Authentication service unavailable")
+      throw error;
+    return null;
+  }
+}
+
+/** Same-origin authenticated fetch with one refresh-and-retry on a 401. */
+export async function authenticatedFetch(
+  input: RequestInfo | URL,
+  options: RequestInit = {},
+  message = "Sign in to continue",
+) {
+  async function send() {
+    const headers = new Headers(options.headers);
+    headers.set("Authorization", await workspaceAuthorization(message));
+    return fetch(input, { ...options, headers });
+  }
+  let response = await send();
+  if (response.status !== 401 || !hostedAuthEnabled()) return response;
+  if (!(await refreshWorkspaceSession())) return response;
+  response = await send();
+  if (response.status === 401) forgetWorkspaceSession();
+  return response;
+}
+
 async function authAction(action: string, body?: Record<string, string>) {
-  if (!hostedAuthConfig()) throw new Error("Hosted sign-in is not enabled in this build.");
+  if (!hostedAuthEnabled()) throw new Error("Hosted sign-in is not enabled in this build.");
+  if (!hostedAuthConfig())
+    throw new Error("Hosted authentication is misconfigured; contact the workspace administrator.");
   // A previous refresh response must finish setting its cookies before an
   // account switch can establish a different owner's cookies.
   await sessionRequest?.catch(() => null);
@@ -162,7 +220,11 @@ async function authAction(action: string, body?: Record<string, string>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body ?? {}),
   });
-  const data = (await response.json()) as { error?: string; requireEmailVerification?: boolean };
+  const data = (await response.json()) as {
+    error?: string;
+    requireEmailVerification?: boolean;
+    verifyEmailMethod?: "code" | "link";
+  };
   if (!response.ok) throw new Error(data.error || "Authentication failed");
   clearSessionCache();
   return data;
@@ -181,9 +243,21 @@ export async function signInHosted(email: string, password: string) {
 }
 
 export async function signUpHosted(email: string, password: string, name: string) {
+  const data = await signUpHostedResult(email, password, name);
+  return data?.session ?? null;
+}
+
+export async function signUpHostedResult(
+  email: string,
+  password: string,
+  name: string,
+): Promise<{ session: WorkspaceSession | null; verifyEmailMethod?: "code" | "link" }> {
   const data = await authAction("sign-up", { email, password, name });
-  if (data.requireEmailVerification) return null;
-  return signedInSession();
+  if (data.requireEmailVerification)
+    return { session: null, verifyEmailMethod: data.verifyEmailMethod ?? "code" };
+  return {
+    session: await signedInSession(),
+  };
 }
 
 export async function signOutWorkspace() {

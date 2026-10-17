@@ -3,6 +3,7 @@ import { Card, CardHead, Pill } from "@/components/app/cards";
 import { Button } from "@/components/ui/button";
 import type { useStockPrediction } from "@/hooks/use-agent-stock";
 import { formatNum } from "@/hooks/use-dashboard-data";
+import { WhyButton } from "@/components/app/evidence/WhyButton";
 
 export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useStockPrediction> }) {
   const result = analysis.data;
@@ -157,7 +158,25 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
                 <p className="mb-2 text-xs text-primary-soft">Evidence</p>
                 <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
                   {research.thesis.key_evidence.map((item, i) => (
-                    <li key={i}>{item}</li>
+                    <li key={i}>
+                      {item}{" "}
+                      <WhyButton
+                        claim={{
+                          id: `research-evidence:${research.as_of}:${i}`,
+                          label: "Research evidence",
+                          value: item,
+                          statement: item,
+                          source: { name: "Research session input" },
+                          observation: { provider: "Research session", as_of: research.as_of },
+                          calculation: {
+                            formula: "Agent-reported evidence; not independently forecasted.",
+                            inputs: [],
+                          },
+                          model_version: "research session v1",
+                          page: "stock-workspace",
+                        }}
+                      />
+                    </li>
                   ))}
                 </ul>
               </div>

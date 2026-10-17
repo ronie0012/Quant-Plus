@@ -41,7 +41,11 @@ const paper = evaluate("../src/lib/paper-trading.ts", {
     },
   },
   "./workspace-session": {
-    workspaceAuthorization: async () => "Bearer test-session-token",
+    authenticatedFetch: async (input, options = {}) => {
+      const headers = new Headers(options.headers);
+      headers.set("Authorization", "Bearer test-session-token");
+      return globalThis.fetch(input, { ...options, headers });
+    },
   },
 });
 // A fixed in-session clock: the shared policy also checks the exchange calendar.

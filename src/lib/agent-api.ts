@@ -1,4 +1,4 @@
-import { workspaceAuthorization } from "@/lib/workspace-session";
+import { authenticatedFetch } from "@/lib/workspace-session";
 
 export type AgentReport = { agent: string; summary: string; confidence: number };
 export type Prediction = {
@@ -91,13 +91,12 @@ export type MarketHistory = {
 };
 
 export async function agentFetch(path: string, options: RequestInit = {}) {
-  const authorization = await workspaceAuthorization("Sign in to access market intelligence");
   const headers = new Headers(options.headers);
-  headers.set("Authorization", authorization);
-  const response = await fetch(`/api/agent/${path}`, {
-    ...options,
-    headers,
-  });
+  const response = await authenticatedFetch(
+    `/api/agent/${path}`,
+    { ...options, headers },
+    "Sign in to access market intelligence",
+  );
   if (!response.ok) {
     const raw = await response.text();
     let detail = raw;

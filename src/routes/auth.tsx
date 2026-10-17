@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2, Lock, Mail, ShieldCheck, User } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { hostedAuthConfig, signInHosted, signUpHosted } from "@/lib/workspace-session";
+import {
+  hostedAuthConfig,
+  hostedAuthEnabled,
+  signInHosted,
+  signUpHostedResult,
+} from "@/lib/workspace-session";
 import { cn } from "@/lib/utils";
 import { EmailVerificationForm } from "@/components/app/EmailVerificationForm";
 
@@ -30,6 +35,24 @@ export const Route = createFileRoute("/auth")({
 });
 
 type Mode = "signin" | "signup";
+type VerificationMethod = "code" | "link";
+
+const PENDING_VERIFICATION_KEY = "qp-pending-auth-verification";
+
+function readPendingVerification(): { email: string; method: VerificationMethod } | null {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const pending = JSON.parse(sessionStorage.getItem(PENDING_VERIFICATION_KEY) ?? "null") as {
+      email?: unknown;
+      method?: unknown;
+    } | null;
+    return pending && typeof pending.email === "string"
+      ? { email: pending.email, method: pending.method === "link" ? "link" : "code" }
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 const HOSTED_UNAVAILABLE =
   "Hosted sign-in is not enabled in this local build. Open the local workspace instead; hosted accounts arrive with the InsForge migration.";
@@ -43,13 +66,17 @@ const proofPoints = [
 function AuthPage() {
   const navigate = useNavigate();
   const { session, loading: sessionLoading } = useSession();
+  const pendingVerification = readPendingVerification();
   const [mode, setMode] = useState<Mode>("signin");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(pendingVerification?.email ?? "");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState<null | "email" | "google">(null);
+  const [busy, setBusy] = useState<null | "email">(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmSent, setConfirmSent] = useState(false);
+  const [confirmSent, setConfirmSent] = useState(pendingVerification != null);
+  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>(
+    pendingVerification?.method ?? "code",
+  );
   const [verificationMessage, setVerificationMessage] = useState("");
 
   useEffect(() => {
@@ -60,7 +87,7 @@ function AuthPage() {
     e.preventDefault();
     setError(null);
     setBusy("email");
-    if (!hostedAuthConfig()) {
+    if (!hostedAuthEnabled()) {
       // This build serves the single local profile; hosted accounts are disabled.
       setError(HOSTED_UNAVAILABLE);
       setBusy(null);
@@ -68,9 +95,23 @@ function AuthPage() {
     }
     try {
       if (mode === "signup") {
-        const created = await signUpHosted(email, password, name || email.split("@")[0]!);
-        if (!created) setConfirmSent(true);
-        else void navigate({ to: "/app/dashboard", replace: true });
+        if (!hostedAuthConfig()) {
+          setError("Hosted authentication is misconfigured; contact the workspace administrator.");
+          return;
+        }
+        const result = await signUpHostedResult(email, password, name || email.split("@")[0]!);
+        if (!result.session) {
+          const method = result.verifyEmailMethod ?? "code";
+          setVerificationMethod(method);
+          setConfirmSent(true);
+          try {
+            sessionStorage.setItem(PENDING_VERIFICATION_KEY, JSON.stringify({ email, method }));
+          } catch {
+            /* verification remains available without persistence */
+          }
+        } else {
+          void navigate({ to: "/app/dashboard", replace: true });
+        }
       } else {
         await signInHosted(email, password);
         void navigate({ to: "/app/dashboard", replace: true });
@@ -80,12 +121,6 @@ function AuthPage() {
     } finally {
       setBusy(null);
     }
-  }
-
-  async function handleGoogle() {
-    setError(null);
-    setError(HOSTED_UNAVAILABLE);
-    setBusy(null);
   }
 
   return (
@@ -199,11 +234,22 @@ function AuthPage() {
                   setMode("signin");
                   setPassword("");
                   setVerificationMessage("Email verified. Sign in to continue.");
+                  try {
+                    sessionStorage.removeItem(PENDING_VERIFICATION_KEY);
+                  } catch {
+                    /* storage may be disabled */
+                  }
                 }}
                 onBack={() => {
                   setConfirmSent(false);
                   setMode("signin");
+                  try {
+                    sessionStorage.removeItem(PENDING_VERIFICATION_KEY);
+                  } catch {
+                    /* storage may be disabled */
+                  }
                 }}
+                method={verificationMethod}
               />
             </div>
           ) : (
@@ -270,30 +316,6 @@ function AuthPage() {
                   )}
                 </button>
               </form>
-
-              <div className="my-6 flex items-center gap-4">
-                <span className="h-px flex-1 bg-border" aria-hidden="true" />
-                <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-subtle">
-                  or
-                </span>
-                <span className="h-px flex-1 bg-border" aria-hidden="true" />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={busy !== null}
-                className="flex w-full items-center justify-center gap-3 border border-border-strong px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground transition-colors duration-500 hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
-              >
-                {busy === "google" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <GoogleMark />
-                    Continue with Google
-                  </>
-                )}
-              </button>
             </>
           )}
 
@@ -341,25 +363,5 @@ function Field({
         />
       </span>
     </label>
-  );
-}
-
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.4a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.6-5.2 3.6-8.8Z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3a7.2 7.2 0 0 1-10.7-3.8H1.3v3.1A12 12 0 0 0 12 24Z"
-      />
-      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1Z" />
-      <path
-        fill="#EA4335"
-        d="M12 4.8c1.8 0 3.4.6 4.6 1.8l3.5-3.5A12 12 0 0 0 1.3 6.6l4 3.1A7.2 7.2 0 0 1 12 4.8Z"
-      />
-    </svg>
   );
 }

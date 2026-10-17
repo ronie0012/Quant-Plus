@@ -120,10 +120,11 @@ found and fixed a real bug: the live session endpoint returns no `role`, so ever
   same CAS/append-only/reconciliation rules: verified identity, rejection of forged and non-user roles,
   two-user isolation, replay, a concurrent-commit retry that settles once, and the hosted route.
 
-Remaining for the gate: a live two-user run against the real project (requires creating two test
-accounts — not done without your approval), mapping the local profile's book to a verified InsForge
-user, the cutover decision, silent token refresh, the chat route's hosted portfolio reads (Phase 8),
-and disk-full/permission fault tests for the local store. Backout SQL:
+Remaining for the gate: a fresh live two-user/worker run against the real project (the historical
+29/29 isolation evidence remains dated 2026-10-14), the final cutover decision, silent token
+refresh, the chat route's hosted portfolio reads (Phase 8), and disk-full/permission fault tests
+for the local store. The selected verified InsForge user now owns the imported local book; the
+frontend flags remain unset until final readback approval. Backout SQL:
 `audit/implementation/insforge/rollback-20261014130103.sql`.
 
 ## Phase 4 — paper execution (core engine delivered)

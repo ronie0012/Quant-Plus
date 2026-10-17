@@ -3,16 +3,14 @@ import { Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { Card } from "@/components/app/cards";
 import { useAccount } from "@/hooks/use-dashboard-data";
-import { useOrders } from "@/hooks/use-orders";
 import { useJournal, usePriceAlerts } from "@/hooks/use-trading-product";
 import { cn } from "@/lib/utils";
 
 const KEY = "qp-onboarding-dismissed";
 
-/** First-session guide: fund wallet → first trade → first alert → first journal entry. */
+/** First-session guide: fund wallet → make a paper decision → first alert → review. */
 export function OnboardingChecklist() {
   const { data: account } = useAccount();
-  const { data: orders } = useOrders();
   const { data: alerts } = usePriceAlerts();
   const { data: journal } = useJournal();
   const [dismissed, setDismissed] = useState(true);
@@ -25,12 +23,16 @@ export function OnboardingChecklist() {
       to: "/app/wallet",
     },
     {
-      label: "Place your first trade",
-      done: (orders ?? []).some((o) => o.status === "FILLED"),
-      to: "/app/markets",
+      label: "Make a paper decision (or watch only)",
+      done: (journal ?? []).some((entry) => Boolean(entry.plan)),
+      to: "/app/journal",
     },
     { label: "Set a price alert", done: (alerts ?? []).length > 0, to: "/app/alerts" },
-    { label: "Journal your thesis", done: (journal ?? []).length > 0, to: "/app/journal" },
+    {
+      label: "Review the decision",
+      done: (journal ?? []).some((entry) => Boolean(entry.reflection)),
+      to: "/app/journal",
+    },
   ] as const;
   const count = steps.filter((s) => s.done).length;
   if (dismissed || count === steps.length || !account) return null;

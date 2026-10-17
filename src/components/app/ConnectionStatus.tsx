@@ -19,16 +19,17 @@ export function ConnectionStatus() {
     refetchInterval: 60_000,
     retry: 1,
   });
-  const ready = status.data?.authenticated;
+  const authenticated = status.data?.authenticated;
+  const ready = authenticated && status.data?.connected;
   const label = status.isPending
     ? "Checking market connection"
     : status.isError
       ? "Market service unavailable"
       : ready
-        ? status.data?.connected
-          ? "Fyers feed connected"
-          : "Fyers signed in · awaiting feed"
-        : "Fyers sign-in required · delayed fallback";
+        ? "Fyers feed connected"
+        : authenticated
+          ? "Fyers signed in · awaiting feed"
+          : "Fyers sign-in required · delayed fallback";
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-x-5 gap-y-1 rounded-md border border-border bg-panel/50 px-3.5 py-2 text-[12px]">
       <span className="flex items-center gap-2 font-medium text-primary-soft">

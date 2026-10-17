@@ -117,6 +117,7 @@ export function DecisionLifecyclePage() {
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const requested =
     typeof search["symbol"] === "string" ? String(search["symbol"]).toUpperCase() : null;
+  const requestedPlanId = typeof search["plan"] === "string" ? String(search["plan"]) : null;
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(() =>
     blankDraft(requested && stockBySymbol(requested) ? requested : "RELIANCE"),
@@ -124,9 +125,16 @@ export function DecisionLifecyclePage() {
   const [riskBudget, setRiskBudget] = useState("");
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "TRADED" | "NO TRADE" | "REVIEWED">("ALL");
   useEffect(() => {
+    if (requestedPlanId && data && !selected) {
+      const requestedEntry = data.find((entry) => entry.id === requestedPlanId);
+      if (requestedEntry) {
+        load(requestedEntry);
+        return;
+      }
+    }
     if (requested && stockBySymbol(requested) && !selected)
       setDraft((d) => ({ ...d, symbol: requested }));
-  }, [requested, selected]);
+  }, [data, requested, requestedPlanId, selected]);
 
   const active = data?.find((entry) => entry.id === selected) ?? null;
   const frozen = Boolean(active?.plan?.market_snapshot);
@@ -269,7 +277,9 @@ export function DecisionLifecyclePage() {
       .mutateAsync(entry)
       .then(() => {
         toast.success(
-          active ? "Decision plan updated" : "Decision plan saved with its market snapshot",
+          active
+            ? "Journal entry saved · decision plan updated"
+            : "Journal entry saved · decision plan saved with its market snapshot",
         );
         if (!active) reset();
       })
@@ -666,7 +676,7 @@ export function DecisionLifecyclePage() {
                 aria-label="Counter-thesis"
                 value={plan.counter_thesis}
                 onChange={(e) => setPlan({ counter_thesis: e.target.value })}
-                placeholder="The strongest argument that you are wrong"
+                placeholder="What could make the thesis wrong?"
                 className={cn(inputClass, "min-h-14")}
               />
             </section>
@@ -1052,7 +1062,7 @@ export function DecisionLifecyclePage() {
               disabled={!draft.thesis.trim() || save.isPending || problems.length > 0}
               onClick={persist}
             >
-              <Save /> {active ? "Save changes" : "Save decision plan"}
+              <Save /> {active ? "Save changes" : "Save entry / decision plan"}
             </Button>
           </div>
         </Card>

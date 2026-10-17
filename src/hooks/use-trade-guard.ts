@@ -156,6 +156,7 @@ export function useTradeGuard(ticket: TicketSpec | null) {
       limit_price: ticket.limit_price,
       quote: {
         price: quote.price,
+        as_of: quote.as_of ?? null,
         bid: quote.bid ?? null,
         ask: quote.ask ?? null,
         bid_size: quote.bid_quantity ?? null,
@@ -188,7 +189,9 @@ export function useTradeGuard(ticket: TicketSpec | null) {
       committed_risk_today: committed,
       events: [...symbolEvents, ...expiries],
       behavior_warnings: policy.consent ? protection.warnings : [],
-      at: new Date(now).toISOString(),
+      // Fees and risk horizon are anchored to the provider observation used
+      // for this preview, not to a browser render timestamp.
+      at: quote.as_of ?? new Date(now).toISOString(),
     });
     return { preview, protection };
   }, [

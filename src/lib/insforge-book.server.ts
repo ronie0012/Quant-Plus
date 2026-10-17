@@ -25,8 +25,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export type InsForgeConfig = { url: string; apiKey: string };
 type Fetch = typeof fetch;
 
+export function insforgeProviderEnabled(env = process.env) {
+  return env["QUANT_PLUS_BOOK_PROVIDER"] === "insforge";
+}
+
 export function insforgeBookConfig(env = process.env): InsForgeConfig | null {
-  if (env["QUANT_PLUS_BOOK_PROVIDER"] !== "insforge") return null;
+  if (!insforgeProviderEnabled(env)) return null;
   const url = env["INSFORGE_URL"]?.replace(/\/$/, "");
   const apiKey = env["INSFORGE_API_KEY"];
   return url && apiKey ? { url, apiKey } : null;
@@ -96,6 +100,7 @@ async function loadBook(config: InsForgeConfig, userId: string, clock: Clock, fe
   if (!row) return { version: 0, state: newBook(userId, clock) };
   if (row.state?.version !== 2 || row.state.account?.user_id !== userId)
     throw new HostedBookError("Hosted book is invalid", 500);
+  if (reconcile(row.state).length) throw new HostedBookError("Hosted book is invalid", 500);
   return { version: Number(row.version), state: row.state };
 }
 
@@ -109,6 +114,7 @@ export function bookDelta(before: BookState, after: BookState) {
   if (
     JSON.stringify(after.ledger.slice(0, before.ledger.length)) !== JSON.stringify(before.ledger) ||
     JSON.stringify(after.fills.slice(0, before.fills.length)) !== JSON.stringify(before.fills) ||
+    JSON.stringify(after.events.slice(0, before.events.length)) !== JSON.stringify(before.events) ||
     after.events.length < before.events.length
   )
     throw new HostedBookError("Book history was rewritten", 500);
@@ -288,13 +294,18 @@ export function hostedBook(config: InsForgeConfig, userId: string, fetchImpl: Fe
 
 /** Users with a hosted book, for the server worker. */
 export async function listHostedBookUsers(config: InsForgeConfig, fetchImpl: Fetch = fetch) {
-  const response = await adminFetch(
-    config,
-    "/api/database/records/paper_books?select=user_id&limit=1000",
-    { method: "GET" },
-    fetchImpl,
-  );
-  if (!response.ok) throw new HostedBookError("Hosted book list unavailable", 503);
-  const rows = (await response.json()) as { user_id: string }[];
-  return rows.map((row) => row.user_id).filter((id) => UUID.test(id));
+  const pageSize = 1000;
+  const users: string[] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const response = await adminFetch(
+      config,
+      `/api/database/records/paper_books?select=user_id&limit=${pageSize}&offset=${offset}`,
+      { method: "GET" },
+      fetchImpl,
+    );
+    if (!response.ok) throw new HostedBookError("Hosted book list unavailable", 503);
+    const rows = (await response.json()) as { user_id: string }[];
+    users.push(...rows.map((row) => row.user_id).filter((id) => UUID.test(id)));
+    if (rows.length < pageSize) return users;
+  }
 }

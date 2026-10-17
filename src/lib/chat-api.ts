@@ -1,4 +1,4 @@
-import { workspaceAuthorization } from "./workspace-session";
+import { authenticatedFetch } from "./workspace-session";
 
 export type ChatMessage = { role: "user" | "assistant"; text: string };
 export type CopilotMode =
@@ -39,21 +39,24 @@ export async function chatFetch(
   signal?: AbortSignal,
   options: { mode?: CopilotMode; context?: CopilotContext } = {},
 ) {
-  const authorization = await workspaceAuthorization("Sign in again to use Quant AI.");
   if (message.length > 4000) throw new Error("Keep your question within 4000 characters.");
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    signal: signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(100_000)])
-      : AbortSignal.timeout(100_000),
-    headers: { "Content-Type": "application/json", Authorization: authorization },
-    body: JSON.stringify({
-      message,
-      history: history.filter((item) => item.text).slice(-12),
-      mode: options.mode ?? "general",
-      ...(options.context ? { context: options.context } : {}),
-    }),
-  });
+  const response = await authenticatedFetch(
+    "/api/chat",
+    {
+      method: "POST",
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(100_000)])
+        : AbortSignal.timeout(100_000),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: history.filter((item) => item.text).slice(-12),
+        mode: options.mode ?? "general",
+        ...(options.context ? { context: options.context } : {}),
+      }),
+    },
+    "Sign in again to use Quant AI.",
+  );
   if (!response.ok || !response.body) {
     const errors: Record<number, string> = {
       401: "Your session expired. Sign in again.",

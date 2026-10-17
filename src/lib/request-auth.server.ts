@@ -17,13 +17,15 @@ export class RequestAuthError extends Error {
 export async function authenticateRequest(request: Request): Promise<RequestIdentity> {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) throw new RequestAuthError("Unauthorized", 401);
+  const { insforgeBookConfig, insforgeProviderEnabled, verifyInsForgeUser, HostedBookError } =
+    await import("./insforge-book.server");
   if (token === LOCAL_TOKEN) {
+    if (insforgeProviderEnabled())
+      throw new RequestAuthError("Hosted mode requires an InsForge account session.", 503);
     if (!isLocalRequest(request))
       throw new RequestAuthError("Local workspace requires localhost", 403);
     return { mode: "local", userId: LOCAL_USER_ID, token };
   }
-  const { insforgeBookConfig, verifyInsForgeUser, HostedBookError } =
-    await import("./insforge-book.server");
   const config = insforgeBookConfig();
   if (!config) throw new RequestAuthError("Authentication is not configured", 503);
   try {

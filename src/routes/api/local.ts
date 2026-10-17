@@ -19,6 +19,11 @@ export async function local(request: Request) {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
+    if (error instanceof Error && error.name === "HostedBookError" && "status" in error) {
+      return new Response(error.message, {
+        status: Number((error as Error & { status: number }).status),
+      });
+    }
     const message =
       error instanceof Error && !("code" in error) && !("status" in error)
         ? error.message
