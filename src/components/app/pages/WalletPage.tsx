@@ -1,27 +1,53 @@
-import { useMemo, useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Loader2, Wallet } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Wallet,
+} from "lucide-react";
 import { Card, CardHead, EmptyState, Pill, Skeleton, SourceTag } from "@/components/app/cards";
 import { MetricStrip, PageIntro, ProgressBar, Segmented } from "@/components/app/pages/workspace";
 import { Button } from "@/components/ui/button";
-import { formatINR, relativeTime, useAccount, useHoldings } from "@/hooks/use-dashboard-data";
-import { tradingErrorMessage, useFundWallet, useWalletTransactions } from "@/hooks/use-wallet";
+import { formatINR, relativeTime, useAccount, useMarkedHoldings } from "@/hooks/use-dashboard-data";
+import {
+  tradingErrorMessage,
+  useFundPractice,
+  useFundWallet,
+  usePracticeBook,
+  useWalletLedgerPage,
+} from "@/hooks/use-wallet";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const presets = [100_000, 1_000_000, 5_000_000, 10_000_000];
 
 const kindLabel: Record<string, string> = {
   DEPOSIT: "Deposit",
   WITHDRAW: "Withdrawal",
-  TRADE_BUY: "Buy settlement",
-  TRADE_SELL: "Sell settlement",
+  BUY: "Buy settlement",
+  SELL: "Sell settlement",
+  CHARGES: "Charges",
+  MIGRATION_ADJUSTMENT: "Migration adjustment",
 };
+const ledgerKinds = ["ALL", "DEPOSIT", "WITHDRAW", "BUY", "SELL", "CHARGES"] as const;
+const PAGE_SIZE = 20;
 
 /** Wallet: simulated cash balance, funding controls and the full cash ledger. */
 export function WalletPage() {
   const { data: account, isLoading, isError, refetch } = useAccount();
-  const { data: holdings } = useHoldings();
-  const { data: txns, isLoading: txnLoading } = useWalletTransactions();
+  const { data: holdings } = useMarkedHoldings();
+  const [kind, setKind] = useState<(typeof ledgerKinds)[number]>("ALL");
+  const [page, setPage] = useState(0);
+  const ledger = useWalletLedgerPage(page, PAGE_SIZE, kind);
+  const txns = ledger.data?.rows;
+  const txnLoading = ledger.isLoading;
+  const totalRows = ledger.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const fund = useFundWallet();
+  // An identical retry reuses its intent so a lost response cannot double-fund.
+  const fundingIntent = useRef<{ key: string; id: string } | null>(null);
 
   const [mode, setMode] = useState<"Add funds" | "Withdraw">("Add funds");
   const [amount, setAmount] = useState("100000");
@@ -39,14 +65,20 @@ export function WalletPage() {
 
   const value = Number(amount.replace(/[^0-9.]/g, "")) || 0;
   const balance = Number(account?.wallet_balance ?? 0);
+  const withdrawable = Number(account?.withdrawable_cash ?? 0);
   const equity = balance + marketValue;
   const deployedPct = equity > 0 ? (marketValue / equity) * 100 : 0;
 
   async function submit() {
     setError(null);
     setDone(null);
+    const kind = mode === "Withdraw" ? "WITHDRAW" : "DEPOSIT";
+    const key = `${kind}:${value}`;
+    if (fundingIntent.current?.key !== key)
+      fundingIntent.current = { key, id: crypto.randomUUID() };
     try {
-      await fund.mutateAsync({ amount: value, kind: mode === "Withdraw" ? "WITHDRAW" : "DEPOSIT" });
+      await fund.mutateAsync({ amount: value, kind, intent_id: fundingIntent.current.id });
+      fundingIntent.current = null;
       setDone(
         mode === "Withdraw"
           ? `${formatINR(value)} withdrawn from your wallet.`
@@ -82,25 +114,63 @@ export function WalletPage() {
       ) : (
         <MetricStrip
           items={[
-            { label: "Wallet balance", value: formatINR(balance), note: "Available to trade", tone: "primary" },
+            {
+              label: "Wallet balance",
+              value: formatINR(balance, { exact: true }),
+              note: account?.reserved_cash
+                ? `${formatINR(Number(account.available_cash ?? 0), { exact: true })} available · ${formatINR(account.reserved_cash, { exact: true })} reserved for resting orders`
+                : "Available to trade",
+              tone: "primary",
+            },
             { label: "Deployed", value: formatINR(invested), note: "Cost of open holdings" },
-            { label: "Holdings value", value: formatINR(marketValue), note: "At demonstrative prices" },
+            {
+              label: "Settled cash",
+              value:
+                account?.settled_cash == null ? "Unavailable" : formatINR(account.settled_cash),
+              note: "Paper T+1 clearing calendar",
+            },
+            {
+              label: "Unsettled cash",
+              value:
+                account?.unsettled_cash == null ? "Unavailable" : formatINR(account.unsettled_cash),
+              note: "Sale proceeds awaiting settlement",
+            },
+            {
+              label: "Withdrawable",
+              value: formatINR(withdrawable),
+              note: "Settled cash after order reservations",
+            },
+            {
+              label: "Holdings value",
+              value: formatINR(marketValue),
+              note: "Provider marks; inspect quote freshness",
+            },
             {
               label: "Realised P&L",
-              value: formatINR(Number(account?.profit ?? 0)),
-              note: `${Number(account?.profit_pct ?? 0).toFixed(2)}% of funds added`,
+              value: formatINR(Number(account?.profit ?? 0), { exact: true }),
+              note: `Net of ${formatINR(Number(account?.charges_paid ?? 0), { exact: true })} charges · ${Number(account?.profit_pct ?? 0).toFixed(2)}% of funds added`,
               tone: Number(account?.profit ?? 0) >= 0 ? "positive" : "negative",
             },
           ]}
         />
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card delay={140}>
           <CardHead
             title="Cash ledger"
-            meta="Every deposit, withdrawal and trade settlement"
-            action={<SourceTag label="Simulated" />}
+            meta={`${totalRows} entries · every deposit, withdrawal, settlement and charge`}
+            action={
+              <Segmented
+                label="Ledger entry type"
+                items={ledgerKinds}
+                value={kind}
+                onChange={(next) => {
+                  setKind(next);
+                  setPage(0);
+                }}
+              />
+            }
           />
           {txnLoading ? (
             <div className="space-y-2 p-5">
@@ -117,7 +187,7 @@ export function WalletPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-left">
                 <thead>
-                  <tr className="border-b border-border font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+                  <tr className="border-b border-border font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                     <th className="px-5 py-3">Type</th>
                     <th className="px-5 py-3">Detail</th>
                     <th className="px-5 py-3 text-right">Amount</th>
@@ -149,12 +219,12 @@ export function WalletPage() {
                           )}
                         >
                           {credit ? "+" : "−"}
-                          {formatINR(Math.abs(Number(txn.amount)))}
+                          {formatINR(Math.abs(Number(txn.amount)), { exact: true })}
                         </td>
                         <td className="px-5 py-3 text-right font-mono text-[12.5px] num-tabular">
-                          {formatINR(Number(txn.balance_after))}
+                          {formatINR(Number(txn.balance_after), { exact: true })}
                         </td>
-                        <td className="px-5 py-3 text-right font-mono text-[10px] uppercase text-subtle">
+                        <td className="px-5 py-3 text-right font-medium text-[11px] uppercase text-subtle">
                           {relativeTime(txn.created_at)}
                         </td>
                       </tr>
@@ -164,6 +234,27 @@ export function WalletPage() {
               </table>
             </div>
           )}
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Newer
+            </Button>
+            <span className="font-mono text-[10px] text-subtle">
+              Page {page + 1} of {pages}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={page + 1 >= pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Older <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </Card>
 
         <div className="flex flex-col gap-5">
@@ -194,7 +285,7 @@ export function WalletPage() {
                     onClick={() => setAmount(String(preset))}
                     aria-pressed={value === preset}
                     className={cn(
-                      "font-mono text-[10px] tracking-[0.12em]",
+                      "font-mono text-[10px] tracking-[0.04em]",
                       value === preset && "border-primary/50 bg-primary/10 text-primary-soft",
                     )}
                   >
@@ -204,7 +295,7 @@ export function WalletPage() {
               </div>
 
               <label className="mt-5 block">
-                <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+                <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                   Amount
                 </span>
                 <span className="mt-2 flex items-center border border-border bg-background/40 px-3">
@@ -221,11 +312,22 @@ export function WalletPage() {
 
               {error && <p className="mt-4 text-[12.5px] text-negative">{error}</p>}
               {done && <p className="mt-4 text-[12.5px] text-positive">{done}</p>}
+              {mode === "Withdraw" && (
+                <p className="mt-4 text-[12px] text-subtle">
+                  {formatINR(withdrawable)} is available to withdraw. Sale proceeds release after
+                  the next clearing day finishes, excluding weekends and verified settlement
+                  holidays.
+                  {account?.settlement_status === "UNVERIFIED" &&
+                    " Some historical fills have unverified settlement dates and need reconciliation."}
+                </p>
+              )}
 
               <Button
                 onClick={() => void submit()}
-                disabled={fund.isPending || value <= 0}
-                className="mt-5 h-12 w-full font-mono text-[11px] tracking-[0.18em]"
+                disabled={
+                  fund.isPending || value <= 0 || (mode === "Withdraw" && value > withdrawable)
+                }
+                className="mt-5 h-12 w-full font-mono text-[11px] tracking-[0.04em]"
               >
                 {fund.isPending ? (
                   <Loader2 className="animate-spin" />
@@ -241,6 +343,8 @@ export function WalletPage() {
               </p>
             </div>
           </Card>
+
+          <PracticeAccountCard />
 
           <Card delay={260}>
             <CardHead title="Capital usage" meta="Cash versus deployed capital" />
@@ -265,5 +369,58 @@ export function WalletPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** The separate closed-session practice account; it never touches the main paper book. */
+function PracticeAccountCard() {
+  const practice = usePracticeBook();
+  const fund = useFundPractice();
+  const account = practice.data?.account;
+  return (
+    <Card delay={230}>
+      <CardHead title="Practice account" meta="Last-session practice only" />
+      <div className="space-y-3 p-5 text-[12px]">
+        <p className="leading-relaxed text-subtle">
+          When the market is closed, stock tickets can practise at the last-session price. Those
+          trades settle here, separately from your main paper book and its risk window.
+        </p>
+        {practice.isLoading ? (
+          <p className="text-subtle">Loading…</p>
+        ) : (
+          <dl className="space-y-1.5 font-mono text-[11px] num-tabular">
+            <div className="flex justify-between">
+              <dt className="text-subtle">Cash</dt>
+              <dd>{formatINR(Number(account?.wallet_balance ?? 0), { exact: true })}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-subtle">Holdings</dt>
+              <dd>
+                {practice.data?.holdings.length
+                  ? practice.data.holdings.map((h) => `${h.symbol} ${h.quantity}`).join(", ")
+                  : "None"}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-subtle">Realised P&amp;L</dt>
+              <dd>{formatINR(Number(account?.profit ?? 0), { exact: true })}</dd>
+            </div>
+          </dl>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={fund.isPending}
+          onClick={() =>
+            fund.mutate(100_000, {
+              onError: (error) => toast.error(tradingErrorMessage(error)),
+              onSuccess: () => toast.success("Added ₹1,00,000 of practice funds"),
+            })
+          }
+        >
+          Add ₹1,00,000 practice funds
+        </Button>
+      </div>
+    </Card>
   );
 }

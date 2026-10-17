@@ -4,18 +4,14 @@ import { Card, CardHead, EmptyState, Pill, Skeleton, SourceTag } from "@/compone
 import {
   formatNum,
   relativeTime,
+  useIndexHistory,
   useInstruments,
   type Instrument,
 } from "@/hooks/use-dashboard-data";
-import { series, toPath } from "@/data/market";
+import { toPath } from "@/data/market";
 import { cn } from "@/lib/utils";
 
 const ranges = ["1D", "1W", "1M", "3M", "1Y"] as const;
-const pointsFor = { "1D": 78, "1W": 96, "1M": 120, "3M": 150, "1Y": 180 } as const;
-
-function seedOf(symbol: string) {
-  return symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 7);
-}
 
 export function MarketOverview() {
   const { data, isLoading, isError, refetch } = useInstruments();
@@ -24,11 +20,16 @@ export function MarketOverview() {
   const [hover, setHover] = useState<number | null>(null);
 
   const instrument: Instrument | undefined = data?.[active];
+  const history = useIndexHistory(instrument?.symbol, range);
 
   const points = useMemo(() => {
-    if (!instrument) return [];
-    return series(seedOf(instrument.symbol) + range.length, pointsFor[range], instrument.change_pct);
-  }, [instrument, range]);
+    const closes = history.data?.candles.map((c) => c.close) ?? [];
+    if (closes.length < 2) return [];
+    const low = Math.min(...closes);
+    const high = Math.max(...closes);
+    const span = high - low || 1;
+    return closes.map((value) => (value - low) / span);
+  }, [history.data]);
 
   if (isLoading) {
     return (
@@ -52,21 +53,28 @@ export function MarketOverview() {
     );
   }
 
-  const up = Number(instrument.change_pct) >= 0;
+  const hasValue = instrument.value != null;
+  const up = Number(instrument.change_pct ?? 0) >= 0;
   const w = 1000;
   const h = 300;
-  const path = toPath(points, w, h);
+  const path = points.length > 1 ? toPath(points, w, h) : "";
   const hoverValue =
-    hover !== null && points[hover] !== undefined
-      ? Number(instrument.value) * (1 + ((points[hover] ?? 0.5) - 0.5) * 0.02)
+    hover !== null && history.data?.candles[hover]?.close != null
+      ? history.data.candles[hover].close
       : null;
 
   return (
     <Card glow delay={180} className="flex h-full flex-col">
       <CardHead
         title="Market overview"
-        meta={`Updated ${relativeTime(instrument.updated_at)} · demonstrative data`}
-        action={<SourceTag />}
+        meta={
+          instrument.updated_at
+            ? `Updated ${relativeTime(instrument.updated_at)}`
+            : "Awaiting provider data"
+        }
+        action={
+          <SourceTag label={instrument.source ? instrument.source.toUpperCase() : "UNAVAILABLE"} />
+        }
       />
 
       {/* instrument selector */}
@@ -78,7 +86,7 @@ export function MarketOverview() {
             onClick={() => setActive(i)}
             aria-pressed={active === i}
             className={cn(
-              "relative shrink-0 rounded px-3 py-1.5 font-mono text-[10px] tracking-[0.16em] whitespace-nowrap uppercase transition-colors duration-300",
+              "relative shrink-0 rounded px-3 py-1.5 font-medium text-[11px] tracking-[0.06em] whitespace-nowrap uppercase transition-colors duration-300",
               active === i
                 ? "bg-panel-elevated text-foreground"
                 : "text-subtle hover:text-muted-foreground",
@@ -100,15 +108,31 @@ export function MarketOverview() {
         <div>
           <div className="flex items-center gap-3">
             <span className="label-tech">{instrument.name}</span>
-            <Pill tone="primary">Live</Pill>
+            <Pill
+              tone={instrument.source === "fyers" && !instrument.stale ? "positive" : "warning"}
+            >
+              {instrument.market_session === "closed"
+                ? "Last session"
+                : instrument.delayed
+                  ? "Delayed"
+                  : instrument.source === "fyers"
+                    ? "Live"
+                    : "Unavailable"}
+            </Pill>
           </div>
           <p className="mt-3 font-mono text-[clamp(1.6rem,2.6vw,2.4rem)] tracking-tight num-tabular">
-            {instrument.kind === "commodity" ? "₹" : ""}
-            <AnimatedNumber
-              value={hoverValue ?? Number(instrument.value)}
-              locale="en-IN"
-              decimals={instrument.kind === "commodity" ? 0 : 2}
-            />
+            {hasValue ? (
+              <>
+                {instrument.kind === "commodity" ? "₹" : ""}
+                <AnimatedNumber
+                  value={hoverValue ?? Number(instrument.value)}
+                  locale="en-IN"
+                  decimals={instrument.kind === "commodity" ? 0 : 2}
+                />
+              </>
+            ) : (
+              "—"
+            )}
           </p>
           <p
             className={cn(
@@ -116,10 +140,9 @@ export function MarketOverview() {
               up ? "text-positive" : "text-negative",
             )}
           >
-            {up ? "+" : ""}
-            {formatNum(Number(instrument.change_abs), instrument.kind === "commodity" ? 0 : 2)}{" "}
-            <span className="text-subtle">·</span> {up ? "+" : ""}
-            {formatNum(Number(instrument.change_pct))}%
+            {instrument.change_abs != null && instrument.change_pct != null
+              ? `${up ? "+" : ""}${formatNum(Number(instrument.change_abs), instrument.kind === "commodity" ? 0 : 2)} · ${up ? "+" : ""}${formatNum(Number(instrument.change_pct))}%`
+              : "No provider change data"}
           </p>
         </div>
 
@@ -131,7 +154,7 @@ export function MarketOverview() {
               onClick={() => setRange(r)}
               aria-pressed={range === r}
               className={cn(
-                "rounded border px-2.5 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-300",
+                "rounded border px-2.5 py-1.5 font-mono text-[10px] tracking-[0.04em] transition-colors duration-300",
                 range === r
                   ? "border-primary/50 bg-primary/10 text-primary-soft"
                   : "border-border text-subtle hover:text-muted-foreground",
@@ -150,12 +173,14 @@ export function MarketOverview() {
           preserveAspectRatio="none"
           className="h-[240px] w-full sm:h-[300px]"
           role="img"
-          aria-label={`${instrument.name} ${range} price trend, demonstrative data`}
+          aria-label={`${instrument.name} ${range} price trend`}
           onMouseLeave={() => setHover(null)}
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
-            setHover(Math.max(0, Math.min(points.length - 1, Math.round(ratio * (points.length - 1)))));
+            setHover(
+              Math.max(0, Math.min(points.length - 1, Math.round(ratio * (points.length - 1)))),
+            );
           }}
         >
           <defs>
@@ -181,15 +206,23 @@ export function MarketOverview() {
             />
           ))}
 
-          <path d={`${path} L${w},${h} L0,${h} Z`} fill="url(#mo-fill)" />
-          <path
-            key={`${instrument.symbol}-${range}`}
-            d={path}
-            fill="none"
-            strokeWidth="1.6"
-            className={cn("animate-draw", up ? "stroke-positive" : "stroke-negative")}
-            style={{ ["--draw-length" as string]: "2600" }}
-          />
+          {path ? (
+            <>
+              <path d={`${path} L${w},${h} L0,${h} Z`} fill="url(#mo-fill)" />
+              <path
+                key={`${instrument.symbol}-${range}`}
+                d={path}
+                fill="none"
+                strokeWidth="1.6"
+                className={cn("animate-draw", up ? "stroke-positive" : "stroke-negative")}
+                style={{ ["--draw-length" as string]: "2600" }}
+              />
+            </>
+          ) : (
+            <text x={w / 2} y={h / 2} textAnchor="middle" className="fill-subtle text-[14px]">
+              Provider history unavailable
+            </text>
+          )}
 
           {hover !== null && points[hover] !== undefined && (
             <>
@@ -215,8 +248,6 @@ export function MarketOverview() {
       {/* indices strip */}
       <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2 xl:grid-cols-4">
         {data.map((inst, i) => {
-          const rising = Number(inst.change_pct) >= 0;
-          const spark = series(seedOf(inst.symbol), 26, inst.change_pct);
           return (
             <button
               key={inst.symbol}
@@ -228,31 +259,29 @@ export function MarketOverview() {
               )}
             >
               <span className="min-w-0">
-                <span className="block font-mono text-[10px] tracking-[0.16em] uppercase text-muted-foreground">
+                <span className="block font-medium text-[11px] tracking-[0.06em] uppercase text-muted-foreground">
                   {inst.name}
                 </span>
                 <span className="mt-1.5 block font-mono text-[13px] num-tabular">
-                  {inst.kind === "commodity" ? "₹" : ""}
-                  {formatNum(Number(inst.value), inst.kind === "commodity" ? 0 : 2)}
+                  {inst.value != null
+                    ? `${inst.kind === "commodity" ? "₹" : ""}${formatNum(Number(inst.value), inst.kind === "commodity" ? 0 : 2)}`
+                    : "—"}
                 </span>
               </span>
               <span className="flex items-center gap-2.5">
-                <svg viewBox="0 0 60 18" className="h-4 w-14" aria-hidden="true">
-                  <path
-                    d={toPath(spark, 60, 18)}
-                    fill="none"
-                    strokeWidth="1.2"
-                    className={rising ? "stroke-positive" : "stroke-negative"}
-                  />
-                </svg>
                 <span
                   className={cn(
                     "font-mono text-[11px] num-tabular",
-                    rising ? "text-positive" : "text-negative",
+                    inst.change_pct == null
+                      ? "text-subtle"
+                      : inst.change_pct >= 0
+                        ? "text-positive"
+                        : "text-negative",
                   )}
                 >
-                  {rising ? "+" : ""}
-                  {formatNum(Number(inst.change_pct))}%
+                  {inst.change_pct != null
+                    ? `${(inst.change_pct ?? 0) >= 0 ? "+" : ""}${formatNum(Number(inst.change_pct))}%`
+                    : "—"}
                 </span>
               </span>
             </button>

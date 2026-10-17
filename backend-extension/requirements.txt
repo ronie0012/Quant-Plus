@@ -1,0 +1,4 @@
+# Optional official filing attachment parser. Keep this exact version in backend installs.
+pypdf==6.20.1
+# Parquet is used by the backend's acquisition and point-in-time model stores.
+pyarrow==24.0.0

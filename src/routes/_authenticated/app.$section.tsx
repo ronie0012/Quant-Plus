@@ -17,11 +17,48 @@ import {
 import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
 import { OrdersPage } from "@/components/app/pages/OrdersPage";
 import { WalletPage } from "@/components/app/pages/WalletPage";
-import { AlertsPage, JournalPage as JournalBase, ReplayPage, RiskPage } from "@/components/app/pages/ProductPages";
+import { AlertsPage, RiskPage } from "@/components/app/pages/ProductPages";
 import { ScreenerPage } from "@/components/app/pages/ScreenerPage";
-import { BasketPage, OptionsPage, XrayPage } from "@/components/app/pages/NextPages";
+import { BasketPage, OptionsPage, XrayPage as XrayBase } from "@/components/app/pages/NextPages";
 import { TradeReviewPanel } from "@/components/app/TradeReviewPanel";
-function JournalPage() { return <><JournalBase /><TradeReviewPanel /></>; }
+import { DecisionLifecyclePage } from "@/components/app/pages/DecisionLifecyclePage";
+import { BehaviorPage } from "@/components/app/pages/BehaviorPage";
+import { TrackRecordPage } from "@/components/app/pages/TrackRecordPage";
+import { RegimePage } from "@/components/app/pages/RegimePage";
+import { StrategyLabPage } from "@/components/app/pages/StrategyLabPage";
+import { EventRadarPage } from "@/components/app/pages/EventRadarPage";
+import { PortfolioIntelligence } from "@/components/app/pages/PortfolioIntelligence";
+import { FlightSimulatorPage } from "@/components/app/pages/FlightSimulatorPage";
+import { TrustControlRoom } from "@/components/app/pages/TrustControlRoom";
+import { ResearchNetworkPage } from "@/components/app/pages/ResearchNetworkPage";
+import { CapabilitiesPage } from "@/components/app/pages/CapabilitiesPage";
+
+function JournalPage() {
+  return (
+    <>
+      <DecisionLifecyclePage />
+      <TradeReviewPanel />
+    </>
+  );
+}
+
+function XrayPage() {
+  return (
+    <div className="flex flex-col gap-5">
+      <XrayBase />
+      <PortfolioIntelligence />
+    </div>
+  );
+}
+
+function TrustPage() {
+  return (
+    <div className="flex flex-col gap-5">
+      <TrustControlRoom />
+      <DataSourcesPage />
+    </div>
+  );
+}
 
 const pageMeta: Record<string, { title: string; description: string }> = {
   markets: {
@@ -40,14 +77,71 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     title: "Wallet — Quant Plus Terminal",
     description: "Simulated cash balance, funding controls and a full cash ledger.",
   },
-  risk: { title: "Risk Centre — Quant Plus Terminal", description: "Portfolio stress testing, concentration diagnostics and trading guardrails." },
-  alerts: { title: "Alerts — Quant Plus Terminal", description: "Manage explainable price and market movement alerts." },
-  journal: { title: "Decision Journal — Quant Plus Terminal", description: "Record trade theses, risks, invalidation rules and outcomes." },
-  options: { title: "Options Lab — Quant Plus Terminal", description: "Simulated option chain, Greeks, strategy builder and payoff diagrams." },
-  basket: { title: "Basket Orders — Quant Plus Terminal", description: "Build and execute a basket of simulated NIFTY 50 orders in one click." },
-  xray: { title: "Portfolio X-ray — Quant Plus Terminal", description: "See which holdings drove today's portfolio move." },
-  screener: { title: "Stock Screener — Quant Plus Terminal", description: "Filter NIFTY 50 stocks by momentum, RSI, volume and Quant AI conviction." },
-  replay: { title: "Market Replay — Quant Plus Terminal", description: "Practice decisions with a bar-by-bar synthetic market replay." },
+  risk: {
+    title: "Risk Centre — Quant Plus Terminal",
+    description: "Portfolio stress testing, concentration diagnostics and trading guardrails.",
+  },
+  alerts: {
+    title: "Alerts — Quant Plus Terminal",
+    description: "Manage explainable price and market movement alerts.",
+  },
+  journal: {
+    title: "Decision Plans — Quant Plus Terminal",
+    description:
+      "One connected decision lifecycle: snapshot, evidence, thesis, risk plan, order and outcome attribution.",
+  },
+  behavior: {
+    title: "Behavioural Risk — Quant Plus Terminal",
+    description:
+      "Consent-based analysis of your own trading patterns, with configurable protections.",
+  },
+  "track-record": {
+    title: "Track Record — Quant Plus Terminal",
+    description: "Calibrated, matured-forecast track records instead of a single confidence score.",
+  },
+  regime: {
+    title: "Market Regime — Quant Plus Terminal",
+    description: "Observable market features and historical analogs shown as distributions.",
+  },
+  "strategy-lab": {
+    title: "Strategy Lab — Quant Plus Terminal",
+    description: "Compile a plain-language hypothesis and run a falsification pipeline.",
+  },
+  events: {
+    title: "Event Radar — Quant Plus Terminal",
+    description: "Corporate, macro, expiry and settlement events with source and knowability.",
+  },
+  "research-network": {
+    title: "Research Network — Quant Plus Terminal",
+    description: "Versioned memos, review workflow and hash-verified research bundles.",
+  },
+  capabilities: {
+    title: "Market Roadmap — Quant Plus Terminal",
+    description: "Capability gates for broader markets, in order.",
+  },
+  options: {
+    title: "Options Lab — Quant Plus Terminal",
+    description:
+      "Unavailable until observed option chains and verified contract rules are connected.",
+  },
+  basket: {
+    title: "Basket Orders — Quant Plus Terminal",
+    description: "Build and execute a basket of simulated NIFTY 50 orders in one click.",
+  },
+  xray: {
+    title: "Portfolio X-ray — Quant Plus Terminal",
+    description:
+      "What moved today, and what can hurt the portfolio next: exposures, stress and a digital twin.",
+  },
+  screener: {
+    title: "Stock Screener — Quant Plus Terminal",
+    description: "Filter NIFTY 50 stocks by measured momentum, RSI, volume and agent opinion.",
+  },
+  replay: {
+    title: "Flight Simulator — Quant Plus Terminal",
+    description:
+      "Replay the information environment with no future information, partial fills and a separate replay wallet.",
+  },
   watchlist: {
     title: "Watchlist — Quant Plus Terminal",
     description: "Track instruments, inspect movement and begin structured analysis.",
@@ -58,7 +152,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
   },
   decisions: {
     title: "Decisions — Quant Plus Terminal",
-    description: "Review committee verdicts, conviction, risk and supporting rationale.",
+    description: "Review committee verdicts, opinion strength, risks and supporting rationale.",
   },
   history: {
     title: "History — Quant Plus Terminal",
@@ -81,8 +175,8 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Manage terminal display, notification and risk-language preferences.",
   },
   "data-sources": {
-    title: "Data Sources — Quant Plus Terminal",
-    description: "Inspect source coverage, freshness, health and connection status.",
+    title: "Trust Control Room — Quant Plus Terminal",
+    description: "Live data quality, a decomposable trust score and every degraded capability.",
   },
   help: {
     title: "Help — Quant Plus Terminal",
@@ -120,7 +214,7 @@ const pages: Record<string, () => React.JSX.Element> = {
   risk: RiskPage,
   alerts: AlertsPage,
   journal: JournalPage,
-  replay: ReplayPage,
+  replay: FlightSimulatorPage,
   screener: ScreenerPage,
   options: OptionsPage,
   basket: BasketPage,
@@ -132,7 +226,14 @@ const pages: Record<string, () => React.JSX.Element> = {
   committee: CommitteePage,
   "agent-activity": AgentActivityPage,
   settings: SettingsPage,
-  "data-sources": DataSourcesPage,
+  "data-sources": TrustPage,
+  behavior: BehaviorPage,
+  "track-record": TrackRecordPage,
+  regime: RegimePage,
+  "strategy-lab": StrategyLabPage,
+  events: EventRadarPage,
+  "research-network": ResearchNetworkPage,
+  capabilities: CapabilitiesPage,
   help: HelpPage,
 };
 

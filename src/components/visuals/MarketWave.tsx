@@ -219,7 +219,7 @@ export function MarketWave({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, [visible, reduced, wrapRef]);
+  }, [visible, reduced, wrapRef, volatility, volume]);
 
   return (
     <div ref={wrapRef} className={cn("relative h-full w-full", className)}>

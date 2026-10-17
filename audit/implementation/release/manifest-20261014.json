@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-10-14T16:53:12.929Z",
+  "source": {
+    "commit": "994cc9541c97d84621fdd2f99741ee8314895c20",
+    "branch": "main",
+    "uncommitted_paths": 228,
+    "note": "Built from an uncommitted working tree; the commit alone does not reproduce this build."
+  },
+  "runtime": {
+    "node": "v22.14.0",
+    "platform": "win32"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@eslint/js": "9.39.5",
+    "@hookform/resolvers": "5.9.1",
+    "@insforge/sdk": "1.5.2",
+    "@lovable.dev/cloud-auth-js": "1.2.1",
+    "@lovable.dev/vite-tanstack-config": "2.25.3",
+    "@playwright/test": "1.64.0",
+    "@radix-ui/react-accordion": "1.2.21",
+    "@radix-ui/react-alert-dialog": "1.1.24",
+    "@radix-ui/react-aspect-ratio": "1.1.16",
+    "@radix-ui/react-avatar": "1.2.7",
+    "@radix-ui/react-checkbox": "1.3.12",
+    "@radix-ui/react-collapsible": "1.1.21",
+    "@radix-ui/react-context-menu": "2.3.8",
+    "@radix-ui/react-dialog": "1.2.0",
+    "@radix-ui/react-dropdown-menu": "2.1.25",
+    "@radix-ui/react-hover-card": "1.1.24",
+    "@radix-ui/react-label": "2.1.16",
+    "@radix-ui/react-menubar": "1.1.25",
+    "@radix-ui/react-navigation-menu": "1.3.0",
+    "@radix-ui/react-popover": "1.2.0",
+    "@radix-ui/react-progress": "1.1.17",
+    "@radix-ui/react-radio-group": "1.4.8",
+    "@radix-ui/react-scroll-area": "1.3.0",
+    "@radix-ui/react-select": "2.3.8",
+    "@radix-ui/react-separator": "1.1.16",
+    "@radix-ui/react-slider": "1.5.0",
+    "@radix-ui/react-slot": "1.4.0",
+    "@radix-ui/react-switch": "1.3.8",
+    "@radix-ui/react-tabs": "1.1.22",
+    "@radix-ui/react-toggle": "1.1.19",
+    "@radix-ui/react-toggle-group": "1.1.20",
+    "@radix-ui/react-tooltip": "1.3.0",
+    "@supabase/supabase-js": "2.117.3",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/react-query": "5.104.1",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "@tanstack/router-plugin": "1.168.42",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "cmdk": "1.1.1",
+    "date-fns": "4.4.0",
+    "embla-carousel-react": "8.6.0",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.6",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.26",
+    "globals": "15.15.0",
+    "gsap": "3.15.0",
+    "input-otp": "1.5.0",
+    "lucide-react": "0.575.0",
+    "nitro": "3.0.260603-beta",
+    "prettier": "3.9.10",
+    "react": "19.3.0",
+    "react-day-picker": "9.14.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.89.0",
+    "react-resizable-panels": "4.14.3",
+    "recharts": "2.15.4",
+    "sonner": "2.0.8",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "tw-animate-css": "1.4.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vaul": "1.1.2",
+    "vite": "8.1.5",
+    "vite-tsconfig-paths": "6.1.1",
+    "zod": "3.25.76"
+  },
+  "reference_data": {
+    "audit/implementation/reference-data.json": "6c7207296b44499ce0f64dff8542df2f65af7f7a15c4de5706b50b4b0d9cac2d",
+    "audit/implementation/reference/nse/EQUITY_L-20261014.csv": "83154043b34313468d9c02a616dd731308526af503dc7137f37eaa308a217424",
+    "audit/implementation/reference/nse/ind_nifty50list-20261014.csv": "f5ba4027d935ae72879d5c24bbebf0e8439ec8ed504ffdf4175fde69206244b3",
+    "backend-extension/quantplus_intelligence/nse_calendar.json": "2b80156261a21211900e9e698195dd59fb4e2ecaf13c2196229fb9ced33ff296",
+    "src/data/instrument-master.ts": "c81f4d2b08bed157b7c41294967e0e503a08237263f916a5a4c00b137fccbd26",
+    "src/lib/exchange-calendar.ts": "30c67bb27b6a868c887d0ad8090d6f695113dc3b1814be4acc82faffc467244e",
+    "src/lib/paper-fees.ts": "9aea16580a5d0e091c066436b0e3fbe52d26d56790b8511cf2c70686e81b9098"
+  },
+  "migrations": {
+    "migrations/20261014130103_create-paper-book.sql": "8f6f90ac4fbc020de821c2950d0bdde4ca5ec47781c020fa31d19a8c3f1cbc9b",
+    "migrations/20261014130652_single-book-authority.sql": "91f4a4ca7239067b7a2fa65328db31d8f1cd7dd7b4e328e6fcd7e64a4f8dd44a"
+  },
+  "backend_patches": {
+    "audit/implementation/backend-patch-claims/app/agents/_util.py": "554ab5a0dea7138386107972c4b9cf90bec28e655b5280b53fa33e4ea0047998",
+    "audit/implementation/backend-patch-claims/app/agents/analysts.py": "2a45388429bca09213c02963f25510b47a0ce0da3f63af271a4f6c9aeae7f1b8",
+    "audit/implementation/backend-patch-claims/app/agents/claims.py": "9d1e7e40e3d39410a63a840dc6f9161e2e245b8b882f18dec60949c1c75d845d",
+    "audit/implementation/backend-patch-claims/app/agents/graph.py": "d3415f1051745795795d1f55b124ed47adae89a9c965d2c8126f1a7dd0ffd13a",
+    "audit/implementation/backend-patch-claims/manifest.json": "59f8ec4f763601cc44f73385efd49878f671a785df7d3edd4fc5a9e78222d8af",
+    "audit/implementation/backend-patch-claims/tests/test_claim_audit.py": "18e5b28f28f6ddb35019824eade93a9f3555365e8e125c232c8b4000b0f66aca",
+    "audit/implementation/backend-patch-fyers/app/data/fyers_provider.py": "60949a196922ac1703450ab5ffd296e6af3a254064befacfda3c0aad64999730",
+    "audit/implementation/backend-patch-fyers/manifest.json": "5658c49a5fe2ec7aedd8571f785a1dbd53fc1afd2d38f1d1c864eba2e54c94f5",
+    "audit/implementation/backend-patch-fyers/tests/test_fyers_budget.py": "5fab96275bb4522dbce106a17534de1b00651ec84f71929f0dbc0c88e07e43ea"
+  },
+  "artifact": {
+    "directory": ".output",
+    "files": 132,
+    "tree_sha256": "0cb4a7fc9f09250b77f75123389bc05819af82c5d6e6061fa135ca0c349e7927",
+    "server_entry_sha256": "295a763cea00fddc78679425ebd1cf9adde4ed5fb04a877c0a0c4683a01aadc8"
+  },
+  "evidence": {
+    "audit/implementation/benchmarks/http-latency-20261014.json": "c996331a39ab7e2297227b3278cd17ea514bf9006f614e7decb2f55e61424124",
+    "audit/implementation/benchmarks/http-latency-20261014.md": "1e0615e2a7aba01f2796228a276920cb4a602bf2b346e532aadbe91a6da3c247",
+    "audit/implementation/benchmarks/latency-20261014.json": "eeea9e327165faccdf29561d2d942a3aaa1b44d6dd73729e03355eb16e356f76",
+    "audit/implementation/benchmarks/latency-20261014.md": "ec70d592428bb43cb279ddaf86d51255429b24d79242eec437439d76b4cc392b",
+    "audit/implementation/insforge/live-isolation-20261014.md": "e9a14648bb4ba204f1f471a28c10bcf72400e75650cf050c7e67848ac8d9d24d",
+    "audit/implementation/soak/accelerated-soak-20261014.json": "2d1a179994c6e71200b9ab45b59416af3540a944617c8df8b3035a34251232ba"
+  },
+  "tests": {
+    "run_at": "2026-10-14",
+    "machine": "11th Gen Intel Core i5-11300H, 8 GB, Windows 11 22631, Node v22.14.0",
+    "results": {
+      "typecheck": "pass",
+      "lint_max_warnings_0": "pass",
+      "npm_test_unit": {
+        "passed": 27,
+        "failed": 0
+      },
+      "npm_test_script_suites": {
+        "suites": 14,
+        "failed": 0,
+        "includes": "fault-injection matrix"
+      },
+      "test_intelligence_pytest": {
+        "passed": 103,
+        "failed": 0
+      },
+      "test_backend_hermetic_pytest": {
+        "passed": 442,
+        "failed": 0
+      },
+      "browser_playwright": {
+        "passed": 42,
+        "failed": 0
+      },
+      "production_build": "pass",
+      "restore_drill": "pass",
+      "accelerated_soak_10_simulated_sessions": "pass"
+    },
+    "not_run": [
+      "10 consecutive real trading-session soak with live provider data",
+      ">=200-answer human-reviewed Quant AI answer set",
+      "Options (excluded from release scope)"
+    ]
+  }
+}

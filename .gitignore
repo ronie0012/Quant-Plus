@@ -15,6 +15,17 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+.intelligence-test/
+.local-data/
+test-results/
+playwright-report/
+.insforge/
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -30,3 +41,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

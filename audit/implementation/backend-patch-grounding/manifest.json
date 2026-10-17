@@ -1,0 +1,62 @@
+[
+  {
+    "path": "quantplus_intelligence/research_grounding.py",
+    "before_sha256": null,
+    "after_sha256": "88e8fd976a6b8ab5d09c106e50c35e9d7235d3f5b1a4f8b1d4fc30f7d699012f"
+  },
+  {
+    "path": "app/agents/_util.py",
+    "before_sha256": "554ab5a0dea7138386107972c4b9cf90bec28e655b5280b53fa33e4ea0047998",
+    "after_sha256": "25530a127f6fc67674d8ad9097f274b9c2597f887cc12fe9cc96a9f55c4be036"
+  },
+  {
+    "path": "app/agents/technical.py",
+    "before_sha256": "c11d9fa22ab5745d19005165dff25028ae2294d4441304441757227a624fdbaa",
+    "after_sha256": "d75990a4e23f3ab9dd787e298b1e8ffe388c2775954d5dd4ba1c1a125352b277"
+  },
+  {
+    "path": "app/agents/events_analyst.py",
+    "before_sha256": "a05b8b2f1f7c89664c4f1126b14e5f51c13b980f5a7c62f3a8c9ff1931301699",
+    "after_sha256": "9f841e706d8df49b2fc29fefa3b158261e7b4cad76f9b02f31b18762c86448c2"
+  },
+  {
+    "path": "app/api/v1.py",
+    "before_sha256": "2487a7afded6c522e9540a6863a4b451ea2435d44813a2a33ea2a2caec96b85a",
+    "after_sha256": "f1498c4bb96f4761e204da94945b8765d2d5eca100dfa14c4eb8e7e6d44426d1"
+  },
+  {
+    "path": "app/api/stocks.py",
+    "before_sha256": "c12de5d5f2805ea14d84169ffd7ad155625c32275c1163712fd1dfaa4e6593d3",
+    "after_sha256": "3e79e9a7c192a4b86b0da351755dacea7419fbe0937abf7574b6ace4bc10b31b"
+  },
+  {
+    "path": "tests/test_internal_auth_boundary.py",
+    "before_sha256": null,
+    "after_sha256": "af48b2c7471c120cb316d19007c37f1858114d6085f7b7257e77693d5eaada4c"
+  },
+  {
+    "path": "tests/test_research_grounding_boundary.py",
+    "before_sha256": null,
+    "after_sha256": "7fb2b224b938a72dd428fda73386b05c0e178e6965959fd8a8f9035d581f34c1"
+  },
+  {
+    "path": "tests/_mocks.py",
+    "before_sha256": "aac5ea963d5e7f9522c8d6e5939529175199fe24531226b819ef65fbfd409f4a",
+    "after_sha256": "a15ef6b5c3ffe636adc849748cfbb0c108932b83d075543db729db81a5845514"
+  },
+  {
+    "path": "tests/test_eval.py",
+    "before_sha256": "7e14b4acf3c08ee44fca304fb216105e344f7511ea230bab66171a36a5129c01",
+    "after_sha256": "f2c7dd7d0ec92c6c8bf6a14e6931b2ed961c2a7717ecbde9ae6165c50c09baa2"
+  },
+  {
+    "path": "tests/test_full_session.py",
+    "before_sha256": "55c12546ac45c9a08b4b98273711f3500b3565675b502f08a228947f632dd178",
+    "after_sha256": "a00ee3db2f9c7cb07cac74024bf0af730445329318fa9facff4a8e3627558d3d"
+  },
+  {
+    "path": "tests/test_hardening.py",
+    "before_sha256": "b38142f20951472cd85b4d043db3e8538cc9e096d7e9dd1d9c2bbfa0e0ffb121",
+    "after_sha256": "b65219c152d4556e627a1a071b7370593f71991b2f0efa1ae2bc1a85c5d83337"
+  }
+]

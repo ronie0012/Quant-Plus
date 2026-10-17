@@ -3,6 +3,14 @@ import { Reveal } from "@/components/site/Reveal";
 import { coverage } from "@/data/market";
 import { cn } from "@/lib/utils";
 
+/** Only a working capability is shown in the positive colour. */
+const STATUS_TONE: Record<string, string> = {
+  Local: "border-positive/40 text-positive",
+  "Connection required": "border-primary/40 text-primary-soft",
+  "Under evaluation": "border-warning/40 text-warning",
+  Unavailable: "border-border-strong text-subtle",
+};
+
 export function Coverage() {
   return (
     <SectionShell className="border-t border-border bg-surface">
@@ -17,24 +25,22 @@ export function Coverage() {
         </p>
       </Reveal>
 
-      <ul className="mt-16 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-16 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
         {coverage.map((item, i) => {
-          const soon = item.status === "Coming soon";
+          const soon = item.status === "Unavailable";
           return (
             <Reveal
               as="li"
               key={item.label}
               delay={i * 60}
-              className="sheen group bg-background p-5 transition-colors duration-500 hover:bg-panel sm:p-7"
+              className="sheen group h-full bg-background p-5 transition-colors duration-500 hover:bg-panel sm:p-7"
             >
               <div className="flex items-start justify-between gap-4">
                 <span className="label-tech">{item.label}</span>
                 <span
                   className={cn(
                     "border px-2 py-1 font-mono text-[9px] tracking-[0.16em] uppercase",
-                    soon
-                      ? "border-warning/40 text-warning"
-                      : "border-positive/40 text-positive",
+                    STATUS_TONE[item.status] ?? "border-border-strong text-muted-foreground",
                   )}
                 >
                   {item.status}

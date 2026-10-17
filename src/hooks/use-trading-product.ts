@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  deleteRows,
+  insertRow,
+  selectOne,
+  selectRows,
+  updateRows,
+  upsertRow,
+  workspaceRpc,
+} from "@/lib/workspace-api";
+import type { DecisionPlanBody } from "@/lib/quant/decision-plan";
+import type { BehaviorPolicy } from "@/lib/quant/behavior";
 
 export type PriceAlert = {
   id: string;
@@ -23,11 +33,33 @@ export type JournalEntry = {
   planned_exit: string;
   reflection: string;
   outcome: "OPEN" | "WIN" | "LOSS" | "FLAT" | "CANCELLED";
+  decision_snapshot?: {
+    price: number;
+    source: string;
+    as_of: string;
+    market_session?: string;
+  } | null;
+  /** The Decision Plan: snapshot, evidence, risk plan, order link and revisions. */
+  plan?: (DecisionPlanBody & { invalidated_at?: string | null }) | null;
   created_at: string;
   updated_at: string;
 };
 
+export type WorkspaceMode = "LEARNER" | "TRADER" | "RESEARCHER" | "PORTFOLIO_MANAGER" | "CUSTOM";
+
+export type WorkspacePreferences = {
+  mode?: WorkspaceMode;
+  panels?: string[];
+  focus_mode?: boolean;
+  review_mode?: boolean;
+  low_bandwidth?: boolean;
+  attention_budget_per_hour?: number;
+  push_notifications?: boolean;
+  max_sector_pct?: number;
+};
+
 export type TradingPreferences = {
+  display_name?: string;
   density: "COMFORTABLE" | "COMPACT";
   calm_mode: boolean;
   default_order_type: "MARKET" | "LIMIT" | "STOP";
@@ -36,6 +68,8 @@ export type TradingPreferences = {
   chart_type: "CANDLE" | "LINE" | "AREA";
   show_volume: boolean;
   notifications: Record<string, boolean>;
+  behavior?: BehaviorPolicy;
+  workspace?: WorkspacePreferences;
 };
 
 export type RiskLimits = {
@@ -54,16 +88,16 @@ const defaults: TradingPreferences = {
   default_quantity: 10,
   chart_type: "CANDLE",
   show_volume: true,
-  notifications: { orders: true, alerts: true, news: false },
+  notifications: { orders: true, alerts: true },
 };
 
 export function usePriceAlerts() {
   return useQuery({
     queryKey: ["price-alerts"],
     queryFn: async (): Promise<PriceAlert[]> => {
-      const { data, error } = await supabase.from("price_alerts").select("id,symbol,alert_type,threshold,note,enabled,triggered_at,created_at").order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as PriceAlert[];
+      return selectRows<PriceAlert>("price_alerts", {
+        order: { field: "created_at", ascending: false },
+      });
     },
   });
 }
@@ -72,9 +106,7 @@ export function useCreateAlert() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (alert: Omit<PriceAlert, "id" | "triggered_at" | "created_at">) => {
-      const { data, error } = await supabase.from("price_alerts").insert(alert).select().single();
-      if (error) throw error;
-      return data;
+      return insertRow<PriceAlert>("price_alerts", alert);
     },
     onSuccess: () => void client.invalidateQueries({ queryKey: ["price-alerts"] }),
   });
@@ -83,11 +115,22 @@ export function useCreateAlert() {
 export function useUpdateAlert() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...values }: { id: string; enabled?: boolean; threshold?: number | null }) => {
-      const { error } = await supabase.from("price_alerts").update(values).eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({
+      id,
+      ...values
+    }: {
+      id: string;
+      enabled?: boolean;
+      threshold?: number | null;
+      triggered_at?: null;
+    }) => {
+      // Re-arming clears the one-shot trigger; the server evaluates it again.
+      await updateRows("price_alerts", values, [["id", id]]);
     },
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["price-alerts"] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["price-alerts"] });
+      void client.invalidateQueries({ queryKey: ["alert-events"] });
+    },
   });
 }
 
@@ -95,8 +138,7 @@ export function useDeleteAlert() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("price_alerts").delete().eq("id", id);
-      if (error) throw error;
+      await deleteRows("price_alerts", [["id", id]]);
     },
     onSuccess: () => void client.invalidateQueries({ queryKey: ["price-alerts"] }),
   });
@@ -106,9 +148,9 @@ export function useJournal() {
   return useQuery({
     queryKey: ["trade-journal"],
     queryFn: async (): Promise<JournalEntry[]> => {
-      const { data, error } = await supabase.from("trade_journal").select("id,order_id,symbol,thesis,evidence,risks,invalidation,planned_exit,reflection,outcome,created_at,updated_at").order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as JournalEntry[];
+      return selectRows<JournalEntry>("trade_journal", {
+        order: { field: "created_at", ascending: false },
+      });
     },
   });
 }
@@ -116,25 +158,51 @@ export function useJournal() {
 export function useSaveJournalEntry() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (entry: { id?: string; symbol: string; thesis: string; evidence?: string[]; risks?: string[]; invalidation?: string; planned_exit?: string; reflection?: string; outcome?: JournalEntry["outcome"]; order_id?: string | null }) => {
+    mutationFn: async (entry: {
+      id?: string;
+      symbol: string;
+      thesis: string;
+      evidence?: string[];
+      risks?: string[];
+      invalidation?: string;
+      planned_exit?: string;
+      reflection?: string;
+      outcome?: JournalEntry["outcome"];
+      order_id?: string | null;
+      decision_snapshot?: JournalEntry["decision_snapshot"];
+      plan?: JournalEntry["plan"];
+    }) => {
       const { id, ...values } = entry;
-      const query = entry.id
-        ? supabase.from("trade_journal").update(values).eq("id", id ?? "")
-        : supabase.from("trade_journal").insert(values);
-      const { error } = await query;
-      if (error) throw error;
+      if (id) await updateRows("trade_journal", values, [["id", id]]);
+      else await insertRow("trade_journal", values);
     },
     onSuccess: () => void client.invalidateQueries({ queryKey: ["trade-journal"] }),
   });
 }
 
-export function useTradingPreferences() {
+export function useDeleteJournalEntry() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await deleteRows("trade_journal", [["id", id]]);
+    },
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["trade-journal"] }),
+  });
+}
+
+export function useTradingPreferences(enabled = true) {
   return useQuery({
     queryKey: ["trading-preferences"],
+    enabled,
     queryFn: async (): Promise<TradingPreferences> => {
-      const { data, error } = await supabase.from("trading_preferences").select("density,calm_mode,default_order_type,default_product,default_quantity,chart_type,show_volume,notifications").maybeSingle();
-      if (error) throw error;
-      return data ? ({ ...data, notifications: (data.notifications ?? {}) as Record<string, boolean> } as TradingPreferences) : defaults;
+      const data = await selectOne<Partial<TradingPreferences>>("trading_preferences");
+      return data
+        ? ({
+            ...defaults,
+            ...data,
+            notifications: { ...defaults.notifications, ...(data.notifications ?? {}) },
+          } as TradingPreferences)
+        : defaults;
     },
   });
 }
@@ -143,11 +211,7 @@ export function useSaveTradingPreferences() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (values: TradingPreferences) => {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth.user?.id;
-      if (!userId) throw new Error("Sign in to save preferences.");
-      const { error } = await supabase.from("trading_preferences").upsert({ user_id: userId, ...values });
-      if (error) throw error;
+      await upsertRow("trading_preferences", values);
     },
     onSuccess: () => void client.invalidateQueries({ queryKey: ["trading-preferences"] }),
   });
@@ -157,9 +221,16 @@ export function useRiskLimits() {
   return useQuery({
     queryKey: ["risk-limits"],
     queryFn: async (): Promise<RiskLimits> => {
-      const { data, error } = await supabase.from("risk_limits").select("daily_loss_limit,max_order_value,max_position_pct,confirmation_above,trading_paused").maybeSingle();
-      if (error) throw error;
-      return (data as RiskLimits | null) ?? { daily_loss_limit: 50000, max_order_value: 1000000, max_position_pct: 25, confirmation_above: 500000, trading_paused: false };
+      const data = await selectOne<RiskLimits>("risk_limits");
+      return (
+        data ?? {
+          daily_loss_limit: 50000,
+          max_order_value: 1000000,
+          max_position_pct: 25,
+          confirmation_above: 500000,
+          trading_paused: false,
+        }
+      );
     },
   });
 }
@@ -168,12 +239,76 @@ export function useSaveRiskLimits() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (values: RiskLimits) => {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth.user?.id;
-      if (!userId) throw new Error("Sign in to save risk limits.");
-      const { error } = await supabase.from("risk_limits").upsert({ user_id: userId, ...values });
-      if (error) throw error;
+      const {
+        daily_loss_limit,
+        max_order_value,
+        max_position_pct,
+        confirmation_above,
+        trading_paused,
+      } = values;
+      await upsertRow("risk_limits", {
+        daily_loss_limit,
+        max_order_value,
+        max_position_pct,
+        confirmation_above,
+        trading_paused,
+      });
     },
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["risk-limits"] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["risk-limits"] });
+      void client.invalidateQueries({ queryKey: ["risk-status"] });
+    },
+  });
+}
+
+export type RiskStatus = {
+  session_date: string;
+  anchor_equity: number;
+  anchor_source: string;
+  anchored_at: string;
+  cash_flows: number;
+  marked_equity: number;
+  day_loss: number;
+  day_pnl: number;
+  daily_loss_limit: number;
+  blocked: boolean;
+  blocked_reason: "TRADING_PAUSED" | "DAILY_LOSS_LIMIT" | null;
+  stale_marks: string[];
+  valuation_policy: string;
+  reserved_cash: number;
+  available_cash: number;
+};
+
+/** Server-computed day loss, valuation freshness and enforcement state. */
+export function useRiskStatus() {
+  return useQuery({
+    queryKey: ["risk-status"],
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    queryFn: () => workspaceRpc<RiskStatus>("risk_status"),
+  });
+}
+
+export type AlertDelivery = {
+  id: string;
+  alert_id: string;
+  symbol: string;
+  alert_type: string;
+  threshold: number;
+  price: number;
+  change_pct: number | null;
+  quote_provider_time: string;
+  triggered_at: string;
+};
+
+export function useAlertDeliveries() {
+  return useQuery({
+    queryKey: ["alert-events"],
+    staleTime: 15_000,
+    queryFn: () =>
+      selectRows<AlertDelivery>("alert_events", {
+        order: { field: "triggered_at", ascending: false },
+        limit: 50,
+      }),
   });
 }

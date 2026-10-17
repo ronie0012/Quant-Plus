@@ -1,0 +1,42 @@
+{
+  "status": "incomplete",
+  "requested_sessions": 10,
+  "simulated_step_seconds": 1800,
+  "session_expiry_proofs": [],
+  "kind": "accelerated simulated-clock soak (not the real-time 10-session soak)",
+  "generated_at": "2026-10-16T14:09:49.837Z",
+  "wall_minutes": 0.02,
+  "simulated_sessions_completed": 0,
+  "simulated_range": {
+    "from": "2026-10-01",
+    "to": "2026-10-01"
+  },
+  "iterations": 0,
+  "requests": 0,
+  "responses_by_status": {},
+  "rejection_reasons": {},
+  "server_errors": 0,
+  "reconciliation_checkpoints": 1,
+  "reconciliation_failures": 0,
+  "orders": 0,
+  "filled": 0,
+  "expired_day_orders": 0,
+  "duplicate_intent_settlements": 0,
+  "retried_intents_settled_once": true,
+  "route_latency_ms": {
+    "p50": null,
+    "p95": null,
+    "p99": null
+  },
+  "heap_mb": {
+    "first": 37,
+    "last": 37,
+    "max": 37
+  },
+  "book_bytes": 2602,
+  "machine": {
+    "platform": "win32",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz",
+    "node": "v22.14.0"
+  }
+}

@@ -34,7 +34,7 @@ function PlatformPage() {
         eyebrow="Platform"
         heading="One workspace for the whole market."
         body="Data, signals, research, portfolio and risk in a single interface — designed so the important thing is always the most visible thing."
-        meta={["6 modules", "Web · Responsive", "Sample data shown"]}
+        meta={["6 modules", "Web · Responsive", "No sample data"]}
       />
       <Capabilities />
       <DashboardReveal />

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import {
   BookMarked,
   CheckCircle2,
@@ -22,86 +24,76 @@ import { Card, CardHead, Pill } from "@/components/app/cards";
 import { MetricStrip, PageIntro, ProgressBar, Segmented } from "./workspace";
 import { useSession, displayNameFrom } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
-import { useSaveTradingPreferences, useTradingPreferences, type TradingPreferences } from "@/hooks/use-trading-product";
+import { HostedAccountSetup } from "@/components/app/HostedAccountSetup";
+import { WorkspaceSettings } from "@/components/app/WorkspaceSettings";
+import { paperOrderFetch } from "@/lib/paper-trading";
+import { agentFetch } from "@/lib/agent-api";
+import { useAccount, useAnalyses } from "@/hooks/use-dashboard-data";
+import {
+  useSaveTradingPreferences,
+  useTradingPreferences,
+  type TradingPreferences,
+} from "@/hooks/use-trading-product";
 
-const settingsDefaults = {
-  marketAlerts: true,
-  committeeAlerts: true,
-  newsAlerts: false,
-  compact: false,
-  reducedData: false,
+const DEFAULT_PREFERENCES: TradingPreferences = {
+  density: "COMFORTABLE",
+  calm_mode: false,
+  default_order_type: "MARKET",
+  default_product: "DELIVERY",
+  default_quantity: 10,
+  chart_type: "CANDLE",
+  show_volume: true,
+  notifications: { orders: true, alerts: true },
 };
-type SettingKey = keyof typeof settingsDefaults;
-const notificationRows: Array<[SettingKey, string, string]> = [
-  ["marketAlerts", "Market movement", "Meaningful movement in tracked instruments"],
-  ["committeeAlerts", "Committee decisions", "Completed analyses and verdict changes"],
-  ["newsAlerts", "High-impact intelligence", "Only events marked high impact"],
+const notificationRows: Array<["orders" | "alerts", string, string]> = [
+  ["orders", "Order and protection events", "Fills, expiries, rejections and protective exits"],
+  ["alerts", "Price alerts", "Triggered price and move alerts, with a sound"],
 ];
-const displayRows: Array<[SettingKey, string, string]> = [
-  ["compact", "Compact data rows", "Show more information per screen"],
-  ["reducedData", "Reduced data mode", "Use fewer chart points on limited connections"],
-];
-const privacyRows: Array<[LucideIcon, string, string]> = [
-  [LockKeyhole, "Private workspace", "Account data is scoped to your signed-in session"],
-  [Shield, "Decision boundary", "No trade execution or personalised advice"],
-];
+
+/** Every control here is saved to the workspace book and read by the terminal. */
 export function SettingsPage() {
   const { session } = useSession();
-  const [settings, setSettings] = useState(settingsDefaults);
-  const [theme, setTheme] = useState<"Dark" | "System">("Dark");
-  const [risk, setRisk] = useState<"Conservative" | "Balanced" | "Growth">("Balanced");
-  const [saved, setSaved] = useState(false);
-  const { data: tradingPreferences } = useTradingPreferences();
-  const saveTradingPreferences = useSaveTradingPreferences();
-  const [calmMode, setCalmMode] = useState(false);
-  useEffect(() => { if (tradingPreferences) setCalmMode(tradingPreferences.calm_mode); }, [tradingPreferences]);
-  useEffect(() => {
-    const raw = window.localStorage.getItem("quant-plus-settings");
-    if (raw)
-      try {
-        const parsed = JSON.parse(raw) as Partial<typeof settingsDefaults> & {
-          theme?: typeof theme;
-          risk?: typeof risk;
-        };
-        setSettings((s) => ({ ...s, ...parsed }));
-        if (parsed.theme) setTheme(parsed.theme);
-        if (parsed.risk) setRisk(parsed.risk);
-      } catch {
-        /* retain defaults */
-      }
-  }, []);
-  function save() {
-    window.localStorage.setItem(
-      "quant-plus-settings",
-      JSON.stringify({ ...settings, theme, risk }),
-    );
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1800);
-    const current: TradingPreferences = tradingPreferences ?? { density: "COMFORTABLE", calm_mode: false, default_order_type: "MARKET", default_product: "DELIVERY", default_quantity: 10, chart_type: "CANDLE", show_volume: true, notifications: { orders: true, alerts: true, news: false } };
-    void saveTradingPreferences.mutateAsync({ ...current, calm_mode: calmMode, density: settings.compact ? "COMPACT" : "COMFORTABLE" });
+  const { data: stored } = useTradingPreferences();
+  const save = useSaveTradingPreferences();
+  const [draft, setDraft] = useState<TradingPreferences | null>(null);
+  const prefs = draft ?? stored ?? DEFAULT_PREFERENCES;
+  const dirty = draft != null && JSON.stringify(draft) !== JSON.stringify(stored);
+  const update = (patch: Partial<TradingPreferences>) => setDraft({ ...prefs, ...patch });
+  async function submit() {
+    try {
+      // Workspace and behaviour settings save themselves; never resend a stale copy.
+      const { behavior: _behavior, workspace: _workspace, ...rest } = prefs;
+      await save.mutateAsync(rest);
+      setDraft(null);
+      toast.success("Settings saved");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Settings could not be saved");
+    }
   }
+  const hosted = session?.mode === "hosted";
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Workspace preferences"
         title="Settings"
-        body="Tune the terminal around your attention, risk language and display preferences."
-        status="Saved to this browser"
+        body="Display, notification and order-ticket defaults. Each setting is saved to your workspace book and applied across the terminal."
+        status={dirty ? "Unsaved changes" : "Saved to your workspace"}
         action={
           <Button
             size="sm"
-            onClick={save}
-            className="font-mono text-[10px] uppercase tracking-[.14em]"
+            onClick={() => void submit()}
+            disabled={save.isPending || !dirty}
+            className="font-medium text-[11px] uppercase tracking-[0.06em]"
           >
-            {saved ? <CheckCircle2 /> : null}
-            {saved ? "Saved" : "Save changes"}
+            {save.isPending ? "Saving…" : dirty ? "Save changes" : "Saved"}
           </Button>
         }
       />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,.8fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,.8fr)]">
         <div className="space-y-5">
+          <WorkspaceSettings />
           <Card>
-            <CardHead title="Profile" meta="Authenticated account" />
+            <CardHead title="Profile" meta={hosted ? "Hosted account" : "Local profile"} />
             <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
               <span className="grid h-14 w-14 place-items-center border border-primary/30 bg-primary/10 text-xl text-primary-soft">
                 {displayNameFrom(session).slice(0, 1).toUpperCase()}
@@ -109,198 +101,344 @@ export function SettingsPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-base">{displayNameFrom(session)}</p>
                 <p className="mt-1 truncate text-[12px] text-subtle">
-                  {session?.user.email ?? "Authenticated user"}
+                  {hosted
+                    ? session?.user.email
+                    : "Single local profile, reachable only from this computer"}
                 </p>
               </div>
-              <Pill tone="positive">Verified session</Pill>
+              <Pill tone={hosted ? "positive" : "neutral"}>
+                {hosted ? "Signed in" : "Loopback only"}
+              </Pill>
             </div>
+            {!hosted && (
+              <label className="block border-t border-border px-5 py-4">
+                <span className="text-[13px]">Your name</span>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  maxLength={100}
+                  value={prefs.display_name ?? ""}
+                  onChange={(event) => update({ display_name: event.target.value })}
+                  placeholder="Enter your name"
+                  className="mt-2 h-10 w-full border border-border bg-background/30 px-3 text-sm outline-none focus:border-primary/50"
+                />
+                <span className="mt-2 block text-[11px] text-subtle">
+                  Used in your greeting and profile. Save changes to apply.
+                </span>
+              </label>
+            )}
           </Card>
           <Card>
-            <CardHead title="Notifications" meta="Choose what earns your attention" />
+            <CardHead title="Notifications" meta="Shown while the terminal is open" />
             <div className="divide-y divide-border">
-              {notificationRows.map(([k, title, body]) => (
-                <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
+              {notificationRows.map(([key, title, body]) => (
+                <label key={key} className="flex cursor-pointer items-center gap-4 px-5 py-4">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13px]">{title}</span>
                     <span className="mt-1 block text-[11px] text-subtle">{body}</span>
                   </span>
                   <Switch
-                    checked={settings[k]}
-                    onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
+                    checked={prefs.notifications[key] !== false}
+                    onCheckedChange={(value) =>
+                      update({ notifications: { ...prefs.notifications, [key]: value } })
+                    }
                   />
                 </label>
               ))}
             </div>
+            <p className="border-t border-border px-5 py-3 text-[11px] text-subtle">
+              The server keeps executing orders, protections and alerts whether or not notifications
+              are shown.
+            </p>
           </Card>
           <Card>
-            <CardHead title="Display" meta="Terminal density and network use" />
+            <CardHead title="Display" meta="Density and motion" />
             <div className="divide-y divide-border">
-              {displayRows.map(([k, title, body]) => (
-                <label key={k} className="flex cursor-pointer items-center gap-4 px-5 py-4">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px]">{title}</span>
-                    <span className="mt-1 block text-[11px] text-subtle">{body}</span>
+              <label className="flex cursor-pointer items-center gap-4 px-5 py-4">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px]">Compact data rows</span>
+                  <span className="mt-1 block text-[11px] text-subtle">
+                    Tighter table rows to show more per screen
                   </span>
-                  <Switch
-                    checked={settings[k]}
-                    onCheckedChange={(v) => setSettings((s) => ({ ...s, [k]: v }))}
-                  />
-                </label>
-              ))}
-              <label className="flex cursor-pointer items-center gap-4 px-5 py-4"><span className="min-w-0 flex-1"><span className="block text-[13px]">Calm mode</span><span className="mt-1 block text-[11px] text-subtle">Stops ambient motion and reduces visual urgency</span></span><Switch checked={calmMode} onCheckedChange={setCalmMode}/></label>
+                </span>
+                <Switch
+                  checked={prefs.density === "COMPACT"}
+                  onCheckedChange={(value) =>
+                    update({ density: value ? "COMPACT" : "COMFORTABLE" })
+                  }
+                />
+              </label>
+              <label className="flex cursor-pointer items-center gap-4 px-5 py-4">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px]">Calm mode</span>
+                  <span className="mt-1 block text-[11px] text-subtle">
+                    Stops ambient motion and pulsing indicators (your system reduced-motion setting
+                    is always honoured)
+                  </span>
+                </span>
+                <Switch
+                  checked={prefs.calm_mode}
+                  onCheckedChange={(value) => update({ calm_mode: value })}
+                />
+              </label>
             </div>
           </Card>
         </div>
         <div className="space-y-5">
           <Card glow>
-            <CardHead title="Interface" meta="Appearance" />
-            <div className="p-5">
-              <p className="mb-3 font-mono text-[9px] uppercase tracking-[.16em] text-subtle">
-                Theme
-              </p>
-              <Segmented
-                items={["Dark", "System"] as const}
-                value={theme}
-                onChange={setTheme}
-                label="Theme"
-              />
-              <p className="mt-5 text-[11px] leading-relaxed text-subtle">
-                Quant Plus uses a low-luminance terminal palette to keep dense market information
-                readable.
-              </p>
-            </div>
-          </Card>
-          <Card>
-            <CardHead title="Risk language" meta="Analysis framing" />
-            <div className="p-5">
-              <Segmented
-                items={["Conservative", "Balanced", "Growth"] as const}
-                value={risk}
-                onChange={setRisk}
-                label="Risk language"
-              />
-              <div className="mt-5">
-                <ProgressBar
-                  value={risk === "Conservative" ? 32 : risk === "Balanced" ? 58 : 82}
-                  tone={risk === "Growth" ? "warning" : "primary"}
+            <CardHead title="Order ticket defaults" meta="Applied when a ticket opens" />
+            <div className="space-y-5 p-5">
+              <div>
+                <p className="mb-2 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+                  Order type
+                </p>
+                <Segmented
+                  items={["MARKET", "LIMIT", "STOP"] as const}
+                  value={prefs.default_order_type}
+                  onChange={(value) => update({ default_order_type: value })}
+                  label="Default order type"
                 />
               </div>
-              <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-                This changes how risk is framed in the workspace. It does not alter data or create
-                recommendations.
+              <label className="block">
+                <span className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+                  Quantity
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={prefs.default_quantity}
+                  onChange={(event) =>
+                    update({
+                      default_quantity: Math.max(1, Math.floor(Number(event.target.value)) || 1),
+                    })
+                  }
+                  className="mt-2 h-10 w-full border border-border bg-background/30 px-3 font-mono text-sm outline-none focus:border-primary/50"
+                />
+              </label>
+              <p className="text-[11px] text-subtle">
+                Product: delivery equity only (the supported paper product).
               </p>
             </div>
           </Card>
           <Card>
-            <CardHead title="Privacy" meta="Account controls" />
+            <CardHead title="Chart defaults" meta="Stock page chart" />
+            <div className="space-y-5 p-5">
+              <Segmented
+                items={["CANDLE", "LINE", "AREA"] as const}
+                value={prefs.chart_type}
+                onChange={(value) => update({ chart_type: value })}
+                label="Default chart type"
+              />
+              <label className="flex cursor-pointer items-center gap-4">
+                <span className="min-w-0 flex-1 text-[13px]">Show volume bars</span>
+                <Switch
+                  checked={prefs.show_volume}
+                  onCheckedChange={(value) => update({ show_volume: value })}
+                />
+              </label>
+            </div>
+          </Card>
+          <Card>
+            <CardHead title="Boundaries" meta="What this workspace does" />
             <div className="space-y-4 p-5">
-              {privacyRows.map(([Icon, title, body]) => (
-                <div key={String(title)} className="flex gap-3">
-                  <Icon className="mt-0.5 h-4 w-4 text-primary-soft" />
-                  <div>
-                    <p className="text-[12px]">{title}</p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-subtle">{body}</p>
+              {[
+                [
+                  LockKeyhole,
+                  hosted ? "Private hosted book" : "Local data",
+                  hosted
+                    ? "Your book is readable only by you (row-level security); only the server writes it."
+                    : "Stored in .local-data on this computer; back it up with the recovery script.",
+                ],
+                [
+                  Shield,
+                  "Decision boundary",
+                  "Paper trading only: no broker orders and no personalised advice",
+                ],
+              ].map(([Icon, title, body]) => {
+                const Glyph = Icon as LucideIcon;
+                return (
+                  <div key={String(title)} className="flex gap-3">
+                    <Glyph className="mt-0.5 h-4 w-4 text-primary-soft" />
+                    <div>
+                      <p className="text-[12px]">{String(title)}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-subtle">{String(body)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>
       </div>
+      {!hosted && <HostedAccountSetup initialName={prefs.display_name ?? ""} />}
     </div>
   );
 }
 
-const sources = [
-  {
-    name: "Market instruments",
-    type: "Market data",
-    status: "Simulated",
-    coverage: "4 indices & commodities",
-    freshness: "Cached snapshot",
-    health: 94,
-  },
-  {
-    name: "Market intelligence",
-    type: "News",
-    status: "Simulated",
-    coverage: "6 contextual items",
-    freshness: "Demonstrative",
-    health: 88,
-  },
-  {
-    name: "Portfolio ledger",
-    type: "Private account",
-    status: "Connected",
-    coverage: "User holdings",
-    freshness: "On request",
-    health: 100,
-  },
-  {
-    name: "Committee analyses",
-    type: "AI output",
-    status: "Connected",
-    coverage: "Stored verdicts",
-    freshness: "On request",
-    health: 100,
-  },
-  {
-    name: "Broker account",
-    type: "Execution",
-    status: "Not connected",
-    coverage: "Unavailable",
-    freshness: "—",
-    health: 0,
-  },
-  {
-    name: "Options surface",
-    type: "Derivatives",
-    status: "Coming soon",
-    coverage: "Unavailable",
-    freshness: "—",
-    health: 0,
-  },
-];
-type Source = (typeof sources)[number];
+type Source = {
+  name: string;
+  type: string;
+  status: string;
+  coverage: string;
+  freshness: string;
+  health: number | null;
+};
 export function DataSourcesPage() {
-  const initialSource: Source = sources[0] ?? {
-    name: "No source",
-    type: "Unavailable",
-    status: "Unavailable",
-    coverage: "Unavailable",
-    freshness: "—",
-    health: 0,
-  };
-  const [selected, setSelected] = useState<Source>(initialSource);
+  const fyers = useQuery({
+    queryKey: ["source-health", "fyers"],
+    queryFn: async ({ signal }) => (await agentFetch("fyers/status", { signal })).json(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const overview = useQuery({
+    queryKey: ["source-health", "market-overview"],
+    queryFn: async ({ signal }) => (await agentFetch("market/overview", { signal })).json(),
+    staleTime: 30_000,
+    retry: false,
+  });
+  const sentiment = useQuery({
+    queryKey: ["source-health", "sentiment"],
+    queryFn: async ({ signal }) => (await agentFetch("market/sentiment", { signal })).json(),
+    staleTime: 45_000,
+    retry: false,
+  });
+  const { data: account } = useAccount();
+  const { data: analyses } = useAnalyses();
+  const worker = useQuery({
+    queryKey: ["source-health", "paper-worker"],
+    queryFn: () =>
+      paperOrderFetch<{
+        worker: {
+          running: boolean;
+          last: {
+            at: string;
+            skipped: boolean;
+            reason?: string;
+            quote_errors: Record<string, string>;
+          } | null;
+        };
+        book: { reconciliation: string[]; worker: { heartbeat_at: string | null } };
+      }>("worker", { method: "POST" }),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    retry: false,
+  });
+  const heartbeat = worker.data?.book.worker.heartbeat_at;
+  const workerFresh = heartbeat ? Date.now() - Date.parse(heartbeat) < 30_000 : false;
+  const overviewItems =
+    (overview.data as { instruments?: { value?: number | null }[] } | undefined)?.instruments ?? [];
+  const liveCount = overviewItems.filter((item) => item.value != null).length;
+  const sources: Source[] = [
+    {
+      name: "Market instruments",
+      type: "Market data",
+      status: liveCount ? "Connected" : "Unavailable",
+      coverage: `${liveCount}/${overviewItems.length || 4} provider indices`,
+      freshness: overview.data?.updated_at ? "Provider snapshot" : "Awaiting response",
+      health: overviewItems.length ? Math.round((liveCount / overviewItems.length) * 100) : 0,
+    },
+    {
+      name: "Market intelligence",
+      type: "News + sentiment",
+      status: sentiment.data ? "Connected" : sentiment.isError ? "Degraded" : "Checking",
+      coverage: sentiment.data
+        ? `${sentiment.data.data_quality ?? "quality unavailable"} data`
+        : "Market sentiment",
+      freshness: sentiment.data?.updated_at ? "Provider timestamp" : "Awaiting response",
+      health: null,
+    },
+    {
+      name: "Portfolio ledger",
+      type: "Private account",
+      status: account ? "Connected" : "Unavailable",
+      coverage: account ? "Authenticated paper account" : "Account unavailable",
+      freshness: account?.updated_at ? "Updated on settlement" : "Awaiting account",
+      health: null,
+    },
+    {
+      name: "Paper execution worker",
+      type: "Server process",
+      status: workerFresh ? "Connected" : worker.isError ? "Degraded" : "Unavailable",
+      coverage: worker.data
+        ? worker.data.book.reconciliation.length
+          ? `Book reconciliation issues: ${worker.data.book.reconciliation.length}`
+          : `Book reconciles · ${Object.keys(worker.data.worker.last?.quote_errors ?? {}).length} quote errors last tick`
+        : "Resting orders, protections, alerts, expiry",
+      freshness: heartbeat
+        ? `Heartbeat ${new Date(heartbeat).toLocaleTimeString("en-IN")}`
+        : "No heartbeat",
+      health: null,
+    },
+    {
+      name: "Committee analyses",
+      type: "CodeCraft research",
+      status: analyses ? "Connected" : "Unavailable",
+      coverage: analyses ? `${analyses.length} stored analyses` : "Research sessions",
+      freshness: "On request",
+      health: null,
+    },
+    {
+      name: "Broker account",
+      type: "Execution",
+      status: "Paper only",
+      coverage: "No live orders enabled",
+      freshness: "Intentional boundary",
+      health: null,
+    },
+    {
+      name: "Options surface",
+      type: "Derivatives",
+      status: "Unavailable",
+      coverage: "No live option-chain adapter",
+      freshness: "No observed option chain",
+      health: null,
+    },
+  ];
+  const [selectedName, setSelectedName] = useState("Market instruments");
+  const selected = sources.find((source) => source.name === selectedName) ?? sources[0]!;
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Data provenance"
         title="Data sources"
-        body="Know what is connected, how fresh it is, and which parts of the workspace are demonstrative."
-        status="No broker connected"
+        body="Know what is connected, how fresh it is, and which parts of the workspace are unavailable."
+        status={
+          fyers.data?.authenticated
+            ? "Fyers connected · paper only"
+            : "Fyers sign-in required · paper only"
+        }
       >
         <MetricStrip
           items={[
             {
               label: "Available sources",
-              value: sources.filter((s) => s.health > 0).length,
+              value: sources.filter((s) => s.status === "Connected").length,
               tone: "positive",
             },
-            { label: "Private sources", value: 2, tone: "primary" },
+            { label: "Private sources", value: account ? 2 : 0, tone: "primary" },
             { label: "External brokers", value: 0, tone: "warning" },
-            { label: "Overall health", value: "Healthy", tone: "positive" },
+            {
+              label: "Overall health",
+              value: sources.some((source) => source.status === "Unavailable")
+                ? "Degraded"
+                : "Operational",
+              tone: sources.some((source) => source.status === "Unavailable")
+                ? "warning"
+                : "positive",
+            },
           ]}
         />
       </PageIntro>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
         <Card>
           <CardHead title="Source registry" meta="Coverage and availability" />
           <div className="divide-y divide-border">
             {sources.map((s, i) => (
               <button
                 key={s.name}
-                onClick={() => setSelected(s)}
+                onClick={() => setSelectedName(s.name)}
                 className={cn(
                   "dash-rise grid w-full gap-3 px-5 py-4 text-left transition-colors hover:bg-panel-elevated/60 sm:grid-cols-[1.2fr_.7fr_.65fr_24px] sm:items-center",
                   selected.name === s.name && "bg-primary/10",
@@ -309,7 +447,7 @@ export function DataSourcesPage() {
               >
                 <span>
                   <span className="block text-[13px]">{s.name}</span>
-                  <span className="mt-1 block font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
+                  <span className="mt-1 block font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                     {s.type}
                   </span>
                 </span>
@@ -324,7 +462,7 @@ export function DataSourcesPage() {
                 >
                   {s.status}
                 </Pill>
-                <span className="font-mono text-[9px] text-subtle">{s.freshness}</span>
+                <span className="font-mono text-[11px] text-subtle">{s.freshness}</span>
                 <ChevronRight className="hidden h-3.5 w-3.5 text-subtle sm:block" />
               </button>
             ))}
@@ -336,14 +474,14 @@ export function DataSourcesPage() {
             <div
               className="relative mx-auto grid h-36 w-36 place-items-center rounded-full"
               style={{
-                background: `conic-gradient(var(--color-primary) ${selected.health * 3.6}deg,var(--color-border) 0)`,
+                background: `conic-gradient(var(--color-primary) ${(selected.health ?? 0) * 3.6}deg,var(--color-border) 0)`,
               }}
             >
               <div className="grid h-28 w-28 place-items-center rounded-full bg-panel">
                 <div className="text-center">
-                  <p className="font-mono text-3xl">{selected.health}</p>
-                  <p className="font-mono text-[8px] uppercase tracking-[.16em] text-subtle">
-                    health
+                  <p className="font-mono text-3xl">{selected.health ?? "Unmeasured"}</p>
+                  <p className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+                    quote coverage
                   </p>
                 </div>
               </div>
@@ -361,7 +499,7 @@ export function DataSourcesPage() {
                 ],
               ].map(([l, v]) => (
                 <div key={l} className="flex justify-between gap-4 border-b border-border pb-3">
-                  <dt className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle">
+                  <dt className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                     {l}
                   </dt>
                   <dd className="text-right text-[11px]">{v}</dd>
@@ -372,14 +510,15 @@ export function DataSourcesPage() {
               <Button
                 variant="outline"
                 disabled
-                className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]"
+                className="mt-5 w-full font-medium text-[11px] uppercase tracking-[0.06em]"
               >
                 Integration unavailable
               </Button>
             )}
             <p className="mt-5 text-[10px] leading-relaxed text-subtle">
-              Simulated sources are demonstrative and must not be interpreted as a live exchange
-              feed.
+              Quote coverage counts returned provider values; other source health is unmeasured.
+              Paper execution is intentionally isolated from broker order placement; unavailable
+              fields are not synthesized.
             </p>
           </div>
         </Card>
@@ -391,29 +530,41 @@ export function DataSourcesPage() {
 const faqs = [
   {
     q: "Are the prices and portfolio values live?",
-    a: "No. Current figures are clearly marked as demonstrative simulated data. Connect a supported source when live integrations become available.",
+    a: "Quotes come from the connected provider and are labelled live, closed-session, delayed or unavailable. Holdings are valued at their latest provider mark with its time; a missing quote is shown as unknown, never as zero. Paper fills require a fresh live Fyers quote during an open NSE session.",
   },
   {
-    q: "Does a committee verdict recommend a trade?",
-    a: "No. Verdicts demonstrate structured analytical reasoning. They are educational context, not personalised investment advice.",
+    q: "How does paper execution work?",
+    a: "The server fetches the quote, checks risk, and settles in whole paise. Buys fill at the observed ask (sells at the bid) when a valid spread exists, otherwise at the last trade. Market orders fill only the observed size; the rest is cancelled. Limit and stop orders reserve cash or shares and are checked by the server worker every few seconds, even with this tab closed. DAY orders expire at the session close.",
+  },
+  {
+    q: "Which charges are deducted?",
+    a: "Each fill debits STT, the NSE transaction charge, SEBI fee, stamp duty on buys and GST, from a dated schedule. Brokerage and depository charges are assumed zero and labelled as broker assumptions. The order audit trail lists every item.",
+  },
+  {
+    q: "What does the daily loss limit measure?",
+    a: "Start-of-session equity plus the day's deposits and withdrawals, minus current marked equity. Unrealised drops count and deposits cannot hide a loss. When the limit or a pause is active, new buys are blocked while sells of existing holdings stay allowed.",
+  },
+  {
+    q: "Does a committee verdict or Quant AI recommend a trade?",
+    a: "No. Research verdicts and opinion scores are educational and uncalibrated; they are not probabilities and do not constitute personalised investment advice. Neither the research agents nor Quant AI can place, change or cancel orders.",
   },
   {
     q: "What does Quant AI use as context?",
-    a: "It can discuss market structure, volatility, breadth, stored analyses and general portfolio risk using the context available in this workspace.",
+    a: "Read-only tools: provider quotes and history-derived facts, news tone, saved research, and your paper account, holdings, risk window, orders and journal. Answers cite evidence IDs, and an evidence check flags any figure that is not in the supplied data.",
   },
   {
-    q: "How are my account records protected?",
-    a: "Private portfolio, watchlist and analysis records are scoped to your authenticated account.",
+    q: "Where are my records kept?",
+    a: "In this local build, one local profile is stored in .local-data/workspace.json on this computer and is reachable only from localhost; it is not multi-user authentication. Hosted accounts on InsForge are available only when they are explicitly configured.",
   },
   {
-    q: "Why can an agent disagree with consensus?",
-    a: "Independent perspectives preserve useful disagreement. The committee shows limiting evidence rather than hiding it inside one score.",
+    q: "Which keyboard shortcuts exist?",
+    a: "Ctrl/Cmd+K or / opens search, B or S opens a buy or sell ticket (for the current stock on a stock page), 1–9 jump to dashboard, markets, portfolio, orders, wallet, alerts, screener, risk and basket, ? shows shortcuts, and Esc closes dialogs. Arrow keys move the chart crosshair.",
   },
 ];
-const helpCards: Array<[LucideIcon, string, string]> = [
-  [BookMarked, "Getting started", "Navigate markets, portfolio and research"],
-  [Keyboard, "Keyboard & workflow", "Search quickly and review efficiently"],
-  [Shield, "Risk & disclosure", "Understand analytical boundaries"],
+const helpCards: Array<[LucideIcon, string, string, string]> = [
+  [BookMarked, "Getting started", "Navigate markets, portfolio and research", "paper"],
+  [Keyboard, "Keyboard & workflow", "Search quickly and review efficiently", "keyboard"],
+  [Shield, "Risk & disclosure", "Understand analytical boundaries", "advice"],
 ];
 export function HelpPage() {
   const [query, setQuery] = useState("");
@@ -440,7 +591,7 @@ export function HelpPage() {
         </label>
       </PageIntro>
       <div className="grid gap-5 lg:grid-cols-3">
-        {helpCards.map(([Icon, title, body], i) => (
+        {helpCards.map(([Icon, title, body, topic], i) => (
           <Card key={String(title)} delay={120 + i * 80}>
             <div className="p-5">
               <span className="grid h-10 w-10 place-items-center border border-border bg-primary/10 text-primary-soft">
@@ -450,16 +601,17 @@ export function HelpPage() {
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{body}</p>
               <Button
                 variant="ghost"
-                className="mt-5 h-auto p-0 font-mono text-[9px] uppercase tracking-[.14em] text-primary-soft"
+                onClick={() => setQuery(topic)}
+                className="mt-5 h-auto p-0 font-medium text-[11px] uppercase tracking-[0.06em] text-primary-soft"
               >
-                Explore guide
+                Show related answers
                 <ChevronRight />
               </Button>
             </div>
           </Card>
         ))}
       </div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,.6fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,.6fr)]">
         <Card>
           <CardHead title="Common questions" meta={`${filtered.length} answers`} />
           <div className="px-5">
@@ -488,7 +640,7 @@ export function HelpPage() {
                 ["Quant AI", "Ask in plain language"],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-center gap-3 px-5 py-3">
-                  <kbd className="min-w-14 border border-border bg-background/40 px-2 py-1 text-center font-mono text-[9px] text-primary-soft">
+                  <kbd className="min-w-14 border border-border bg-background/40 px-2 py-1 text-center font-mono text-[11px] text-primary-soft">
                     {k}
                   </kbd>
                   <span className="text-[11px] text-muted-foreground">{v}</span>
@@ -507,7 +659,7 @@ export function HelpPage() {
               <Button
                 variant="outline"
                 disabled
-                className="mt-5 w-full font-mono text-[9px] uppercase tracking-[.14em]"
+                className="mt-5 w-full font-medium text-[11px] uppercase tracking-[0.06em]"
               >
                 Support coming soon
               </Button>

@@ -1,44 +1,48 @@
-import { AnimatedNumber } from "@/components/site/AnimatedNumber";
-import { instruments } from "@/data/market";
-import { formatQuote, useLiveQuotes } from "@/hooks/use-live";
-import { cn } from "@/lib/utils";
+const PHRASES = [
+  "Local paper trading",
+  "Provider market data with source and freshness",
+  "Research with visible uncertainty",
+  "Decision plans before orders",
+  "Pre-trade risk in rupees",
+  "Evidence you can trace",
+  "Calibrated track records",
+  "No invented statistics",
+];
 
-/** Continuously scrolling tape of the demonstrative dataset. */
+/** Product principles as a slow marquee; a static list for reduced motion and screen readers. */
 export function MarketTicker() {
-  const quotes = useLiveQuotes(instruments, { interval: 2400 });
-  const row = instruments.map((inst, i) => ({ inst, quote: quotes[i] }));
-
+  const row = (hidden: boolean) => (
+    <ul
+      aria-hidden={hidden || undefined}
+      className="flex shrink-0 items-center motion-reduce:shrink motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:gap-y-2"
+    >
+      {PHRASES.map((phrase) => (
+        <li key={phrase} className="flex items-center gap-6 px-6 whitespace-nowrap">
+          <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground">
+            {phrase}
+          </span>
+          <span aria-hidden="true" className="h-1 w-1 rotate-45 bg-primary" />
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <div
-      className="relative w-full overflow-hidden border-y border-border bg-surface py-3"
-      aria-label="Sample market tape"
+      className="marquee relative overflow-hidden border-y border-border bg-surface py-4"
+      aria-label="Quant Plus principles"
+      role="region"
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-surface to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-surface to-transparent" />
-      <div className="marquee-track flex w-max items-center gap-10 px-6">
-        {[0, 1].map((pass) => (
-          <div key={pass} className="flex items-center gap-10" aria-hidden={pass === 1}>
-            {row.map(({ inst, quote }) => {
-              const change = quote?.change ?? inst.change;
-              const last = quote?.last ?? Number(inst.last.replace(/,/g, ""));
-              return (
-                <span key={`${pass}-${inst.symbol}`} className="flex items-center gap-3 font-mono text-[11px]">
-                  <span className="tracking-[0.16em] uppercase text-muted-foreground">
-                    {inst.symbol}
-                  </span>
-                  <span className="num-tabular text-foreground">{formatQuote(last)}</span>
-                  <AnimatedNumber
-                    value={change}
-                    signed
-                    suffix="%"
-                    className={cn(change >= 0 ? "text-positive" : "text-negative")}
-                  />
-                  <span aria-hidden="true" className="h-3 w-px bg-border-strong" />
-                </span>
-              );
-            })}
-          </div>
-        ))}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-surface to-transparent"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-surface to-transparent"
+      />
+      <div className="marquee-track flex w-max motion-reduce:w-auto motion-reduce:flex-wrap">
+        {row(false)}
+        <div className="motion-reduce:hidden">{row(true)}</div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export function CalendarPanel() {
         <EmptyState
           title="No calendar data"
           hint="Event source temporarily unavailable."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       )}
 
@@ -40,13 +40,18 @@ export function CalendarPanel() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px]">{e.event}</p>
-                  <p className="mt-1 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                    {new Date(e.event_time).toLocaleString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
+                  <p className="mt-1 font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                    {e.time_known === false
+                      ? new Date(e.event_time).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : new Date(e.event_time).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
                     · {relativeTime(e.event_time)}
                   </p>
                 </div>

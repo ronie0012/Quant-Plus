@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BarChart3,
@@ -17,17 +18,85 @@ import {
   formatINR,
   formatNum,
   relativeTime,
-  useHoldings,
   useInstruments,
   useNews,
   useSentiment,
   useWatchlist,
+  useMarkedHoldings,
+  useIndexHistory,
+  useAddWatchlistItem,
+  useAnalyses,
 } from "@/hooks/use-dashboard-data";
-import { researchDesks } from "@/data/market";
+import { toPath } from "@/data/market";
+import { nifty50 } from "@/data/nifty50";
 import { StockBoard } from "@/components/app/stocks/StockBoard";
 import { cn } from "@/lib/utils";
+import { useStockMetrics, useStockQuotes } from "@/hooks/use-agent-stock";
+import { useMarketIntelligence } from "@/hooks/use-intelligence";
 
 const marketRanges = ["1D", "1W", "1M", "3M", "1Y"] as const;
+
+function ProviderIndexChart({
+  symbol,
+  range,
+  positive,
+}: {
+  symbol: string;
+  range: string;
+  positive: boolean;
+}) {
+  const history = useIndexHistory(symbol, range);
+  const closes = history.data?.candles.map((c) => c.close) ?? [];
+  const low = closes.length ? Math.min(...closes) : 0;
+  const high = closes.length ? Math.max(...closes) : 1;
+  const span = high - low || 1;
+  const path =
+    closes.length > 1
+      ? toPath(
+          closes.map((value) => (value - low) / span),
+          1000,
+          280,
+        )
+      : "";
+  return (
+    <div className="relative h-[280px]">
+      <svg
+        viewBox="0 0 1000 280"
+        preserveAspectRatio="none"
+        className="h-full w-full"
+        role="img"
+        aria-label={`${symbol} provider price history`}
+      >
+        {[0.2, 0.4, 0.6, 0.8].map((line) => (
+          <line
+            key={line}
+            x1="0"
+            x2="1000"
+            y1={280 * line}
+            y2={280 * line}
+            stroke="var(--color-border)"
+          />
+        ))}
+        {path ? (
+          <path
+            d={path}
+            fill="none"
+            strokeWidth="2"
+            className={positive ? "stroke-positive" : "stroke-negative"}
+          />
+        ) : (
+          <text x="500" y="140" textAnchor="middle" className="fill-subtle text-[14px]">
+            Provider history unavailable
+          </text>
+        )}
+      </svg>
+      <span className="absolute right-3 bottom-3 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+        {history.data?.source ? `${history.data.source} OHLCV` : "Awaiting provider history"}
+      </span>
+    </div>
+  );
+}
+
 export function MarketsPage() {
   const { data, isLoading, isError, refetch } = useInstruments();
   const { data: sentiment } = useSentiment();
@@ -35,9 +104,6 @@ export function MarketsPage() {
   const [selected, setSelected] = useState(0);
   const [range, setRange] = useState<(typeof marketRanges)[number]>("1D");
   const instrument = data?.[selected];
-  const seed = (instrument?.symbol ?? "INDEX")
-    .split("")
-    .reduce((a, c) => a + c.charCodeAt(0), range.length);
   if (isLoading)
     return (
       <div className="flex flex-col gap-5">
@@ -70,31 +136,39 @@ export function MarketsPage() {
       </div>
     );
 
-  const up = instrument.change_pct >= 0;
+  const up = (instrument.change_pct ?? 0) >= 0;
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Markets desk · live context"
         title="Market pulse"
         body="Price action, regime and cross-market context in one focused workspace."
-        action={<SourceTag label="Demonstrative feed" />}
+        action={
+          <SourceTag label={instrument.source ? instrument.source.toUpperCase() : "UNAVAILABLE"} />
+        }
       >
         <MetricStrip
-          items={data
-            .slice(0, 4)
-            .map((i) => ({
-              label: i.name,
-              value: `${i.kind === "commodity" ? "₹" : ""}${formatNum(i.value, i.kind === "commodity" ? 0 : 2)}`,
-              note: `${i.change_pct >= 0 ? "+" : ""}${formatNum(i.change_pct)}%`,
-              tone: i.change_pct >= 0 ? "positive" : "negative",
-            }))}
+          items={data.slice(0, 4).map((i) => ({
+            label: i.name,
+            value:
+              i.value == null
+                ? "—"
+                : `${i.kind === "commodity" ? "₹" : ""}${formatNum(i.value, i.kind === "commodity" ? 0 : 2)}`,
+            note:
+              i.change_pct == null
+                ? "Unavailable"
+                : `${i.change_pct >= 0 ? "+" : ""}${formatNum(i.change_pct)}%`,
+            ...(i.change_pct == null
+              ? {}
+              : { tone: i.change_pct >= 0 ? ("positive" as const) : ("negative" as const) }),
+          }))}
         />
       </PageIntro>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
         <Card glow delay={180}>
           <CardHead
             title={instrument.name}
-            meta={`${instrument.symbol} · updated ${relativeTime(instrument.updated_at)}`}
+            meta={`${instrument.symbol} · ${instrument.updated_at ? `updated ${relativeTime(instrument.updated_at)}` : "awaiting provider data"}`}
             action={
               <Segmented
                 items={marketRanges}
@@ -108,13 +182,14 @@ export function MarketsPage() {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="font-mono text-[clamp(1.8rem,4vw,3rem)] num-tabular">
-                  {instrument.kind === "commodity" ? "₹" : ""}
-                  {formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}
+                  {instrument.value != null
+                    ? `${instrument.kind === "commodity" ? "₹" : ""}${formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}`
+                    : "—"}
                 </p>
                 <p className={cn("mt-2 font-mono text-sm", up ? "text-positive" : "text-negative")}>
-                  {up ? "+" : ""}
-                  {formatNum(instrument.change_abs)} · {up ? "+" : ""}
-                  {formatNum(instrument.change_pct)}%
+                  {instrument.change_abs != null && instrument.change_pct != null
+                    ? `${up ? "+" : ""}${formatNum(instrument.change_abs)} · ${up ? "+" : ""}${formatNum(instrument.change_pct)}%`
+                    : "No provider change data"}
                 </p>
               </div>
               <Pill tone={sentiment?.label === "BULLISH" ? "positive" : "primary"}>
@@ -127,30 +202,23 @@ export function MarketsPage() {
               aria-hidden
               className="scan-line pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-primary/35"
             />
-            <SparkChart
-              key={`${seed}-${range}`}
-              seed={seed}
-              positive={up}
-              height={280}
-              className="h-[280px]"
-              label={`${instrument.name} ${range} trend`}
-            />
+            <ProviderIndexChart symbol={instrument.symbol} range={range} positive={up} />
           </div>
           <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
             {[
-              { l: "Momentum", v: up ? 68 : 42 },
-              { l: "Volatility", v: instrument.kind === "commodity" ? 31 : 46 },
-              { l: "Breadth", v: sentiment?.score ?? 50 },
+              { l: "Momentum", v: null },
+              { l: "Volatility", v: null },
+              { l: "Sentiment score", v: sentiment?.score ?? null },
             ].map((m, i) => (
               <div key={m.l} className="bg-panel/80 p-4">
-                <div className="flex justify-between font-mono text-[9px] tracking-[.16em] uppercase text-subtle">
+                <div className="flex justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                   <span>{m.l}</span>
-                  <span className="text-muted-foreground">{m.v}</span>
+                  <span className="text-muted-foreground">{m.v ?? "Unavailable"}</span>
                 </div>
                 <div className="mt-3">
                   <ProgressBar
-                    value={m.v}
-                    tone={m.v > 60 ? "positive" : "primary"}
+                    value={m.v ?? 0}
+                    tone={(m.v ?? 0) > 60 ? "positive" : "primary"}
                     delay={500 + i * 100}
                   />
                 </div>
@@ -173,18 +241,29 @@ export function MarketsPage() {
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block font-mono text-[10px] tracking-[.14em] uppercase">
+                    <span className="block font-medium text-[11px] tracking-[0.06em] uppercase">
                       {item.name}
                     </span>
                     <span className="mt-1 block text-[11px] text-subtle">{item.symbol}</span>
                   </span>
                   <span className="text-right font-mono text-[11px] num-tabular">
                     <span className="block">
-                      {formatNum(item.value, item.kind === "commodity" ? 0 : 2)}
+                      {item.value != null
+                        ? formatNum(item.value, item.kind === "commodity" ? 0 : 2)
+                        : "—"}
                     </span>
-                    <span className={item.change_pct >= 0 ? "text-positive" : "text-negative"}>
-                      {item.change_pct >= 0 ? "+" : ""}
-                      {formatNum(item.change_pct)}%
+                    <span
+                      className={
+                        item.change_pct == null
+                          ? "text-subtle"
+                          : item.change_pct >= 0
+                            ? "text-positive"
+                            : "text-negative"
+                      }
+                    >
+                      {item.change_pct == null
+                        ? "—"
+                        : `${item.change_pct >= 0 ? "+" : ""}${formatNum(item.change_pct)}%`}
                     </span>
                   </span>
                 </Button>
@@ -198,7 +277,9 @@ export function MarketsPage() {
                 <li key={n.id} className="p-4">
                   <p className="text-[12.5px] leading-relaxed">{n.headline}</p>
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="font-mono text-[9px] uppercase text-subtle">{n.source}</span>
+                    <span className="font-medium text-[11px] uppercase text-subtle">
+                      {n.source}
+                    </span>
                     <Pill tone={n.impact === "HIGH" ? "warning" : "neutral"}>{n.impact}</Pill>
                   </div>
                 </li>
@@ -214,7 +295,7 @@ export function MarketsPage() {
 
 const portfolioViews = ["Holdings", "Allocation", "Contribution"] as const;
 export function PortfolioPage() {
-  const { data, isLoading, isError, refetch } = useHoldings();
+  const { data, isLoading, isError, refetch } = useMarkedHoldings();
   const [view, setView] = useState<(typeof portfolioViews)[number]>("Holdings");
   if (isLoading)
     return (
@@ -232,7 +313,7 @@ export function PortfolioPage() {
         <EmptyState
           title="No portfolio positions"
           hint="Add positions to unlock portfolio intelligence."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       </Card>
     );
@@ -260,9 +341,11 @@ export function PortfolioPage() {
         title="Capital, understood."
         body="See what drives return, where risk concentrates, and how every position contributes."
         action={
-          <Button size="sm" className="sheen font-mono text-[10px] tracking-[.14em] uppercase">
-            <ShieldCheck />
-            Run risk scan
+          <Button asChild size="sm" className="font-medium text-[11px] tracking-[0.06em] uppercase">
+            <Link to="/app/$section" params={{ section: "risk" }}>
+              <ShieldCheck />
+              Open risk centre
+            </Link>
           </Button>
         }
       >
@@ -283,11 +366,11 @@ export function PortfolioPage() {
           ]}
         />
       </PageIntro>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.75fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.75fr)]">
         <Card glow>
           <CardHead
             title="Portfolio ledger"
-            meta={`${rows.length} positions · simulated account`}
+            meta={`${rows.length} positions · live marks · paper account`}
             action={
               <Segmented
                 items={portfolioViews}
@@ -300,7 +383,7 @@ export function PortfolioPage() {
           {view === "Holdings" && (
             <div className="overflow-x-auto">
               <div className="min-w-[720px]">
-                <div className="grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] border-b border-border px-5 py-2 font-mono text-[9px] uppercase tracking-[.16em] text-subtle">
+                <div className="grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] border-b border-border px-5 py-2 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                   <span>Instrument</span>
                   <span className="text-right">Invested</span>
                   <span className="text-right">Current</span>
@@ -313,7 +396,7 @@ export function PortfolioPage() {
                     className="group grid grid-cols-[1.2fr_.8fr_.8fr_.8fr_.7fr] items-center border-b border-border px-5 py-4 transition-colors hover:bg-panel-elevated/60"
                   >
                     <div>
-                      <p className="font-mono text-[11px] tracking-[.12em]">{r.symbol}</p>
+                      <p className="font-mono text-[11px] tracking-[0.04em]">{r.symbol}</p>
                       <p className="mt-1 text-[11px] text-subtle">
                         {r.quantity} shares · {r.company}
                       </p>
@@ -418,7 +501,9 @@ export function PortfolioPage() {
               {sectors.map(([name, value], i) => (
                 <div key={name}>
                   <div className="mb-2 flex justify-between font-mono text-[10px]">
-                    <span className="uppercase tracking-[.14em] text-muted-foreground">{name}</span>
+                    <span className="uppercase tracking-[0.06em] text-muted-foreground">
+                      {name}
+                    </span>
                     <span>{((value / current) * 100).toFixed(1)}%</span>
                   </div>
                   <ProgressBar value={(value / current) * 100} delay={i * 100} />
@@ -452,20 +537,42 @@ export function PortfolioPage() {
 }
 
 const watchFilters = ["All", "Gainers", "Decliners"] as const;
+
+/** Mean of observed moves only; unknown when no instrument has a quote. */
+function averageMove(values: (number | null)[]) {
+  const known = values.filter((value): value is number => value != null && Number.isFinite(value));
+  if (!known.length) return "—";
+  const mean = known.reduce((sum, value) => sum + value, 0) / known.length;
+  return `${mean >= 0 ? "+" : ""}${mean.toFixed(2)}% (${known.length}/${values.length})`;
+}
 export function WatchlistPage() {
   const { data, isLoading, isError, refetch } = useWatchlist();
+  const addWatchlist = useAddWatchlistItem();
+  const feed = useStockQuotes((data ?? []).map((item) => item.symbol));
   const [filter, setFilter] = useState<(typeof watchFilters)[number]>("All");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
+  const liveData = useMemo(
+    () =>
+      data?.map((item) => ({
+        ...item,
+        // Missing provider observations stay unknown; they are never shown as zero.
+        price: feed.quotes[item.symbol]?.price ?? null,
+        change_pct: feed.quotes[item.symbol]?.change_pct ?? null,
+      })) ?? [],
+    [data, feed.quotes],
+  );
   const filtered = useMemo(
     () =>
-      data?.filter(
+      liveData.filter(
         (w) =>
-          (filter === "All" || (filter === "Gainers" ? w.change_pct >= 0 : w.change_pct < 0)) &&
+          (filter === "All" ||
+            (w.change_pct != null &&
+              (filter === "Gainers" ? w.change_pct >= 0 : w.change_pct < 0))) &&
           (w.symbol.toLowerCase().includes(query.toLowerCase()) ||
             w.company.toLowerCase().includes(query.toLowerCase())),
       ) ?? [],
-    [data, filter, query],
+    [liveData, filter, query],
   );
   const focus = filtered[selected] ?? filtered[0];
   return (
@@ -478,7 +585,19 @@ export function WatchlistPage() {
           <Button
             size="sm"
             variant="outline"
-            className="font-mono text-[10px] uppercase tracking-[.14em]"
+            className="font-medium text-[11px] uppercase tracking-[0.06em]"
+            onClick={() => {
+              const candidate = nifty50.find(
+                (stock) => !(data ?? []).some((item) => item.symbol === stock.symbol),
+              );
+              if (candidate) {
+                void addWatchlist.mutateAsync({
+                  symbol: candidate.symbol,
+                  company: candidate.company,
+                });
+              }
+            }}
+            disabled={addWatchlist.isPending}
           >
             <Star />
             Add instrument
@@ -490,23 +609,23 @@ export function WatchlistPage() {
             { label: "Tracked", value: data?.length ?? 0 },
             {
               label: "Advancing",
-              value: data?.filter((x) => x.change_pct >= 0).length ?? 0,
+              value: liveData.filter((x) => x.change_pct != null && x.change_pct >= 0).length,
               tone: "positive",
             },
             {
               label: "Declining",
-              value: data?.filter((x) => x.change_pct < 0).length ?? 0,
+              value: liveData.filter((x) => x.change_pct != null && x.change_pct < 0).length,
               tone: "negative",
             },
             {
               label: "Average move",
-              value: `${data?.length ? (data.reduce((s, x) => s + x.change_pct, 0) / data.length >= 0 ? "+" : "") + (data.reduce((s, x) => s + x.change_pct, 0) / data.length).toFixed(2) : "0.00"}%`,
+              value: averageMove(liveData.map((x) => x.change_pct)),
               tone: "primary",
             },
           ]}
         />
       </PageIntro>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.8fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.8fr)]">
         <Card>
           <CardHead
             title="Tracked instruments"
@@ -559,23 +678,27 @@ export function WatchlistPage() {
                   )}
                 >
                   <span>
-                    <span className="block font-mono text-[11px] tracking-[.12em]">{w.symbol}</span>
+                    <span className="block font-mono text-[11px] tracking-[0.04em]">
+                      {w.symbol}
+                    </span>
                     <span className="mt-1 block truncate text-[11px] text-subtle">{w.company}</span>
                   </span>
-                  <SparkChart
-                    seed={w.symbol.length * 17}
-                    positive={w.change_pct >= 0}
-                    height={26}
-                    className="h-7"
-                  />
+                  <span className="text-right font-mono text-[11px] text-subtle">
+                    {w.price == null ? "No quote" : `₹${formatNum(w.price)}`}
+                  </span>
                   <span
                     className={cn(
                       "text-right font-mono text-[11px]",
-                      w.change_pct >= 0 ? "text-positive" : "text-negative",
+                      w.change_pct == null
+                        ? "text-subtle"
+                        : w.change_pct >= 0
+                          ? "text-positive"
+                          : "text-negative",
                     )}
                   >
-                    {w.change_pct >= 0 ? "+" : ""}
-                    {formatNum(w.change_pct)}%
+                    {w.change_pct == null
+                      ? "—"
+                      : `${w.change_pct >= 0 ? "+" : ""}${formatNum(w.change_pct)}%`}
                   </span>
                   <ChevronRight className="h-3.5 w-3.5 text-subtle" />
                 </Button>
@@ -589,8 +712,16 @@ export function WatchlistPage() {
             meta={focus?.company ?? "Select an instrument"}
             action={
               focus && (
-                <Pill tone={focus.change_pct >= 0 ? "positive" : "negative"}>
-                  {focus.change_pct >= 0 ? "Momentum +" : "Momentum −"}
+                <Pill
+                  tone={
+                    focus.change_pct == null
+                      ? "neutral"
+                      : focus.change_pct >= 0
+                        ? "positive"
+                        : "negative"
+                  }
+                >
+                  {focus.change_pct == null ? "No quote" : "Day change"}
                 </Pill>
               )
             }
@@ -598,41 +729,32 @@ export function WatchlistPage() {
           {focus ? (
             <>
               <div className="p-5">
-                <p className="font-mono text-3xl num-tabular">₹{formatNum(focus.price)}</p>
-                <p
-                  className={cn(
-                    "mt-2 font-mono text-sm",
-                    focus.change_pct >= 0 ? "text-positive" : "text-negative",
-                  )}
-                >
-                  {focus.change_pct >= 0 ? "+" : ""}
-                  {formatNum(focus.change_pct)}%
+                <p className="font-mono text-3xl num-tabular">
+                  {focus.price == null ? "Price unavailable" : `₹${formatNum(focus.price)}`}
                 </p>
+                {focus.change_pct != null && (
+                  <p
+                    className={cn(
+                      "mt-2 font-mono text-sm",
+                      focus.change_pct >= 0 ? "text-positive" : "text-negative",
+                    )}
+                  >
+                    {focus.change_pct >= 0 ? "+" : ""}
+                    {formatNum(focus.change_pct)}%
+                  </p>
+                )}
               </div>
-              <SparkChart
-                seed={focus.symbol.length * 29}
-                positive={focus.change_pct >= 0}
-                height={180}
-                className="h-44 px-2"
-              />
-              <div className="grid grid-cols-3 gap-px border-y border-border bg-border">
-                {[
-                  ["Momentum", focus.change_pct >= 0 ? "68" : "42"],
-                  ["Risk", "Moderate"],
-                  ["Source", "Simulated"],
-                ].map((x) => (
-                  <div className="bg-panel p-3" key={x[0]}>
-                    <p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
-                      {x[0]}
-                    </p>
-                    <p className="mt-2 text-[11px]">{x[1]}</p>
-                  </div>
-                ))}
-              </div>
+              <SparkChart symbol={focus.symbol} height={180} className="h-44 px-2" />
+              <FocusMetrics symbol={focus.symbol} />
               <div className="p-4">
-                <Button className="w-full font-mono text-[10px] uppercase tracking-[.16em]">
-                  <BarChart3 />
-                  Analyze {focus.symbol}
+                <Button
+                  asChild
+                  className="w-full font-medium text-[11px] uppercase tracking-[0.06em]"
+                >
+                  <Link to="/app/stocks/$symbol" params={{ symbol: focus.symbol }}>
+                    <BarChart3 />
+                    Analyze {focus.symbol}
+                  </Link>
                 </Button>
               </div>
             </>
@@ -648,12 +770,83 @@ export function WatchlistPage() {
   );
 }
 
+/** Technical factors for the inspected instrument, from completed provider candles. */
+function FocusMetrics({ symbol }: { symbol: string }) {
+  const metrics = useStockMetrics(symbol);
+  const cells: [string, number | null | undefined][] = [
+    ["Momentum", metrics.data?.momentum],
+    ["Volatility", metrics.data?.volatility],
+    ["RSI", metrics.data?.rsi],
+  ];
+  return (
+    <div className="border-y border-border">
+      <div className="grid grid-cols-3 gap-px bg-border">
+        {cells.map(([label, value]) => (
+          <div className="bg-panel p-3" key={label}>
+            <p className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+              {label}
+            </p>
+            <p
+              className={cn(
+                "mt-1.5 font-mono text-[13px] num-tabular",
+                value == null && "text-subtle",
+              )}
+            >
+              {metrics.isLoading ? "…" : value == null ? "Unavailable" : formatNum(value)}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="bg-panel px-3 py-2 text-[11px] text-subtle">
+        {metrics.data?.source
+          ? `Source: ${metrics.data.source}${metrics.data.as_of ? ` · as of ${new Date(metrics.data.as_of).toLocaleDateString("en-IN")}` : ""}`
+          : "Technical factors need provider history"}
+      </p>
+    </div>
+  );
+}
+
 const researchFilters = ["All", "Market", "Macro", "Risk", "AI"] as const;
 export function ResearchPage() {
   const [filter, setFilter] = useState<(typeof researchFilters)[number]>("All");
   const [selected, setSelected] = useState(0);
   const { data: news } = useNews();
-  const desks = researchDesks.filter(
+  const { data: analyses } = useAnalyses();
+  const { data: intelligence } = useMarketIntelligence();
+  const liveDesks = [
+    {
+      code: "MARKET",
+      title: "Market intelligence",
+      meta: intelligence?.updated_at
+        ? `Updated ${relativeTime(intelligence.updated_at)}`
+        : "Provider-backed",
+      body:
+        intelligence?.ai_explanation?.summary ??
+        "Quantitative market context is being assembled from provider quotes, breadth, sectors, volatility and news.",
+      metrics: [
+        { label: "Score", value: intelligence?.score == null ? "—" : String(intelligence.score) },
+        { label: "Regime", value: intelligence?.regime?.replaceAll("_", " ") ?? "Unavailable" },
+      ],
+      symbol: null as string | null,
+    },
+    ...(analyses ?? []).slice(0, 5).map((analysis) => ({
+      code: analysis.symbol,
+      title: `${analysis.symbol} research decision`,
+      meta: `Completed ${relativeTime(analysis.created_at)}`,
+      body:
+        analysis.summary ??
+        "Completed CodeCraft research session with persisted analyst and risk stages.",
+      metrics: [
+        { label: "Verdict", value: analysis.verdict },
+        {
+          label: "Opinion (uncalibrated)",
+          value: analysis.conviction == null ? "—" : `${analysis.conviction}/100`,
+        },
+      ],
+      symbol: analysis.symbol as string | null,
+    })),
+  ];
+  const desks = liveDesks.filter(
     (d) =>
       filter === "All" ||
       (filter === "Market" && /Market|Sector|Earnings/.test(d.title)) ||
@@ -661,7 +854,7 @@ export function ResearchPage() {
       (filter === "Risk" && /Volatility/.test(d.title)) ||
       (filter === "AI" && /AI/.test(d.title)),
   );
-  const active = desks[selected] ?? desks[0] ?? researchDesks[0];
+  const active = desks[selected] ?? desks[0] ?? liveDesks[0];
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
@@ -669,15 +862,17 @@ export function ResearchPage() {
         title="Research terminal"
         body="Evidence-led briefs that separate what changed, why it matters and what remains unconfirmed."
         action={
-          <Button size="sm" className="font-mono text-[10px] uppercase tracking-[.14em]">
-            <BookOpen />
-            Generate brief
+          <Button asChild size="sm" className="font-medium text-[11px] uppercase tracking-[0.06em]">
+            <Link to="/app/$section" params={{ section: "committee" }}>
+              <BookOpen />
+              Generate brief
+            </Link>
           </Button>
         }
       >
         <MetricStrip
           items={[
-            { label: "Research desks", value: researchDesks.length },
+            { label: "Live briefs", value: liveDesks.length },
             { label: "Latest updates", value: news?.length ?? 0 },
             { label: "Coverage", value: "Cross-market", tone: "primary" },
             { label: "Method", value: "Evidence first" },
@@ -694,42 +889,34 @@ export function ResearchPage() {
           }}
           label="Research category"
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="font-mono text-[9px] uppercase tracking-[.14em] text-subtle"
-        >
-          <Filter />
-          Newest first
-        </Button>
       </div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
         <div className="grid gap-4 sm:grid-cols-2">
           {desks.map((d, i) => (
             <button
               key={d.code}
               onClick={() => setSelected(i)}
               className={cn(
-                "dash-rise group relative overflow-hidden rounded-xl border bg-panel/70 p-5 text-left transition-all duration-500 hover:-translate-y-1 hover:border-primary/40",
+                "dash-rise group relative overflow-hidden rounded-lg border bg-panel/80 p-5 text-left transition-colors duration-200 hover:border-primary/40",
                 active?.code === d.code ? "border-primary/50" : "border-border",
               )}
               style={{ ["--d" as string]: `${i * 70}ms` }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[9px] tracking-[.18em] text-primary-soft">
+                <span className="font-mono text-[11px] tracking-[0.04em] text-primary-soft">
                   {d.code}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 text-subtle transition-transform group-hover:translate-x-1 group-hover:text-primary-soft" />
               </div>
               <h2 className="mt-8 text-xl tracking-tight">{d.title}</h2>
-              <p className="mt-2 font-mono text-[9px] uppercase tracking-[.14em] text-subtle">
+              <p className="mt-2 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                 {d.meta}
               </p>
               <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">{d.body}</p>
               <div className="mt-6 grid grid-cols-2 gap-2">
                 {d.metrics.map((m) => (
                   <div key={m.label} className="border-t border-border pt-3">
-                    <p className="font-mono text-[8px] uppercase tracking-[.14em] text-subtle">
+                    <p className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                       {m.label}
                     </p>
                     <p className="mt-1 font-mono text-[12px]">{m.value}</p>
@@ -745,29 +932,23 @@ export function ResearchPage() {
             <Pill tone="primary">{active?.code}</Pill>
             <h2 className="mt-5 text-2xl tracking-tight">{active?.title}</h2>
             <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">{active?.body}</p>
-            <SparkChart seed={active?.seed ?? 5} height={120} className="mt-6 h-28" />
-            <div className="mt-6 space-y-4">
-              {["Observed signal", "Primary driver", "Counter-evidence", "Confidence boundary"].map(
-                (x, i) => (
-                  <div key={x} className="flex gap-3 border-t border-border pt-3">
-                    <span className="font-mono text-[9px] text-primary-soft">0{i + 1}</span>
-                    <div>
-                      <p className="text-[12px]">{x}</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-subtle">
-                        Derived from demonstrative market context. Validate against a live source
-                        before acting.
-                      </p>
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
+            <SparkChart symbol={active?.symbol} height={120} className="mt-6 h-28" />
             <Button
+              asChild
               variant="outline"
-              className="mt-6 w-full font-mono text-[10px] uppercase tracking-[.14em]"
+              className="mt-6 w-full font-medium text-[11px] uppercase tracking-[0.06em]"
             >
-              Open full report
-              <ChevronRight />
+              {active?.symbol ? (
+                <Link to="/app/stocks/$symbol" params={{ symbol: active.symbol }}>
+                  Open full research
+                  <ChevronRight />
+                </Link>
+              ) : (
+                <Link to="/app/$section" params={{ section: "markets" }}>
+                  Open markets
+                  <ChevronRight />
+                </Link>
+              )}
             </Button>
           </div>
         </Card>

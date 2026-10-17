@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-14",
+  "scope": "Implementation checkpoint, not a release gate or live integration certification",
+  "checks": [
+    { "command": "tsc --noEmit", "exit_code": 0 },
+    { "command": "eslint . --max-warnings 0", "exit_code": 0, "errors": 0, "warnings": 0 },
+    { "command": "vite build", "exit_code": 0, "preset": "node-server", "remaining_warning": "vite-tsconfig-paths overlaps Vite native resolution" },
+    { "command": "node --experimental-strip-types --test src/lib/options.test.ts src/lib/sim-price.test.ts src/lib/market-session.test.ts", "exit_code": 0, "passed": 12 },
+    { "command": "frontend scripts listed in package.json test", "passed_suites": 9, "exit_code": 0, "additional_check": "runtime market fixture/import audit passed" },
+    { "command": "python -B -m pytest backend-extension/tests -q -p no:cacheprovider", "exit_code": 0, "passed": 82, "provider_data": "mocked" },
+    { "command": "python -B scripts/test-backend-hermetic.py", "exit_code": 0, "passed": 436, "excluded": "tests/test_technical.py (live Yahoo/model test)", "duration_seconds": 51.28, "network": "external connections denied; loopback allowed for Windows asyncio" },
+    { "command": "npm.cmd run test:browser", "exit_code": 0, "passed": 7, "duration_seconds": 20.6, "coverage": "initial public and local unavailable-provider workflows; isolated paper account" },
+    { "command": "npm.cmd run test:browser -- --grep screener", "exit_code": 0, "passed": 1, "duration_seconds": 11.5, "coverage": "follow-up regression: unknown volatility cannot pass an active constraint" },
+    { "command": "node scripts/roadmap-inventory.mjs", "exit_code": 0, "source_files": 210, "action_sites": 154, "audit_defects": 43, "manual_inventory_review": "pending" }
+  ],
+  "release_gates_passed": [],
+  "not_verified": [
+    "InsForge schema/auth/RLS and local-data migration",
+    "integer-money transactional ledger and durable matching/alert workers",
+    "complete day-start equity, fresh mark, calendar and legacy-label eligibility policies",
+    "live provider entitlements/recovery and complete product data lineage",
+    "real-corpus news/sentiment/AI grounding and forecast quality",
+    "complete route/action/accessibility browser coverage",
+    "fault/load/recovery matrix and ten trading-session soak",
+    "dated competitive comparison"
+  ]
+}

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/site/PageHeader";
 
 const title = "Markets — Quant Plus Market Intelligence";
 const description =
-  "Track indices, crypto, commodities and currencies with quantitative context: momentum, volatility, breadth and market regime.";
+  "Follow NSE cash equities with quantitative context: provider quotes, momentum, volatility, breadth and market regime.";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -29,9 +29,9 @@ function MarketsPage() {
     <>
       <PageHeader
         eyebrow="Markets"
-        heading="Every market, one language."
-        body="Indices, crypto, commodities and currencies normalised into the same quantitative frame — so comparison is honest rather than convenient."
-        meta={["8 instruments", "Momentum · Volatility · Breadth", "Sample data"]}
+        heading="NSE equities, measured honestly."
+        body="NIFTY 50 stocks and NSE indices with source-labelled quotes, technical factors and market breadth. Live data appears inside the terminal; this page describes what it measures."
+        meta={["NSE cash equities", "Momentum · Volatility · Breadth", "Live data in the terminal"]}
       />
       <MarketIntelligence />
       <MarketExplorer />

@@ -1,0 +1,71 @@
+class SupabaseSentimentHistoryRepository:
+    """Legacy PostgREST adapter, kept for historical deployments only."""
+
+    def __init__(self, url: str, service_key: str, transport=None, table="market_sentiment_snapshots"):
+        self.url = url.rstrip("/") + "/rest/v1/"
+        self.headers = {"apikey": service_key, "Authorization": "Bearer " + service_key}
+        self.transport = transport
+        self.table = table
+
+    async def save(self, snapshot: SentimentSnapshot) -> None:
+        row = {
+            "timestamp": snapshot.timestamp,
+            "score": snapshot.score,
+            "label": snapshot.label,
+            "confidence": snapshot.confidence,
+            "data_quality": snapshot.data_quality,
+            "regime": snapshot.regime,
+            "alignment_score": snapshot.alignment_score,
+            **snapshot.components,
+            "metadata": snapshot.metadata,
+            "forward_return_15m": snapshot.forward_return_15m,
+            "forward_return_30m": snapshot.forward_return_30m,
+            "forward_return_1h": snapshot.forward_return_1h,
+            "forward_return_eod": snapshot.forward_return_eod,
+            "forward_return_1d": snapshot.forward_return_1d,
+        }
+        async with httpx.AsyncClient(transport=self.transport, timeout=5) as client:
+            response = await client.post(self.url + self.table, params={"on_conflict": "timestamp"}, json=row,
+                headers={**self.headers, "Prefer": "resolution=merge-duplicates,return=minimal"})
+            response.raise_for_status()
+
+    async def list(self, since: datetime, until: datetime | None = None) -> list[SentimentSnapshot]:
+        until = until or utcnow()
+
+        rows = []
+        async with httpx.AsyncClient(transport=self.transport, timeout=5) as client:
+            for offset in range(0, config.sentiment_history_max_snapshots, 500):
+                response = await client.get(self.url + self.table, headers=self.headers,
+                    params=[("select", "*"), ("timestamp", "gte." + since.isoformat()),
+                            ("timestamp", "lte." + until.isoformat()), ("order", "timestamp.asc"),
+                            ("offset", str(offset)), ("limit", "500")])
+                response.raise_for_status()
+                page = response.json()
+                rows.extend(page)
+                if len(page) < 500:
+                    break
+        return [
+            SentimentSnapshot(
+                timestamp=row["timestamp"],
+                score=row.get("score"),
+                label=row.get("label", "UNAVAILABLE"),
+                confidence=row.get("confidence", 0),
+                data_quality=row.get("data_quality", "DEGRADED"),
+                regime=row.get("regime", "MIXED"),
+                components={
+                    key: row.get(key)
+                    for key in (
+                        "nifty_momentum", "market_breadth", "sector_breadth",
+                        "india_vix", "news_sentiment", "volume_momentum", "bank_nifty",
+                    )
+                },
+                alignment_score=row.get("alignment_score"),
+                metadata=row.get("metadata") or {},
+                forward_return_15m=row.get("forward_return_15m"),
+                forward_return_30m=row.get("forward_return_30m"),
+                forward_return_1h=row.get("forward_return_1h"),
+                forward_return_eod=row.get("forward_return_eod"),
+                forward_return_1d=row.get("forward_return_1d"),
+            )
+             for row in rows
+        ]

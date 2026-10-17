@@ -12,10 +12,7 @@ export function ProductShowcase() {
   const lift = reduced ? 0 : (1 - t) * 40;
 
   return (
-    <section
-      ref={ref}
-      className="relative overflow-hidden border-t border-border py-24 md:py-36"
-    >
+    <section ref={ref} className="relative overflow-hidden border-t border-border py-24 md:py-36">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
@@ -24,7 +21,10 @@ export function ProductShowcase() {
             "radial-gradient(ellipse 60% 50% at 50% 42%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 70%)",
         }}
       />
-      <div className="grid-lines pointer-events-none absolute inset-0 opacity-25" aria-hidden="true" />
+      <div
+        className="grid-lines pointer-events-none absolute inset-0 opacity-25"
+        aria-hidden="true"
+      />
 
       <div className="relative mx-auto w-full max-w-[1500px] px-5 sm:px-8 lg:px-12">
         <Reveal className="mx-auto max-w-2xl text-center">

@@ -1,0 +1,22 @@
+[
+  {
+    "path": "quantplus_intelligence/config.py",
+    "before_sha256": "7998a2f2191e810c2022b6202f010adeccbfd5520d237b75b0f09d930ff7f8f9",
+    "after_sha256": "2af0f26a36635e5f38837fea852dbcea7f6291b739765c64c4d063a6e9b5ba34"
+  },
+  {
+    "path": "quantplus_intelligence/history.py",
+    "before_sha256": "ee3e68b591c490d333ff42cb0ebcd436d528e00474bfb080069c6ac0fa9870cc",
+    "after_sha256": "ed652ed57733240ae968e19cabac134a360ee6d129ccc0c53bd683d4502edf0b"
+  },
+  {
+    "path": "quantplus_intelligence/news/attachments.py",
+    "before_sha256": "13f27d6da1bde69bf08eb4580dc48e10a93aab5cc323eba359772ecfc64906d2",
+    "after_sha256": "7ff332e088d41ac1087a3c30dd40f0fc37a701959da5167dbf2e0003b5607224"
+  },
+  {
+    "path": "quantplus_intelligence/news/service.py",
+    "before_sha256": "018a125488c377ea95248693d323e185a8d45ce8a5fb2ed7e78155db9cb7c56b",
+    "after_sha256": "677b7c8054d1cec839b651567c1ae9c16c3ef53f7309ddaf9ba2c9496fcd46a3"
+  }
+]

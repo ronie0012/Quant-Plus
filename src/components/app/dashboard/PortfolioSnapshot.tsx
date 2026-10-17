@@ -1,5 +1,5 @@
 import { Card, CardHead, EmptyState, Skeleton } from "@/components/app/cards";
-import { formatINR, useHoldings } from "@/hooks/use-dashboard-data";
+import { formatINR, useMarkedHoldings } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
 
 const ALLOC_TONES = [
@@ -12,7 +12,7 @@ const ALLOC_TONES = [
 ];
 
 export function PortfolioSnapshot() {
-  const { data, isLoading, isError, refetch } = useHoldings();
+  const { data, isLoading, isError, refetch } = useMarkedHoldings();
 
   if (isLoading) {
     return (
@@ -29,7 +29,7 @@ export function PortfolioSnapshot() {
         <EmptyState
           title="No holdings"
           hint="Your portfolio has no positions yet."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       </Card>
     );
@@ -73,10 +73,13 @@ export function PortfolioSnapshot() {
 
   return (
     <Card delay={620} className="flex h-full flex-col">
-      <CardHead title="Portfolio snapshot" meta="Your positions · simulated account" />
+      <CardHead title="Portfolio snapshot" meta="Your positions · live marks · paper account" />
 
       <div className="px-5 pt-5">
-        <div className="flex h-2 w-full overflow-hidden rounded-full bg-border/70" aria-hidden="true">
+        <div
+          className="flex h-2 w-full overflow-hidden rounded-full bg-border/70"
+          aria-hidden="true"
+        >
           {alloc.map((a, i) => (
             <span
               key={a.symbol}
@@ -95,12 +98,12 @@ export function PortfolioSnapshot() {
                 className={cn("h-1.5 w-1.5 rounded-full", ALLOC_TONES[i % ALLOC_TONES.length])}
                 aria-hidden="true"
               />
-              <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-subtle">
+              <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                 {a.symbol}
               </span>
               <span
                 className={cn(
-                  "font-mono text-[9px] num-tabular",
+                  "font-mono text-[11px] num-tabular",
                   a.pnlPct >= 0 ? "text-positive/80" : "text-negative/80",
                 )}
               >
@@ -118,7 +121,7 @@ export function PortfolioSnapshot() {
             key={s.label}
             className="bg-panel/70 px-4 py-4 transition-colors duration-300 hover:bg-panel-elevated"
           >
-            <dt className="font-mono text-[9px] tracking-[0.18em] uppercase text-subtle">
+            <dt className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
               {s.label}
             </dt>
             <dd

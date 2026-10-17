@@ -1,19 +1,39 @@
 import { Card, CardHead, EmptyState, Skeleton, SourceTag } from "@/components/app/cards";
 import { relativeTime, useSentiment } from "@/hooks/use-dashboard-data";
+import { useMarketSentimentHistory } from "@/hooks/use-intelligence";
 import { cn } from "@/lib/utils";
 
+function historyPath(values: Array<{ score: number | null }>) {
+  const usable = values.filter((item) => item.score !== null);
+  if (usable.length < 2) return "";
+  return usable
+    .map((item, index) => {
+      const x = (index / (usable.length - 1)) * 300;
+      const y = 100 - (Number(item.score) / 100) * 100;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
 /** Maps a qualitative breakdown value to a 0-1 strength and tone for the bars. */
-function readValue(value: string): { strength: number; tone: "positive" | "negative" | "neutral" } {
-  const v = value.toLowerCase();
-  if (/(very bullish|strong|net buyers|positive|bullish|improving|low)/.test(v))
-    return { strength: 0.82, tone: "positive" };
-  if (/(bearish|negative|net sellers|elevated|high|weak)/.test(v))
-    return { strength: 0.76, tone: "negative" };
-  return { strength: 0.5, tone: "neutral" };
+function readValue(score: number | null): {
+  strength: number;
+  tone: "positive" | "negative" | "neutral";
+} {
+  return {
+    strength: score === null ? 0 : score / 100,
+    tone:
+      score !== null && score >= 60
+        ? "positive"
+        : score !== null && score <= 40
+          ? "negative"
+          : "neutral",
+  };
 }
 
 export function SentimentPanel() {
   const { data, isLoading, isError, refetch } = useSentiment();
+  const history = useMarketSentimentHistory("1h");
 
   if (isLoading) {
     return (
@@ -39,10 +59,17 @@ export function SentimentPanel() {
 
   const score = Math.max(0, Math.min(100, data.score));
   const label = data.label.toUpperCase();
-  const tone =
-    label === "BULLISH" ? "positive" : label === "BEARISH" ? "negative" : "neutral";
+  const tone = label.includes("BULLISH")
+    ? "positive"
+    : label.includes("BEARISH")
+      ? "negative"
+      : "neutral";
   const toneText =
-    tone === "positive" ? "text-positive" : tone === "negative" ? "text-negative" : "text-primary-soft";
+    tone === "positive"
+      ? "text-positive"
+      : tone === "negative"
+        ? "text-negative"
+        : "text-primary-soft";
 
   // Semi-circular gauge geometry (180 degrees, -90 to +90).
   const R = 74;
@@ -56,7 +83,7 @@ export function SentimentPanel() {
       <CardHead
         title="Market sentiment"
         meta={`Overall market · updated ${relativeTime(data.updated_at)}`}
-        action={<SourceTag />}
+        action={<SourceTag label={data.data_quality} />}
       />
 
       <div className="flex flex-col items-center px-5 pt-7">
@@ -140,70 +167,179 @@ export function SentimentPanel() {
             <circle cx="100" cy="100" r="4" fill="var(--color-foreground)" />
           </svg>
           <style>{`@keyframes sent-sweep{to{stroke-dashoffset:var(--sent-target)}}@keyframes sent-needle{from{transform:rotate(-90deg)}to{transform:rotate(var(--needle-angle))}}`}</style>
-
         </div>
 
         <div className="mt-4 flex flex-col items-center">
           <span className="font-mono text-[2.6rem] leading-none num-tabular tracking-tight">
             {score}
           </span>
-          <span className={cn("mt-2 font-mono text-[10px] tracking-[0.22em] uppercase", toneText)}>
-            {data.label}
+          <span
+            className={cn("mt-2 font-medium text-[11px] tracking-[0.06em] uppercase", toneText)}
+          >
+            {data.label.replaceAll("_", " ")}
           </span>
+          <span className="mt-2 text-xs text-subtle">
+            {data.regime.replaceAll("_", " ")} · confidence {Math.round(data.confidence * 100)}%
+          </span>
+          <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+            <span>Data {data.data_quality}</span>
+            {data.data_quality_score !== undefined && (
+              <span>{data.data_quality_score}/100 quality</span>
+            )}
+            {data.market_status && <span>{data.market_status}</span>}
+          </div>
         </div>
 
-        <div className="mt-6 flex w-full items-center justify-between font-mono text-[9px] tracking-[0.18em] uppercase text-subtle">
+        <div className="mt-6 w-full border-y border-border/70 py-3">
+          <div className="flex items-center justify-between font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+            <span>1H change</span>
+            <span
+              className={cn(
+                "text-[11px]",
+                (data.trend?.change_1h ?? 0) > 0
+                  ? "text-positive"
+                  : (data.trend?.change_1h ?? 0) < 0
+                    ? "text-negative"
+                    : "text-muted-foreground",
+              )}
+            >
+              {(data.trend?.change_1h ?? 0) > 0 ? "+" : ""}
+              {data.trend?.change_1h ?? "—"}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{data.trend?.direction?.replaceAll("_", " ") ?? "Awaiting history"}</span>
+            <span>{data.trend?.velocity ? `${data.trend.velocity} velocity` : "—"}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex w-full items-center justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
           <span>Fear</span>
           <span>Neutral</span>
           <span>Greed</span>
         </div>
       </div>
 
+      <div className="border-t border-border px-5 py-5">
+        <div className="flex items-center justify-between">
+          <span className="label-tech">Market sentiment · last hour</span>
+          {history.isFetching && (
+            <span className="font-mono text-[11px] text-subtle">Updating</span>
+          )}
+        </div>
+        {history.data?.snapshots?.length ? (
+          <svg
+            viewBox="0 0 300 100"
+            className="mt-4 h-24 w-full"
+            role="img"
+            aria-label="Market sentiment history"
+          >
+            {[20, 40, 60, 80].map((threshold) => (
+              <line
+                key={threshold}
+                x1="0"
+                x2="300"
+                y1={100 - threshold}
+                y2={100 - threshold}
+                stroke="var(--color-border)"
+                strokeWidth=".7"
+                strokeDasharray="2 3"
+              />
+            ))}
+            <path
+              d={historyPath(history.data.snapshots)}
+              fill="none"
+              stroke="var(--color-primary)"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        ) : (
+          <p className="mt-4 text-[11px] text-subtle">
+            Snapshots are collected during the open market session.
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2">
+        <div className="bg-panel/70 p-5">
+          <span className="label-tech">Strongest positive drivers</span>
+          <ul className="mt-3 space-y-2 text-[11px] text-muted-foreground">
+            {(data.drivers ?? []).slice(0, 3).map((driver) => (
+              <li key={driver} className="text-positive">
+                ↑ {driver}
+              </li>
+            ))}
+            {!data.drivers?.length && (
+              <li className="text-subtle">No confirmed positive driver.</li>
+            )}
+          </ul>
+        </div>
+        <div className="bg-panel/70 p-5">
+          <span className="label-tech">Risks and warnings</span>
+          <ul className="mt-3 space-y-2 text-[11px] text-muted-foreground">
+            {(data.divergences?.length
+              ? data.divergences.map((item) => item.description)
+              : (data.risks ?? [])
+            )
+              .slice(0, 3)
+              .map((risk) => (
+                <li key={risk} className="text-warning">
+                  ⚠ {risk}
+                </li>
+              ))}
+            {!data.divergences?.length && !data.risks?.length && (
+              <li className="text-subtle">No active divergence detected.</li>
+            )}
+          </ul>
+        </div>
+      </div>
+
       <div className="mt-auto pt-7">
-      <ul className="grid gap-px border-t border-border bg-border">
-        {data.breakdown.map((b, i) => {
-          const r = readValue(b.value);
-          return (
-            <li
-              key={b.label}
-              className="group/row bg-panel/70 px-5 py-3 transition-colors duration-300 hover:bg-panel-elevated"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-subtle">
-                  {b.label}
+        <ul className="grid gap-px border-t border-border bg-border">
+          {data.breakdown.map((b, i) => {
+            const r = readValue(b.score);
+            return (
+              <li
+                key={b.label}
+                className="group/row bg-panel/70 px-5 py-3 transition-colors duration-300 hover:bg-panel-elevated"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                    {b.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[12px]",
+                      r.tone === "positive"
+                        ? "text-positive"
+                        : r.tone === "negative"
+                          ? "text-negative"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    {b.value}
+                  </span>
+                </div>
+                <span className="mt-2 block h-[2px] w-full overflow-hidden rounded-full bg-border/80">
+                  <span
+                    className={cn(
+                      "grow-bar block h-full rounded-full",
+                      r.tone === "positive"
+                        ? "bg-positive/70"
+                        : r.tone === "negative"
+                          ? "bg-negative/70"
+                          : "bg-primary/60",
+                    )}
+                    style={{
+                      width: `${r.strength * 100}%`,
+                      ["--d" as string]: `${400 + i * 90}ms`,
+                    }}
+                  />
                 </span>
-                <span
-                  className={cn(
-                    "text-[12px]",
-                    r.tone === "positive"
-                      ? "text-positive"
-                      : r.tone === "negative"
-                        ? "text-negative"
-                        : "text-muted-foreground",
-                  )}
-                >
-                  {b.value}
-                </span>
-              </div>
-              <span className="mt-2 block h-[2px] w-full overflow-hidden rounded-full bg-border/80">
-                <span
-                  className={cn(
-                    "grow-bar block h-full rounded-full",
-                    r.tone === "positive"
-                      ? "bg-positive/70"
-                      : r.tone === "negative"
-                        ? "bg-negative/70"
-                        : "bg-primary/60",
-                  )}
-                  style={{
-                    width: `${r.strength * 100}%`,
-                    ["--d" as string]: `${400 + i * 90}ms`,
-                  }}
-                />
-              </span>
-            </li>
-          );
-        })}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </Card>

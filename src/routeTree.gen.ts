@@ -17,8 +17,14 @@ import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiLocalRouteImport } from './routes/api/local'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app.$section'
 import { Route as AuthenticatedAppDashboardRouteImport } from './routes/_authenticated/app.dashboard'
+import { Route as ApiAgentSplatRouteImport } from './routes/api/agent/$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiMarketSplatRouteImport } from './routes/api/market/$'
+import { Route as ApiPaperSplatRouteImport } from './routes/api/paper/$'
+import { Route as ApiStocksSplatRouteImport } from './routes/api/stocks/$'
 import { Route as AuthenticatedAppStocksSymbolRouteImport } from './routes/_authenticated/app.stocks.$symbol'
 
 const IndexRoute = IndexRouteImport.update({
@@ -60,6 +66,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLocalRoute = ApiLocalRouteImport.update({
+  id: '/api/local',
+  path: '/api/local',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   id: '/app/$section',
   path: '/app/$section',
@@ -71,6 +82,31 @@ const AuthenticatedAppDashboardRoute =
     path: '/app/dashboard',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiAgentSplatRoute = ApiAgentSplatRouteImport.update({
+  id: '/api/agent/$',
+  path: '/api/agent/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMarketSplatRoute = ApiMarketSplatRouteImport.update({
+  id: '/api/market/$',
+  path: '/api/market/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaperSplatRoute = ApiPaperSplatRouteImport.update({
+  id: '/api/paper/$',
+  path: '/api/paper/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStocksSplatRoute = ApiStocksSplatRouteImport.update({
+  id: '/api/stocks/$',
+  path: '/api/stocks/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppStocksSymbolRoute =
   AuthenticatedAppStocksSymbolRouteImport.update({
     id: '/app/stocks/$symbol',
@@ -86,8 +122,14 @@ export interface FileRoutesByFullPath {
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/local': typeof ApiLocalRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/api/agent/$': typeof ApiAgentSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/market/$': typeof ApiMarketSplatRoute
+  '/api/paper/$': typeof ApiPaperSplatRoute
+  '/api/stocks/$': typeof ApiStocksSplatRoute
   '/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRoutesByTo {
@@ -98,8 +140,14 @@ export interface FileRoutesByTo {
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/local': typeof ApiLocalRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/api/agent/$': typeof ApiAgentSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/market/$': typeof ApiMarketSplatRoute
+  '/api/paper/$': typeof ApiPaperSplatRoute
+  '/api/stocks/$': typeof ApiStocksSplatRoute
   '/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRoutesById {
@@ -112,8 +160,14 @@ export interface FileRoutesById {
   '/platform': typeof PlatformRoute
   '/research': typeof ResearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/local': typeof ApiLocalRoute
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
   '/_authenticated/app/dashboard': typeof AuthenticatedAppDashboardRoute
+  '/api/agent/$': typeof ApiAgentSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/market/$': typeof ApiMarketSplatRoute
+  '/api/paper/$': typeof ApiPaperSplatRoute
+  '/api/stocks/$': typeof ApiStocksSplatRoute
   '/_authenticated/app/stocks/$symbol': typeof AuthenticatedAppStocksSymbolRoute
 }
 export interface FileRouteTypes {
@@ -126,8 +180,14 @@ export interface FileRouteTypes {
     | '/platform'
     | '/research'
     | '/api/chat'
+    | '/api/local'
     | '/app/$section'
     | '/app/dashboard'
+    | '/api/agent/$'
+    | '/api/auth/$'
+    | '/api/market/$'
+    | '/api/paper/$'
+    | '/api/stocks/$'
     | '/app/stocks/$symbol'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,8 +198,14 @@ export interface FileRouteTypes {
     | '/platform'
     | '/research'
     | '/api/chat'
+    | '/api/local'
     | '/app/$section'
     | '/app/dashboard'
+    | '/api/agent/$'
+    | '/api/auth/$'
+    | '/api/market/$'
+    | '/api/paper/$'
+    | '/api/stocks/$'
     | '/app/stocks/$symbol'
   id:
     | '__root__'
@@ -151,8 +217,14 @@ export interface FileRouteTypes {
     | '/platform'
     | '/research'
     | '/api/chat'
+    | '/api/local'
     | '/_authenticated/app/$section'
     | '/_authenticated/app/dashboard'
+    | '/api/agent/$'
+    | '/api/auth/$'
+    | '/api/market/$'
+    | '/api/paper/$'
+    | '/api/stocks/$'
     | '/_authenticated/app/stocks/$symbol'
   fileRoutesById: FileRoutesById
 }
@@ -165,6 +237,12 @@ export interface RootRouteChildren {
   PlatformRoute: typeof PlatformRoute
   ResearchRoute: typeof ResearchRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiLocalRoute: typeof ApiLocalRoute
+  ApiAgentSplatRoute: typeof ApiAgentSplatRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiMarketSplatRoute: typeof ApiMarketSplatRoute
+  ApiPaperSplatRoute: typeof ApiPaperSplatRoute
+  ApiStocksSplatRoute: typeof ApiStocksSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -225,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/local': {
+      id: '/api/local'
+      path: '/api/local'
+      fullPath: '/api/local'
+      preLoaderRoute: typeof ApiLocalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/$section': {
       id: '/_authenticated/app/$section'
       path: '/app/$section'
@@ -238,6 +323,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AuthenticatedAppDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/agent/$': {
+      id: '/api/agent/$'
+      path: '/api/agent/$'
+      fullPath: '/api/agent/$'
+      preLoaderRoute: typeof ApiAgentSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/market/$': {
+      id: '/api/market/$'
+      path: '/api/market/$'
+      fullPath: '/api/market/$'
+      preLoaderRoute: typeof ApiMarketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/paper/$': {
+      id: '/api/paper/$'
+      path: '/api/paper/$'
+      fullPath: '/api/paper/$'
+      preLoaderRoute: typeof ApiPaperSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stocks/$': {
+      id: '/api/stocks/$'
+      path: '/api/stocks/$'
+      fullPath: '/api/stocks/$'
+      preLoaderRoute: typeof ApiStocksSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/stocks/$symbol': {
       id: '/_authenticated/app/stocks/$symbol'
@@ -274,6 +394,12 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformRoute: PlatformRoute,
   ResearchRoute: ResearchRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiLocalRoute: ApiLocalRoute,
+  ApiAgentSplatRoute: ApiAgentSplatRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMarketSplatRoute: ApiMarketSplatRoute,
+  ApiPaperSplatRoute: ApiPaperSplatRoute,
+  ApiStocksSplatRoute: ApiStocksSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

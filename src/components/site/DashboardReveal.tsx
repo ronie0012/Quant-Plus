@@ -21,8 +21,8 @@ export function DashboardReveal() {
           </h2>
         </div>
         <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Market overview, portfolio, signals, risk and AI research in a single surface. The data
-          shown here is demonstrative sample data.
+          Market overview, portfolio, signals, risk and AI research in a single surface. This
+          overview describes the product; account and market values appear in the local terminal.
         </p>
       </Reveal>
 

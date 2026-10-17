@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2, Lock, Mail, ShieldCheck, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { hostedAuthConfig, signInHosted, signUpHosted } from "@/lib/workspace-session";
 import { cn } from "@/lib/utils";
+import { EmailVerificationForm } from "@/components/app/EmailVerificationForm";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -30,6 +31,9 @@ export const Route = createFileRoute("/auth")({
 
 type Mode = "signin" | "signup";
 
+const HOSTED_UNAVAILABLE =
+  "Hosted sign-in is not enabled in this local build. Open the local workspace instead; hosted accounts arrive with the InsForge migration.";
+
 const proofPoints = [
   "Portfolio, market and sentiment in one terminal",
   "Quant signals with transparent reasoning",
@@ -46,6 +50,7 @@ function AuthPage() {
   const [busy, setBusy] = useState<null | "email" | "google">(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmSent, setConfirmSent] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
 
   useEffect(() => {
     if (session) void navigate({ to: "/app/dashboard", replace: true });
@@ -55,21 +60,20 @@ function AuthPage() {
     e.preventDefault();
     setError(null);
     setBusy("email");
+    if (!hostedAuthConfig()) {
+      // This build serves the single local profile; hosted accounts are disabled.
+      setError(HOSTED_UNAVAILABLE);
+      setBusy(null);
+      return;
+    }
     try {
       if (mode === "signup") {
-        const { data, error: err } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth`,
-            data: { display_name: name || email.split("@")[0] },
-          },
-        });
-        if (err) throw err;
-        if (!data.session) setConfirmSent(true);
+        const created = await signUpHosted(email, password, name || email.split("@")[0]!);
+        if (!created) setConfirmSent(true);
+        else void navigate({ to: "/app/dashboard", replace: true });
       } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
+        await signInHosted(email, password);
+        void navigate({ to: "/app/dashboard", replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -80,15 +84,8 @@ function AuthPage() {
 
   async function handleGoogle() {
     setError(null);
-    setBusy("google");
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth` },
-    });
-    if (err) {
-      setError(err.message);
-      setBusy(null);
-    }
+    setError(HOSTED_UNAVAILABLE);
+    setBusy(null);
   }
 
   return (
@@ -138,7 +135,7 @@ function AuthPage() {
 
         <div className="relative flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] uppercase text-subtle">
           <ShieldCheck className="h-3.5 w-3.5 text-primary-soft" />
-          Demonstrative data · not investment advice
+          Paper trading · not investment advice
         </div>
       </aside>
 
@@ -165,7 +162,9 @@ function AuthPage() {
                 aria-pressed={mode === m}
                 className={cn(
                   "relative flex-1 px-4 py-3 font-mono text-[10px] tracking-[0.18em] uppercase transition-colors duration-300",
-                  mode === m ? "bg-panel text-foreground" : "text-subtle hover:text-muted-foreground",
+                  mode === m
+                    ? "bg-panel text-foreground"
+                    : "text-subtle hover:text-muted-foreground",
                 )}
               >
                 {m === "signin" ? "Log in" : "Create account"}
@@ -186,20 +185,35 @@ function AuthPage() {
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {mode === "signin"
               ? "Sign in to view your portfolio and the market overview."
-              : "A sample portfolio is prepared for you so the terminal is useful from the first second."}
+              : "Your paper book starts empty: add virtual funds, then place your first simulated trade."}
           </p>
 
           {confirmSent ? (
             <div className="mt-8 border border-border bg-panel p-6">
               <p className="label-tech">Check your email</p>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                We sent a confirmation link to <span className="text-foreground">{email}</span>.
-                Open it and you'll land straight in the terminal.
-              </p>
+              <EmailVerificationForm
+                email={email}
+                onEmailChange={setEmail}
+                onVerified={() => {
+                  setConfirmSent(false);
+                  setMode("signin");
+                  setPassword("");
+                  setVerificationMessage("Email verified. Sign in to continue.");
+                }}
+                onBack={() => {
+                  setConfirmSent(false);
+                  setMode("signin");
+                }}
+              />
             </div>
           ) : (
             <>
               <form onSubmit={handleEmail} className="mt-8 space-y-3">
+                {verificationMessage && (
+                  <p role="status" className="text-sm text-positive">
+                    {verificationMessage}
+                  </p>
+                )}
                 {mode === "signup" && (
                   <Field
                     icon={<User className="h-3.5 w-3.5" />}
@@ -233,7 +247,10 @@ function AuthPage() {
                 />
 
                 {error && (
-                  <p role="alert" className="border border-negative/40 bg-negative/5 px-3 py-2.5 text-xs text-negative">
+                  <p
+                    role="alert"
+                    className="border border-negative/40 bg-negative/5 px-3 py-2.5 text-xs text-negative"
+                  >
                     {error}
                   </p>
                 )}
@@ -281,7 +298,7 @@ function AuthPage() {
           )}
 
           <p className="mt-10 font-mono text-[10px] leading-relaxed tracking-[0.14em] uppercase text-subtle">
-            Demonstrative sample data · Quant Plus does not provide investment advice
+            Virtual funds only · Quant Plus does not provide investment advice
           </p>
         </div>
       </main>

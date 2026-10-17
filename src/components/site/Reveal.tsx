@@ -21,7 +21,13 @@ interface RevealProps {
   as?: "div" | "section" | "li" | "article" | "header" | "ul" | "ol";
 }
 
-export function Reveal({ children, className, delay = 0, variant = "up", as = "div" }: RevealProps) {
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+  variant = "up",
+  as = "div",
+}: RevealProps) {
   const { ref, inView } = useInView<HTMLDivElement>();
   const Tag = as;
   const inClass = variant === "blur" ? "reveal-in-blur" : "reveal-in";
@@ -49,17 +55,19 @@ export function RevealGroup({
 }: RevealProps & { stagger?: number; itemClassName?: string }) {
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.12 });
   const Tag = as;
+  // Lists need <li> items; everything else uses a neutral wrapper.
+  const Item = as === "ul" || as === "ol" ? "li" : "div";
   const inClass = variant === "blur" ? "reveal-in-blur" : "reveal-in";
 
   return (
     <Tag ref={ref as never} className={className}>
       {Children.map(children, (child, i) => (
-        <div
+        <Item
           className={cn(inView ? inClass : initClass[variant], itemClassName)}
           style={{ transitionDelay: `${delay + i * stagger}ms` }}
         >
           {child}
-        </div>
+        </Item>
       ))}
     </Tag>
   );

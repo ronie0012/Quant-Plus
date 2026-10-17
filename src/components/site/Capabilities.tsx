@@ -21,13 +21,21 @@ export function Capabilities() {
                 aria-hidden="true"
                 className="absolute bottom-0 left-0 h-px w-0 bg-primary transition-all duration-700 group-hover:w-full"
               />
-              <span className="label-tech md:col-span-1">{cap.index}</span>
-              <h3 className="font-mono text-lg tracking-[0.08em] uppercase transition-colors duration-500 group-hover:text-primary-soft md:col-span-5 md:text-xl">
+              <span className="label-tech transition-colors duration-500 group-hover:text-primary-soft md:col-span-1">
+                {cap.index}
+              </span>
+              <h3 className="font-mono text-lg tracking-[0.08em] uppercase transition-all duration-500 [transition-timing-function:var(--ease-out-expo)] group-hover:translate-x-2 group-hover:text-primary-soft md:col-span-5 md:text-xl">
                 {cap.title}
               </h3>
-              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:col-span-6">
+              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground transition-colors duration-500 group-hover:text-foreground/85 md:col-span-5">
                 {cap.body}
               </p>
+              <span
+                aria-hidden="true"
+                className="hidden justify-self-end font-mono text-primary-soft opacity-0 transition-all duration-500 group-hover:opacity-100 md:col-span-1 md:block md:-translate-x-3 md:group-hover:translate-x-0"
+              >
+                →
+              </span>
             </div>
           </Reveal>
         ))}

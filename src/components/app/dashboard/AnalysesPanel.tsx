@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Card, CardHead, EmptyState, Pill, Skeleton } from "@/components/app/cards";
 import { relativeTime, useAnalyses } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
@@ -18,12 +19,13 @@ export function AnalysesPanel() {
         title="Recent analyses"
         meta="From the AI investment committee"
         action={
-          <button
-            type="button"
-            className="hidden border border-border px-3 py-1.5 font-mono text-[9px] tracking-[0.16em] uppercase text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary-soft sm:block"
+          <Link
+            to="/app/$section"
+            params={{ section: "committee" }}
+            className="hidden border border-border px-3 py-1.5 font-medium text-[11px] tracking-[0.06em] uppercase text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary-soft sm:block"
           >
             Run analysis
-          </button>
+          </Link>
         }
       />
 
@@ -39,7 +41,7 @@ export function AnalysesPanel() {
         <EmptyState
           title="No analyses yet"
           hint="Run an analysis to see the committee verdict here."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       )}
 
@@ -51,12 +53,14 @@ export function AnalysesPanel() {
               className="group/row px-5 py-3.5 transition-colors duration-300 hover:bg-panel-elevated/60"
             >
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[11px] tracking-[0.14em] uppercase">{a.symbol}</span>
+                <span className="font-medium text-[11px] tracking-[0.06em] uppercase">
+                  {a.symbol}
+                </span>
                 <Pill tone={verdictTone(a.verdict)}>{a.verdict}</Pill>
                 <span className="ml-auto font-mono text-[11px] num-tabular text-muted-foreground">
-                  {Number(a.conviction).toFixed(0)}%
+                  {a.conviction == null ? "—" : `${a.conviction}/100`}
                 </span>
-                <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+                <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                   {a.risk}
                 </span>
               </div>
@@ -72,10 +76,10 @@ export function AnalysesPanel() {
                       "block h-px transition-[width] duration-[1200ms] ease-out",
                       verdictTone(a.verdict) === "negative" ? "bg-negative/70" : "bg-primary/70",
                     )}
-                    style={{ width: `${Math.min(100, Number(a.conviction))}%` }}
+                    style={{ width: `${Math.min(100, a.conviction ?? 0)}%` }}
                   />
                 </span>
-                <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+                <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                   {relativeTime(a.created_at)}
                 </span>
               </div>

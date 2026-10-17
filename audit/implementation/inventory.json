@@ -1,0 +1,2968 @@
+{
+  "generated_at": "2026-10-14T09:46:46.507Z",
+  "scope": "Static discovery inventory; manual and browser coverage remain pending",
+  "files": [
+    {
+      "path": "src/components/app/AppShell.tsx",
+      "sha256": "328c76e537d53fe3061165035a58def4c9eabf300bf17a18c90f4c7719c4c637",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/AppSidebar.tsx",
+      "sha256": "ff27734a83a3f4f69530274d6417e9918dd3d252456c449196e1b8a52bdf1ca2",
+      "routes": [],
+      "actions": [
+        {
+          "line": 123,
+          "source": "onClick={onToggle}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 135,
+          "source": "onClick={onCloseMobile}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 163,
+          "source": "onClick={onCloseMobile}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 211,
+          "source": "onClick={signOut}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 222,
+          "source": "onClick={signOut}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 246,
+          "source": "onClick={onCloseMobile}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/AppTopbar.tsx",
+      "sha256": "6795f86bec597662bea35e6c706da1534c7673bee854a6142b527cfe0322d837",
+      "routes": [],
+      "actions": [
+        {
+          "line": 31,
+          "source": "onClick={onOpenMobile}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 46,
+          "source": "onClick={openCommand}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 61,
+          "source": "onClick={() => openTicket()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 84,
+          "source": "onClick={() => void navigate({ to: \"/app/$section\", params: { section: \"alerts\" } })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/cards.tsx",
+      "sha256": "77c72582765aef9c79159aa9e8e4bf16bcb51a314fb7c506dcaf317ad6eb5359",
+      "routes": [],
+      "actions": [
+        {
+          "line": 126,
+          "source": "onClick={onRetry}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/ConnectionStatus.tsx",
+      "sha256": "205fe43db7cd81e09ff827ec5f4d8fa1edf56058ae3395fcc9d72f6a73bb2f0b",
+      "routes": [],
+      "actions": [
+        {
+          "line": 51,
+          "source": "onClick={() => void status.refetch()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/AnalysesPanel.tsx",
+      "sha256": "25b4b9e75c52b96af9f15872c89c8ccee8814f8ed6415c2f02f26c9634d3666f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/CalendarPanel.tsx",
+      "sha256": "13bf8dfb265e3a4b7c05d17b02bf6879aabed8e546321198faa14d446ae2b75a",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/DashboardHero.tsx",
+      "sha256": "88a1b5593650789b34784794244903df9580a4a8b52522a212910f7587bcb7b7",
+      "routes": [],
+      "actions": [
+        {
+          "line": 125,
+          "source": "onClick={openCommand}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 133,
+          "source": "onClick={() => openTicket()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 46,
+          "source": "<AnimatedNumber value={profit} locale=\"en-IN\" prefix=\"+₹\" decimals={0} />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 61,
+          "source": "<AnimatedNumber value={deployed} decimals={0} suffix=\"%\" />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 72,
+          "source": "<AnimatedNumber value={analyses ? analyses.length : 0} decimals={0} />",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/dashboard/FundsRow.tsx",
+      "sha256": "ebfb87e0efdb29678a68d9bc59cf3e26b9594b02f136835fa99c027ebf9b9d4c",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": [
+        {
+          "line": 144,
+          "source": "<AnimatedNumber value={s.value} locale=\"en-IN\" prefix=\"₹\" decimals={0} />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 181,
+          "source": "<span className=\"sr-only\">{formatINR(Number(data.total_funds))} total funds</span>",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/dashboard/MarketOverview.tsx",
+      "sha256": "95238797134fbba23d0b8eb249cc434bd9373498af6148a30a1fe75ca78773bc",
+      "routes": [],
+      "actions": [
+        {
+          "line": 86,
+          "source": "onClick={() => setActive(i)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 154,
+          "source": "onClick={() => setRange(r)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 255,
+          "source": "onClick={() => setActive(i)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 127,
+          "source": "<AnimatedNumber",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 144,
+          "source": "? `${up ? \"+\" : \"\"}${formatNum(Number(instrument.change_abs), instrument.kind === \"commodity\" ? 0 : 2)} · ${up ? \"+\" : \"\"}${formatNum(Number(instrument.change_pct))}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 267,
+          "source": "? `${inst.kind === \"commodity\" ? \"₹\" : \"\"}${formatNum(Number(inst.value), inst.kind === \"commodity\" ? 0 : 2)}`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 279,
+          "source": "? `${(inst.change_pct ?? 0) >= 0 ? \"+\" : \"\"}${formatNum(Number(inst.change_pct))}%`",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/dashboard/NewsPanel.tsx",
+      "sha256": "4edc696601f405081539b5f0aeadb9771887502e32e52a10dcb363b0ec5f29de",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/OnboardingChecklist.tsx",
+      "sha256": "8c556962ce1f3df7c06b01eca073b3dfbcea2f523e76b5ecdf0e8575caf4925a",
+      "routes": [],
+      "actions": [
+        {
+          "line": 50,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/PortfolioSnapshot.tsx",
+      "sha256": "75dafe678da2dd942e8d099c5217d468a751603abff6dd31ce3992923058aed5",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": [
+        {
+          "line": 55,
+          "source": "{ label: \"Invested\", value: formatINR(invested) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 56,
+          "source": "{ label: \"Current value\", value: formatINR(current) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 59,
+          "source": "value: `${pnl >= 0 ? \"+\" : \"\"}${formatINR(pnl)}`,",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/dashboard/SectorSentimentPanel.tsx",
+      "sha256": "e78bc7e95cd312bd5e8f9ecd11dc84a6e914917765a31e438a6246692f13aafd",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/SentimentPanel.tsx",
+      "sha256": "0f64e23950d7e9c73baa587f50aa6a672fd2b55cc6b8670d4c8d3799c88ecfd6",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/dashboard/WatchlistPanel.tsx",
+      "sha256": "c6090a81f55c233cc62376e236b0a817aad364a144a58f7d55984f8dad020703",
+      "routes": [],
+      "actions": [
+        {
+          "line": 67,
+          "source": "onClick={() => openTicket({ symbol: w.symbol, price: price ?? 0 })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 52,
+          "source": "{price == null ? \"—\" : `₹${formatNum(price)}`}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 61,
+          "source": "{change == null ? \"—\" : `${formatNum(change)}%`}",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/IntelligencePages.tsx",
+      "sha256": "9c4fd32910e60c267f151a84170439f42b561517caf07be8253707add71a918d",
+      "routes": [],
+      "actions": [
+        {
+          "line": 53,
+          "source": "onClick={() => void navigate({ to: \"/app/$section\", params: { section: \"committee\" } })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 102,
+          "source": "onClick={() => setSelected(a)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 171,
+          "source": "onClick={() => setStates((x) => ({ ...x, [active.id]: s }))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 253,
+          "source": "onClick={() => setOpen(open === a.id ? null : a.id)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 359,
+          "source": "onClick={() => void send(p)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 400,
+          "source": "onClick={() => void send(p)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 429,
+          "source": "onSubmit={(e) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 439,
+          "source": "onChange={(e) => setInput(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 62,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 118,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 157,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 211,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/NextPages.tsx",
+      "sha256": "98821f80f16adc3f66950ad6c1cb7fafe7f690a5e3c277c567e7615c6ee0c8ad",
+      "routes": [],
+      "actions": [
+        {
+          "line": 112,
+          "source": "onClick={() =>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 134,
+          "source": "onChange={(e) => update(i, { symbol: e.target.value })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 149,
+          "source": "onClick={() => update(i, { side: sd })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 167,
+          "source": "onChange={(e) => update(i, { qty: Math.max(1, Number(e.target.value) || 1) })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 184,
+          "source": "onClick={() => setRows(rows.filter((_, j) => j !== i))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 213,
+          "source": "onClick={() => void execute()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 91,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 96,
+          "source": "value: total == null ? \"Unavailable\" : formatINR(total),",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 99,
+          "source": "{ label: \"Wallet\", value: formatINR(wallet) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 173,
+          "source": "? formatINR(feed.quotes[r.symbol]!.price! * r.qty)",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 249,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 251,
+          "source": "{ label: \"Value\", value: formatINR(total) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 252,
+          "source": "{ label: \"Today\", value: formatINR(move), tone: move >= 0 ? \"positive\" : \"negative\" },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 281,
+          "source": "contributing {formatINR(top.today)} (",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 311,
+          "source": "{formatINR(r.today)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 323,
+          "source": "{formatINR(rows.reduce((s, r) => s + r.unreal, 0))}",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/OrdersPage.tsx",
+      "sha256": "9ab5f7f832f59b86388bde5ba2cd06895b05b50decc6e027c8466aa4f0c858be",
+      "routes": [],
+      "actions": [
+        {
+          "line": 76,
+          "source": "onChange={setFilter}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 165,
+          "source": "onClick={() => act(order.id, \"FILLED\")}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 173,
+          "source": "onClick={() => act(order.id, \"CANCELLED\")}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 43,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 48,
+          "source": "{ label: \"Filled turnover\", value: formatINR(stats.turnover) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 141,
+          "source": "₹{formatNum(Number(order.price))}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 144,
+          "source": "{formatINR(Number(order.price) * order.quantity)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 225,
+          "source": "<span className=\"mt-0.5 block text-subtle\">₹{formatNum(avg)} avg</span>",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/ProductPages.tsx",
+      "sha256": "4a7fc7c8730e53a2cbbd271ecdc3ff87bbcd90558398368f9ce8a3e8ead609d7",
+      "routes": [],
+      "actions": [
+        {
+          "line": 95,
+          "source": "onClick={() => setShock(x)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 141,
+          "source": "onChange={(e) => setDraft({ ...limits, [key]: Number(e.target.value) })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 160,
+          "source": "onClick={() =>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 219,
+          "source": "onChange={(e) => setSymbol(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 231,
+          "source": "onChange={setType}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 238,
+          "source": "onChange={(e) => setThreshold(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 245,
+          "source": "onClick={() =>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 294,
+          "source": "onClick={() => void remove.mutate(a.id)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 343,
+          "source": "<Button size=\"sm\" onClick={reset}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 377,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 417,
+          "source": "onChange={(e) => setSymbol(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 433,
+          "source": "onChange={(e) => setter(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 441,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 69,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 71,
+          "source": "{ label: \"Portfolio at risk\", value: formatINR(value) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 77,
+          "source": "{ label: `${shock}% scenario`, value: `−${formatINR(stressLoss)}`, tone: \"negative\" },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 104,
+          "source": "<span className=\"font-mono text-negative\">−{formatINR(stressLoss)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 107,
+          "source": "<ProgressBar value={Math.abs(shock) * 2.5} tone=\"negative\" />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 118,
+          "source": "<p className=\"mt-2 font-mono text-lg\">{formatINR(Number(v))}</p>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 194,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 349,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/ScreenerPage.tsx",
+      "sha256": "4398760e129a1b124a41eaba4a77ed77f924f6ec59507f0def7ef1c98bdebf2f",
+      "routes": [],
+      "actions": [
+        {
+          "line": 148,
+          "source": "onChange={(e) => setF({ ...f, [key]: Number(e.target.value) })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 180,
+          "source": "onChange={(e) => setF({ ...f, sector: e.target.value })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 198,
+          "source": "onClick={() => setF({ ...f, verdict: v })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 212,
+          "source": "<Button variant=\"ghost\" size=\"sm\" onClick={() => setF(initial)}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 222,
+          "source": "onChange={(e) => setName(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 229,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 246,
+          "source": "onClick={() => setF(s.filters)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 255,
+          "source": "onClick={() => persist(saved.filter((x) => x !== s))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 161,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/SystemPages.tsx",
+      "sha256": "b10b4234207d5051773be8778766597274be92ea125b7366539d9f8688a74e28",
+      "routes": [],
+      "actions": [
+        {
+          "line": 135,
+          "source": "onClick={() => void save()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 215,
+          "source": "onChange={setTheme}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 230,
+          "source": "onChange={setRisk}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 392,
+          "source": "onClick={() => setSelectedName(s.name)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 526,
+          "source": "onChange={(e) => setQuery(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 234,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 364,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/TerminalPages.tsx",
+      "sha256": "4819f193c274846ee75dd94a1ab257afc62d9f88d58dfc0a813d5ed15273c930",
+      "routes": [],
+      "actions": [
+        {
+          "line": 173,
+          "source": "onChange={setRange}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 234,
+          "source": "onClick={() => setSelected(i)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 365,
+          "source": "onChange={setView}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 563,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 611,
+          "source": "onChange={(v) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 623,
+          "source": "onChange={(e) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 648,
+          "source": "onClick={() => setSelected(i)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 821,
+          "source": "onChange={(v) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 841,
+          "source": "onClick={() => setSelected(i)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 149,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 155,
+          "source": ": `${i.kind === \"commodity\" ? \"₹\" : \"\"}${formatNum(i.value, i.kind === \"commodity\" ? 0 : 2)}`,",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 159,
+          "source": ": `${i.change_pct >= 0 ? \"+\" : \"\"}${formatNum(i.change_pct)}%`,",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 183,
+          "source": "? `${instrument.kind === \"commodity\" ? \"₹\" : \"\"}${formatNum(instrument.value, instrument.kind === \"commodity\" ? 0 : 2)}`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 188,
+          "source": "? `${up ? \"+\" : \"\"}${formatNum(instrument.change_abs)} · ${up ? \"+\" : \"\"}${formatNum(instrument.change_pct)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 216,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 249,
+          "source": "? formatNum(item.value, item.kind === \"commodity\" ? 0 : 2)",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 257,
+          "source": ": `${item.change_pct >= 0 ? \"+\" : \"\"}${formatNum(item.change_pct)}%`}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 339,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 341,
+          "source": "{ label: \"Current value\", value: formatINR(current), tone: \"primary\" },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 342,
+          "source": "{ label: \"Invested capital\", value: formatINR(invested) },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 345,
+          "source": "value: `${pnl >= 0 ? \"+\" : \"\"}${formatINR(pnl)}`,",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 392,
+          "source": "{formatINR(r.invested)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 394,
+          "source": "<span className=\"text-right font-mono text-[11px]\">{formatINR(r.current)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 402,
+          "source": "{formatINR(r.pnl)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 451,
+          "source": "<ProgressBar value={(r.current / current) * 100} />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 468,
+          "source": "{formatINR(r.pnl)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 471,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 494,
+          "source": "<ProgressBar value={(value / current) * 100} delay={i * 100} />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 511,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 581,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 671,
+          "source": "{formatNum(w.change_pct)}%",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 694,
+          "source": "<p className=\"font-mono text-3xl num-tabular\">₹{formatNum(focus.price)}</p>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 702,
+          "source": "{formatNum(focus.change_pct)}%",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 808,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/WalletPage.tsx",
+      "sha256": "46ce6a0075d6a1570ccc799edf3355a4a231e435b93fe6ac22eb546b3cfcd9bc",
+      "routes": [],
+      "actions": [
+        {
+          "line": 190,
+          "source": "onChange={(next) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 203,
+          "source": "onClick={() => setAmount(String(preset))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 225,
+          "source": "onChange={(event) => setAmount(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 235,
+          "source": "onClick={() => void submit()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 52,
+          "source": "? `${formatINR(value)} withdrawn from your wallet.`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 53,
+          "source": ": `${formatINR(value)} added to your wallet.`,",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 83,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 87,
+          "source": "value: formatINR(balance),",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 91,
+          "source": "{ label: \"Deployed\", value: formatINR(invested), note: \"Cost of open holdings\" },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 94,
+          "source": "value: formatINR(marketValue),",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 99,
+          "source": "value: formatINR(Number(account?.profit ?? 0)),",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 161,
+          "source": "{formatINR(Math.abs(Number(txn.amount)))}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 164,
+          "source": "{formatINR(Number(txn.balance_after))}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 210,
+          "source": "{formatINR(preset)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 246,
+          "source": "{mode === \"Withdraw\" ? \"Withdraw\" : \"Add\"} {formatINR(value)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 257,
+          "source": "<ProgressBar value={deployedPct} tone=\"primary\" delay={320} />",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 269,
+          "source": "<dd>{formatINR(equity)}</dd>",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/pages/workspace.tsx",
+      "sha256": "2bd192801a166ffb4d04e1a53d58d171d71dbf8327b2a4c623a6fdbb96e751d4",
+      "routes": [],
+      "actions": [
+        {
+          "line": 144,
+          "source": "onClick={() => onChange(item)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/QuantAIDock.tsx",
+      "sha256": "1684587077c326c9bf0134f42699d1c56f6f9e7f987dc2439db106bcb54c59d6",
+      "routes": [],
+      "actions": [
+        {
+          "line": 87,
+          "source": "onClick={() => setOpen(false)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 131,
+          "source": "onClick={() => void send(s)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 143,
+          "source": "onSubmit={(e) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 152,
+          "source": "onChange={(e) => setInput(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/ResearchWorkspace.tsx",
+      "sha256": "065f705c69db34d96a7f00f0eda049c6f2ca0c51c336c118b393c689c8178eed",
+      "routes": [],
+      "actions": [
+        {
+          "line": 61,
+          "source": "onSubmit={(event) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 70,
+          "source": "onChange={(event) => setInput(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 42,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/AgentPrediction.tsx",
+      "sha256": "bdfb49a2c6bf10f7f2c155509eff66c2fb220b2ad49f355a1d659886d19026d7",
+      "routes": [],
+      "actions": [
+        {
+          "line": 30,
+          "source": "onClick={() => void analysis.refetch()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 96,
+          "source": "onClick={() => analysis.retryAnalysis()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 136,
+          "source": "<span>Research entry ₹{formatNum(display.proposal.entry)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 137,
+          "source": "<span>Target ₹{formatNum(display.proposal.target)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 138,
+          "source": "<span>Stop ₹{formatNum(display.proposal.stop)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/OrderPanel.tsx",
+      "sha256": "0ae096321a890ccf24f2729a0d0403e3738fa6844bdb4fda77b84c5a1f6f2ace",
+      "routes": [],
+      "actions": [
+        {
+          "line": 92,
+          "source": "onClick={() => setSide(option)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 121,
+          "source": "onClick={() => setOrderType(type)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 143,
+          "source": "onClick={() => setQuantity((value) => Math.max(1, value - 1))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 152,
+          "source": "onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 159,
+          "source": "onClick={() => setQuantity((value) => value + 1)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 181,
+          "source": "onChange={(event) => setTriggerPrice(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 251,
+          "source": "onChange={(e) => setStopLoss(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 261,
+          "source": "onChange={(e) => setTarget(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 297,
+          "source": "onClick={() => void submit()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 349,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 191,
+          "source": "<dd className=\"font-mono num-tabular\">{formatINR(estimate)}</dd>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 195,
+          "source": "<dd className=\"font-mono num-tabular\">{formatINR(estimate * 0.00035)}</dd>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 205,
+          "source": "{formatINR(side === \"BUY\" ? walletBalance - estimate : walletBalance + estimate)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 216,
+          "source": "{formatINR(walletBalance)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 227,
+          "source": "{position.qty ? ` @ ₹${formatNum(position.avgPrice)}` : \"\"}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 240,
+          "source": "{formatINR(pnl)}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 320,
+          "source": "{order.quantity} @ ₹{formatNum(Number(order.price))}",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/ProfessionalChart.tsx",
+      "sha256": "701371b1787c3114717ea91d26d83c0d5023ac8c7ad4c2643ca12e5bc0a7a10f",
+      "routes": [],
+      "actions": [
+        {
+          "line": 90,
+          "source": "onClick={() => setChartType(type)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 104,
+          "source": "onClick={() => setIndicator(indicator === item ? null : item)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 113,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 231,
+          "source": "<Pill>O {formatNum(focus?.open ?? 0)}</Pill>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 232,
+          "source": "<Pill tone=\"positive\">H {formatNum(focus?.high ?? 0)}</Pill>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 233,
+          "source": "<Pill tone=\"negative\">L {formatNum(focus?.low ?? 0)}</Pill>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 234,
+          "source": "<Pill>C {formatNum(focus?.close ?? 0)}</Pill>",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/StockBoard.tsx",
+      "sha256": "46cdbf70ac38777c89cb7225854cd005f5e9976784f37e46a67732414186037e",
+      "routes": [],
+      "actions": [
+        {
+          "line": 140,
+          "source": "onChange={(event) => setQuery(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 151,
+          "source": "onClick={() => setSector(item)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 182,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 290,
+          "source": "onClick={() => setShowAll(true)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 94,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 105,
+          "source": "? `${gainers[0].symbol} ${gainers[0].changePct > 0 ? \"+\" : \"\"}${formatNum(gainers[0].changePct)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 112,
+          "source": "? `${losers[0].symbol} ${losers[0].changePct > 0 ? \"+\" : \"\"}${formatNum(losers[0].changePct)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 251,
+          "source": "{quote?.price != null ? formatNum(quote.price) : \"--\"}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 265,
+          "source": "? `${up ? \"+\" : \"\"}${formatNum(quote.change_pct)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 269,
+          "source": "{stock.weight > 0 ? `${formatNum(stock.weight)}%` : \"Unavailable\"}",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/StockDetail.tsx",
+      "sha256": "08df10706b52546c04f594fe491af04cb2b2c9b47303167c167287c5e5d32b89",
+      "routes": [],
+      "actions": [
+        {
+          "line": 229,
+          "source": "<Segmented items={ranges} value={range} onChange={setRange} label=\"Chart range\" />",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 108,
+          "source": "{quote?.price != null ? `₹${formatNum(quote.price)}` : \"—\"}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 112,
+          "source": "? `${up ? \"+\" : \"\"}${formatNum(quote.change)} · ${up ? \"+\" : \"\"}${formatNum(quote.change_pct)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 150,
+          "source": "<MetricStrip",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 152,
+          "source": "{ label: \"Open\", value: quote?.open != null ? `₹${formatNum(quote.open)}` : \"—\" },",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 157,
+          "source": "? `₹${formatNum(quote.low)} – ₹${formatNum(quote.high)}`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 268,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 311,
+          "source": "? formatNum(fundamentals.data.pe_ratio, 1)",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 317,
+          "source": "? `${formatNum(fundamentals.data.dividend_yield * 100)}%`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 322,
+          "source": "fundamentals.data?.beta != null ? formatNum(fundamentals.data.beta) : \"—\",",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 324,
+          "source": "[\"Index weight\", stock.weight ? `${formatNum(stock.weight)}%` : \"—\"],",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 328,
+          "source": "? `₹${formatNum(weekLow, 0)} – ₹${formatNum(weekHigh, 0)}`",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/StockMarketData.tsx",
+      "sha256": "2bd8435d4b402cb9c9f9bc69bc3f47c87cf30acf10e5805ad4d89b164bb77a7d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": [
+        {
+          "line": 10,
+          "source": "value != null && value > 0 ? `₹${formatNum(value)}` : \"—\";",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 11,
+          "source": "const quantity = (value?: number | null) => (value != null ? formatNum(value, 0) : \"—\");",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/StockNewsIntelligence.tsx",
+      "sha256": "6bfb3f747b5b4c9b659c74fbcf6b3a5ed4e5d14e5cacf652f59d91723f81ffa8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": [
+        {
+          "line": 33,
+          "source": "<ProgressBar",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/stocks/StockSearch.tsx",
+      "sha256": "987d3c84a2ea0557ea08477b7abb3e2daa80830091324b8e5627ccdc6ed8cb92",
+      "routes": [],
+      "actions": [
+        {
+          "line": 35,
+          "source": "onSubmit={(event) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 44,
+          "source": "onChange={(event) => setInput(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/TradeReviewPanel.tsx",
+      "sha256": "33e1674a563d49660f309c90996139da1845c7e4116840ef8dea3cf46935251b",
+      "routes": [],
+      "actions": [
+        {
+          "line": 82,
+          "source": "onChange={(e) => setId(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 91,
+          "source": "<Button onClick={() => void review()} disabled={busy}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/trading-desk-context.ts",
+      "sha256": "64471a09d96dea002df14d99b99c6ecb62bbcf0aafd110d4ed98324df5e7cc49",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/TradingDesk.tsx",
+      "sha256": "f865dea756b79f766f5a8d97af9c17ab7dae89393c9a046b648a5fb98865d985",
+      "routes": [],
+      "actions": [
+        {
+          "line": 197,
+          "source": "onChange={(event) => setQuery(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 213,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 266,
+          "source": "onClick={() => setTicket(null)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 291,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 298,
+          "source": "<Button onClick={() => setTicket(null)}>Return to terminal</Button>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 324,
+          "source": "onClick={() => setTicket({ ...ticket, side })}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 347,
+          "source": "onClick={() => setOrderType(type)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 369,
+          "source": "onChange={(event) => setTriggerPrice(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 378,
+          "source": "onClick={() => setQuantity((value) => Math.max(1, value - 1))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 386,
+          "source": "onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 392,
+          "source": "onClick={() => setQuantity((value) => value + 1)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 445,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 285,
+          "source": "? `Settled against your wallet — balance is now ${formatINR(walletBalance)}.`",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 310,
+          "source": "{marketPrice > 0 ? formatINR(marketPrice) : \"—\"}",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 400,
+          "source": "<dd className=\"font-mono num-tabular\">{formatINR(estimate)}</dd>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 420,
+          "source": "{formatINR(walletBalance)}",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/app/TradingMonitor.tsx",
+      "sha256": "7d0a3fdbfe0ae50ea8f55936bbaaaec2688d7f847f97cacd0fe2cd549ed760ce",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/app/WalletGate.tsx",
+      "sha256": "55131e9ed356ae40d8635072f76fd1986559143ad22dab838b6bf29a24fbc9d8",
+      "routes": [],
+      "actions": [
+        {
+          "line": 87,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 113,
+          "source": "onChange={(event) => setCustom(event.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 126,
+          "source": "onClick={() => void submit()}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 120,
+          "source": "Starting balance · <span className=\"text-foreground\">{formatINR(value)}</span>",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 131,
+          "source": "Add {formatINR(value)} to wallet",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/components/site/AIAnalyst.tsx",
+      "sha256": "ae897dca6f05552e0074e57be6c36c02a221811db09c1094e80b8d230f287dee",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/AnimatedNumber.tsx",
+      "sha256": "fa271144428b401adcb575014ef29841d71b60fb8d1331798013fde4ccefe3fa",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/CallToAction.tsx",
+      "sha256": "7a65141106f92788f20e5bd2ffae92ebfa36e208e0a6fcc705155e65cc48f729",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Capabilities.tsx",
+      "sha256": "3f12d789f43a45d9607d8e034ce3678c406a45ce737fb71f29ff97421400e857",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/CapabilitySection.tsx",
+      "sha256": "2196c5f3c63e3156402003ce4b4e381835c84cb2639eed40bc699d50d732158b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Coverage.tsx",
+      "sha256": "229294c2242c831708fda936278abf3636d59b302bb473d8e222306058f2cc87",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/DashboardPreview.tsx",
+      "sha256": "4f52cf2b456e74b83f947a0e462c7fab5e0c83c41d1d6d9c3e84171f86cb7588",
+      "routes": [],
+      "actions": [
+        {
+          "line": 25,
+          "source": "onClick={() => setTab(name)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/DashboardReveal.tsx",
+      "sha256": "92e7b9a3aaecf00ec5b5a0252e8078e42a8edc5d00e9e302924bbafcd342dcd8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Footer.tsx",
+      "sha256": "17ce85095d48ee6151c6d49099ccd059c1550186ba50968314c27c53a2521983",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Hero.tsx",
+      "sha256": "77de340659135837dfc61d2c60580ebe14de48259a6589eaaca493060860feab",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/MarketExplorer.tsx",
+      "sha256": "4df9ce81dbad25f66034c811d72b37ceb6f7ed178104593956a8eb44a6fcc9ff",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/MarketIntelligence.tsx",
+      "sha256": "a606cb01bbdca7af3fab4aba0534a9c44110a964edcc8f1f3210fc6ac6a64e91",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/MarketTicker.tsx",
+      "sha256": "5f39753e4519ec208fedb63f061efa10d37c218e4b1891416166e7b925cb2ef8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Navbar.tsx",
+      "sha256": "d6ccb71269d0a993882a024f2e44aa0ef8d54706be010f229b7ad7a0679a24ab",
+      "routes": [],
+      "actions": [
+        {
+          "line": 46,
+          "source": "<Link to=\"/\" className=\"group flex items-center gap-2.5\" onClick={() => setOpen(false)}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 95,
+          "source": "onClick={() => setOpen((v) => !v)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 116,
+          "source": "onClick={() => setOpen(false)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 128,
+          "source": "onClick={() => setOpen(false)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 135,
+          "source": "onClick={() => setOpen(false)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/PageHeader.tsx",
+      "sha256": "102acc86936c8a46cf22d0282805d10df31fdc9ff772d106eee16fbb9b41ebe8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Philosophy.tsx",
+      "sha256": "34e9b3d8405c6b035c1338e0be0645e061dabd67fff1c2147831121a5f1f5313",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/PortfolioIntelligence.tsx",
+      "sha256": "baee1e2a5dbbcea77b90e28e93935da042b0c7de5f660050a9b97dcbba629809",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/primitives.tsx",
+      "sha256": "ad04a7edfbe45704e9311952ff0389bedfc1646bf26f102d5047bf65e852fb55",
+      "routes": [],
+      "actions": [
+        {
+          "line": 94,
+          "source": "<button type=\"button\" onClick={onClick} className={classes}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 133,
+          "source": "<button type=\"button\" onClick={onClick} className={classes}>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/ProductShowcase.tsx",
+      "sha256": "8ac2e328ec7e48a217f4ed05a88994163205641b50036741d45658d8dc49f53f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/ResearchSection.tsx",
+      "sha256": "4cd247a197e399a6085c3718de8d2b7cfe7c8474bbd4c1e80907ade334ac5519",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/Reveal.tsx",
+      "sha256": "31cb4adc60c121bccb9f1647c46fb603632f2d7a4dd11d60199ee3c4d442c5ed",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/RiskEngine.tsx",
+      "sha256": "43dcbaa00072a741002484322b8f2b4b2c44e05e90d2c6e8193a601ede129f0e",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/site/SignalEngine.tsx",
+      "sha256": "523a7fb258797b603329e60079efc6bf09dd918ed4d5dfcec07e873f7d4f5749",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/accordion.tsx",
+      "sha256": "0de02bb71ec1739e64a2fc2af0848458f204490719bad8e51c3fbe2bcb31d3a8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "25b05ee3aa33c37bd88c015ed8eb8f5e30f164dd3e5e8be7d81766b2633953db",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/alert.tsx",
+      "sha256": "aef6ee0b3672f312e6906461273d8135f11f0f56e2f9b115d92262b7946dd6f9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/aspect-ratio.tsx",
+      "sha256": "67c60b91df6dc9fc729390742b04c02d40c19f51f7a2d4f79110911a061266bb",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "a2077be3cb2702c55b3ff024e28a2d19e426bb5827e366d03a6bf756dbf8221c",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/badge-variants.ts",
+      "sha256": "d546bafb2e664a3c379113575dc9c8f2b2d3ba41d7b25603ff22d354660fc1b6",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/badge.tsx",
+      "sha256": "bd29dd2190e3f4237d39ed414dbbf5063e645a08afbc3d2bcfaee1adbf9fb4f4",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/breadcrumb.tsx",
+      "sha256": "d70a97e46e4d0846be2d22b546632e55ab3335a3c82804c0160b45a7abdc760d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/button-variants.ts",
+      "sha256": "be8693464b863bcd0080476fa298655f58852f08e99f6e207cca18ea8dd25f41",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "a85070195b7f69c0de8c6f90b976c249679a790842bbeb125b3e1ddf3cb9189c",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/calendar.tsx",
+      "sha256": "7b9311b6725a049736871a44641b071712e61d130e5a644ac526782291c1e6d8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "sha256": "c6e182e038df4994615be337e682910a3835594f12d7bf61ab0909e6518477b2",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/carousel.tsx",
+      "sha256": "bdf6f1be424fa2d49cf82d09b219d6613d6bc83340df1105d88ddc328034ede2",
+      "routes": [],
+      "actions": [
+        {
+          "line": 194,
+          "source": "onClick={scrollPrev}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 222,
+          "source": "onClick={scrollNext}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/chart.tsx",
+      "sha256": "d816f293d915c86968a16100f50df23fc20f9cd0bc6f5a1e8fcadea50a1d58f0",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "sha256": "d2c880d1a7de1633a5eb6f4d09977f203d737de24fe3d7e8ba959b851fd18145",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/collapsible.tsx",
+      "sha256": "0be1d5082be6ce6a06e0f67accb38ef50e981f111187e3954d0a1bca062f52e1",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/command.tsx",
+      "sha256": "5f15a9b4aeec3f848264322c65798e92f9af0cb3777ca075796bdfce56deaf54",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/context-menu.tsx",
+      "sha256": "aa47df69152c464a586878b1f35cc19442c4d3778eb58cc3e1d6fa9ba79df9b4",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "a5b691c73830e0eab35b93a0ff08703cf7b1dd42a7acd435f1a4ebb9a2e232e9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/drawer.tsx",
+      "sha256": "096c508d4ebbe9ed00647588e8077cd65970938b773c0e1d252723b903bd620e",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "sha256": "15f01555648d666df9e3f6ddc7474e85c815624d765adaf166e66329e69991d4",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/form-context.ts",
+      "sha256": "c8f866e71e5ad234ca1bffa09558c4004c1cc977e3219465b0e79ecf8465d517",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/form.tsx",
+      "sha256": "db669eb0479642cd582d2273400cd01c7eb0915eef0da35d88c0c55b87483213",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/hover-card.tsx",
+      "sha256": "989e3074c71555f2f3a1e8ba3ff23652309dc44bef9ce17705d241aa1ccf5e2f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/input-otp.tsx",
+      "sha256": "9fff71c84c444efe593891c0323cac7c4b3b59e58d02e32db1006f19b5f902c3",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "sha256": "4ee1c239851691038ddef07a1cac8f3d348a35ff5816ecc296d20c9803b1c3de",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/label.tsx",
+      "sha256": "c33a02e76ac4dfd8e328026ca068ec184aae5b00dc454955865edf5f90f403e0",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/menubar.tsx",
+      "sha256": "522d76827b02db048a67d991bce2975c734f295a062b13c77bc699e1f7154c76",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/navigation-menu-variants.ts",
+      "sha256": "00264831fbb87bf2bc45b8c4fb8ac1d9b6668ba21e548681ed18966b3b54f9ba",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/navigation-menu.tsx",
+      "sha256": "cbb255a5a1f3ce9979f620dd1a822f6f97f6b87a796256b44b351d3ce893ef50",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/pagination.tsx",
+      "sha256": "a6e68eb0c713a48c6cc05528cb70ca878e85a1d6b82c6d5fbee59abf88af8870",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "sha256": "5b57bee5769e87ab533a8326c6a25fc1940b5a8fbe1c5276f25ba89615cc7030",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/progress.tsx",
+      "sha256": "61646ebf88d17e251bafd69784b40af978e4a5e8311a5651288b203410a9b107",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/radio-group.tsx",
+      "sha256": "2e71f118a77c7adf6c5cc35923576632d0db62c1db4a4aa2b16acad7a841a43d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/resizable.tsx",
+      "sha256": "3c3fdec6f7cca80a152bc861a313758bf28703170cdd322ce4ec9da5f0b67a2f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "sha256": "c9f69c09fada3c8653fb4122988a43f6bf49a0b71e8be5ffeeca94e0d87ca266",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "27b85948433560e1d1792037dafac2fa4d0dc38e72977464271ceae1bac60a1d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/separator.tsx",
+      "sha256": "0f833b4b3a11bdb561f10b704902cb1533d2119bb0c2c7b81fbb47955b621224",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "b78b82c5e0e83ac972ae96ff489ed1d5c0ae792c77c9cec67d201f0c76d3b098",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/sidebar-context.ts",
+      "sha256": "8b37e256de1fd04832ab534b46baa94112c2e97a06aa479028537b9657551662",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/sidebar.tsx",
+      "sha256": "b329ea5948660e1b963bdd1d36cf3de829848f35a74f566202830b7f68a0edd6",
+      "routes": [],
+      "actions": [
+        {
+          "line": 253,
+          "source": "onClick={(event) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 276,
+          "source": "onClick={toggleSidebar}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "sha256": "020954b8c6a47e7584eefee6af278bf8ce482b8152585b70052cf196b6fd79a5",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/slider.tsx",
+      "sha256": "5ee4156c0e9a0bfb12fbbdd80a881e5b957e4e4801e7c9082b5d6f7062a7dbbf",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/sonner.tsx",
+      "sha256": "be303e32fe6688cdf44ba42466aed162d4d6341eb279317d1fbeb3b4ae4cbe8b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/switch.tsx",
+      "sha256": "194d3554933df8573ef1bf84584e1acb9b255f55e73b24b2076c36cca116c5e6",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "sha256": "14849bacd517394129565a2736f367a2dc218dee044e9dbc4c37ede9ae56e22b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/tabs.tsx",
+      "sha256": "a33395479355fc3cb0127e8731359830ceb29cb137b4090b65a8a9818c2a093d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/textarea.tsx",
+      "sha256": "5af8d497b7b1c4f77399bf5b9f1861230d9950d0c2c5fe1bdbf8b3bdb6eab1e0",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/toggle-group.tsx",
+      "sha256": "0cf0fa7834bbf30b1b55c180015b773fa120ce46398d2deb383d007f266c907f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/toggle-variants.ts",
+      "sha256": "822a1459a343799d8b6d0a580c4e3655c0cc26084fe70ed7cb79c3908623a005",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/toggle.tsx",
+      "sha256": "49691d6d0de5dcfaf989c79a3eec434014313b85e42569c11588fce6721afdec",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/ui/tooltip.tsx",
+      "sha256": "657bfcea60e04adf0d5385ae4aabede6158b718206c4b8a91452a728acb9ad00",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/visuals/MarketField.tsx",
+      "sha256": "7bcf75d000286839c92761e908446cbd762cf5158e97396ec67785e2fd18a4eb",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/components/visuals/MarketWave.tsx",
+      "sha256": "8f7a69d8363c36ee53b057e51efb3d5a5a61f2c1d543f1051e93854d15563849",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/data/market.ts",
+      "sha256": "521e9d6d6ee481d641fe24900c07bc9d28afcba057c7c745af5bea7243f74d93",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/data/nifty50.ts",
+      "sha256": "e4f7e697e3e011fbe510743e2cf7a15e72e8659f855c2cf3a4dd188cc90e0e10",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-agent-stock.ts",
+      "sha256": "b1d934402411d74dd17cf58b5962c10f2714ec0d97fea3503da0a5ab4646566d",
+      "routes": [],
+      "actions": [
+        {
+          "line": 39,
+          "source": "mutationFn: async () =>",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-dashboard-data.ts",
+      "sha256": "ce7503d139b46844932dd06b08030beee0eb7e7a9dc29a5131955e5727778e6f",
+      "routes": [],
+      "actions": [
+        {
+          "line": 170,
+          "source": "mutationFn: async (item: { symbol: string; company: string }) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 197,
+          "source": "mutationFn: async (id: string) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": [
+        {
+          "line": 352,
+          "source": "export function formatINR(value: number, opts: { compact?: boolean } = {}) {",
+          "review": "pending: document lineage, formula and missing state"
+        },
+        {
+          "line": 361,
+          "source": "export function formatNum(value: number, digits = 2) {",
+          "review": "pending: document lineage, formula and missing state"
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/use-intelligence.ts",
+      "sha256": "f2f65611fdd27db6bba089d15156e427f1ae3fefe2dc547db764eb3b99d7b6dc",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-live.ts",
+      "sha256": "55958c9a7ba7cabcf841aeea2aa4c99e012f5dfb0eedd616185d16224ecf38ea",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-mobile.tsx",
+      "sha256": "f6f7a7643d4607721c57e2b8c4081a8f84aefbb0a240f4b9dd1fc20d8d7a61e6",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-orders.ts",
+      "sha256": "b34a66fd4aeefaad491139cbc134ea617971b9657c5c8b28992e7164d04ec414",
+      "routes": [],
+      "actions": [
+        {
+          "line": 90,
+          "source": "mutationFn: async (order: NewOrder): Promise<Order> => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 141,
+          "source": "mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-reveal.ts",
+      "sha256": "298422de862a4997fcbbab12f04558741d34590caa5447cb3da28de9c2394ca6",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-session.ts",
+      "sha256": "8ba702dde84624e5ce6f644028714e80d4e2d70d0c97d025dac783882092b319",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-trading-product.ts",
+      "sha256": "e9be3afcb3366cac434334083367cf6ef4fdddaf1c16aff648df2b90a990f1b9",
+      "routes": [],
+      "actions": [
+        {
+          "line": 77,
+          "source": "mutationFn: async (alert: Omit<PriceAlert, \"id\" | \"triggered_at\" | \"created_at\">) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 89,
+          "source": "mutationFn: async ({",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 107,
+          "source": "mutationFn: async (id: string) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 134,
+          "source": "mutationFn: async (entry: {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 184,
+          "source": "mutationFn: async (values: TradingPreferences) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 224,
+          "source": "mutationFn: async (values: RiskLimits) => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/hooks/use-wallet.ts",
+      "sha256": "2da6a6b71d351ce7f02cab7c24f89784769346b7fefcd02895c9e51da3b8a88e",
+      "routes": [],
+      "actions": [
+        {
+          "line": 62,
+          "source": "mutationFn: async ({",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/lovable/index.ts",
+      "sha256": "947cf367544ac0452b2e90ef7de5205690bc7033b39869c2336d353b04b48731",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/supabase/auth-middleware.ts",
+      "sha256": "a6c13fdf4730b84a8f15d71b9ab1ba1368f7269918ce6814ee1cf47b0b7de5bb",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/supabase/client.server.ts",
+      "sha256": "dd5501d556fa41a92b29362bc2b93b3937441e2371147fa75f0a4ae3b73abc61",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/supabase/client.ts",
+      "sha256": "d0e84ee9b344a553a89b5b78ab21311c04204122823716d999a57c2b2eceeb38",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/supabase/previewAuthStorage.ts",
+      "sha256": "4df0b0a49878c3948da6eb2f96ed55c96350c8c1fe053f4dec2772be7b786b9b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/integrations/supabase/types.ts",
+      "sha256": "536a5973c7749498d0dc16ed4079c2864cfd19b02b860ac2ee87f4c240dd4164",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/agent-api.ts",
+      "sha256": "e4ec1fc30ab30f76985752057a1e0f58de0475d5b987c7994177ac584eea712d",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/chat-api.ts",
+      "sha256": "6e3be58e45987aa8f7588b9c28ed589521ab24c6cf7bd95defeef80bc355e09a",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/error-capture.ts",
+      "sha256": "a590666534b54955f12909cb9abcfc7793750e3b52408b26518e93cdd8289709",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/error-page.ts",
+      "sha256": "b070f0586e5d17c818700024c9dff021b7e7ffb40cd8e7f7e7bc19ea82efd1b5",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/intelligence-api.ts",
+      "sha256": "e2f973f339a6bc928fa409bc0f5f2ab218f7ac22d19b8667b6d96c68ce1de173",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/local-client.ts",
+      "sha256": "d6862464f467e6222bd23b2c42f4149c1fcc007b52508628f8baeabd006f0b94",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/local-schemas.ts",
+      "sha256": "6d31441b87811bbb6c2d65b8e36df700752238ac3322014604c501845f5e1eee",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/local-session.ts",
+      "sha256": "4eca03cd7f84776a4f20cd236e1a8db9dfc9ee2f802cd7ab711ae83189acf5df",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/local-store.server.ts",
+      "sha256": "d9b1458eb3be9a0c7906d296f831878368b5ac662aa5aa659b3772119f12c254",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/lovable-error-reporting.ts",
+      "sha256": "27cadfb8edfb04d3688d88e4ab1b2c018ec28dd1734be8d37c70c1c7daf0fee4",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/market-session.test.ts",
+      "sha256": "13af53eb932849ca83cba444424122cc439e1fab49d9602252b101e5bb41864e",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/market-session.ts",
+      "sha256": "94de562f76058481d949c5329adfb7d0e0278cd8a0d7c3a02a072de632bd7a4c",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/market-subscriptions.ts",
+      "sha256": "b8491baa7494dfd0bd29e22e52e5cfd851b69bd756ee41cee257418c6401f2da",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/options.test.ts",
+      "sha256": "76900a549f0b9b3b54fd899bce817099010c1d15440343e8b49f359b108d976e",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/options.ts",
+      "sha256": "0a3a096093d5a7ad3f3f0b07623e91fee6d67e92034324fccf9b16ab682b0a63",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/paper-trading.ts",
+      "sha256": "b004ec24aeb557556d02469d01070cb4fe9360052e8955766aeb301dfcec8452",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/quote-eligibility.ts",
+      "sha256": "8b7ecc6aec4d6be69477921e4055680f428e49482e6e1faea2a5f88510d96a37",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/sim-price.test.ts",
+      "sha256": "816bb9d1899ab80546ec95936f5f699fa17876f3faac4757dbcd69c136fc7372",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/sim-price.ts",
+      "sha256": "53c0409698bc6e27215e3295d32e8b0b8475d17834793a54616d14d891cb7db9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "c0adf27efbfa148d5abcf99e860f8e3e6c8fc77a1f99e023c08ef4f12e6ece29",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/router.tsx",
+      "sha256": "7e3481892de4073ba86e9a6c3a52f1cc6c0d8ab8668df1b14a3ce9f7658edc4a",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/ai.tsx",
+      "sha256": "6090027fb3bfe315144bd87cd051970eb12a4469047d7aeb10fc6a56a398f6b0",
+      "routes": [
+        "/ai"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/agent/$.ts",
+      "sha256": "208911e9ad46ca69e01b4c8ce774e24e19c93dfa08dca5731a47ddeffef92e7d",
+      "routes": [
+        "/api/agent/$"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/chat.ts",
+      "sha256": "4bd283440d2db8545be123206f5439dba95095b937e37d07364d6c36a8dfd632",
+      "routes": [
+        "/api/chat"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/local.ts",
+      "sha256": "aa93b52c97302e45dbcd552cea93444da43c7e8622ee872a27d94ca92bf78bc0",
+      "routes": [
+        "/api/local"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/market/$.ts",
+      "sha256": "e0b67e02598fbe4608b206fb988235d805320dae932dbe85a9b5fc8ef2bdf68c",
+      "routes": [
+        "/api/market/$"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/paper/$.ts",
+      "sha256": "e49b32e261abebd7dcf6b60af1b0b758e7b76b528285f6abe387135a9f17f3d3",
+      "routes": [
+        "/api/paper/$"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/api/stocks/$.ts",
+      "sha256": "c7054d3f01b4ab79bdf31c3d5e8991c0253bd24548f3d7062bc6a27c0eb9e026",
+      "routes": [
+        "/api/stocks/$"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/auth.tsx",
+      "sha256": "b0e3c3a6539031887bb8dcb3e76e4ffa7158c6ba42429e24a31bad14dcf6c42e",
+      "routes": [
+        "/auth"
+      ],
+      "actions": [
+        {
+          "line": 160,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 204,
+          "source": "<form onSubmit={handleEmail} className=\"mt-8 space-y-3\">",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 210,
+          "source": "onChange={setName}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 220,
+          "source": "onChange={setEmail}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 230,
+          "source": "onChange={setPassword}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 272,
+          "source": "onClick={handleGoogle}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        },
+        {
+          "line": 323,
+          "source": "onChange={(e) => onChange(e.target.value)}",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/index.tsx",
+      "sha256": "7f44258d47cc11ed98162a202d38c2d81125b34e8a3c7f3f2d66cff284eceff7",
+      "routes": [
+        "/"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/markets.tsx",
+      "sha256": "567e0c0af89087eae2677dfae4dd16d21a72b902608fbbea925200451f62752c",
+      "routes": [
+        "/markets"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/platform.tsx",
+      "sha256": "01fe95ec9f57c2c41b025dc288de5f25f0985f46ffe5304899c0db55a105b991",
+      "routes": [
+        "/platform"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/research.tsx",
+      "sha256": "5fe96358743712f28b9754bd2161a0e58072885f29dc31b1dda58acbed1ff96b",
+      "routes": [
+        "/research"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/_authenticated/app.$section.tsx",
+      "sha256": "3596352c5751ca21e8ac22032ccc21da8b9d3deba585678899c68121c181019e",
+      "routes": [
+        "/_authenticated/app/$section"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/_authenticated/app.dashboard.tsx",
+      "sha256": "786140e4938f84d7b2f9c409fde2706f03ca68a3ac853b613d8a20519fc7bb8f",
+      "routes": [
+        "/_authenticated/app/dashboard"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/_authenticated/app.stocks.$symbol.tsx",
+      "sha256": "043b4c89d4031d9f485a7900e233f2b9b1390312c3984b28441ddac57399826f",
+      "routes": [
+        "/_authenticated/app/stocks/$symbol"
+      ],
+      "actions": [
+        {
+          "line": 81,
+          "source": "<Button variant=\"outline\" onClick={() => void profile.refetch()} className=\"mr-4\">",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/_authenticated.tsx",
+      "sha256": "9268fa512bdddf1d4dea672336ba56f927e7ce3464ba9ba7ccd9e282c086f7f8",
+      "routes": [
+        "/_authenticated"
+      ],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routes/__root.tsx",
+      "sha256": "ad7bff5451942f3be5379e5b1565e27161692ed7fae50ca222d9cf5e4f3f2d9c",
+      "routes": [],
+      "actions": [
+        {
+          "line": 57,
+          "source": "onClick={() => {",
+          "review": "pending: trace handler, side effects, error and browser evidence"
+        }
+      ],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/routeTree.gen.ts",
+      "sha256": "ad9bcb8a75041fea89231641112568cf562656ce200e9c3cd213fb3b6f84a05c",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/server.ts",
+      "sha256": "a3d094d598f274564cc4a8e7b4376b1234d324b4992c3e69841267aa57fc4ebb",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "src/start.ts",
+      "sha256": "9d3a00e7f89d1596407c269e9df54f163f36ca5edc2e9d2b180af640ccf4622e",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/analytics.py",
+      "sha256": "632943cab5cf89d7c38abb7e6b701904e52f3730be621dcb2604c0f751fbc3c8",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/api.py",
+      "sha256": "c05545c749124d974e9c73d309ed252eca8e240dea06ccaed5f83dd992abcd94",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/cache.py",
+      "sha256": "97ced729f5accc9642f25f1202d551daa6fa7c2c90ac388bebd37d52329c55ed",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/calibration.py",
+      "sha256": "d13d7590d054e91ef22f07afac5f6e37a144fd905ae8eb89e426efd9e64537fe",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/common.py",
+      "sha256": "a7a48f82c57b4874e7a51f2cbe128c8980f920428778aa9be94ba9f8083ae681",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/config.py",
+      "sha256": "1ed693f7c2c711bed87a28b3787b160ac86cbeda569042c7cb88c11692db355f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/explanation.py",
+      "sha256": "b54512f7766dda1683c91495d027a38b1fee9b29939df47be38a30bcd8083ef9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/history.py",
+      "sha256": "a6ac952b8f47e77a9708f61c89ea235c8dfd0ec4ee4b1d14cc0643efdac77ad3",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/intelligence.py",
+      "sha256": "443d7abac25885ccbf426cb5afd879ce605dd0dc4f6fe7fe2dc0bd2d95efa03f",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/market.py",
+      "sha256": "14746639240d9f0c3f76d03aa33073664b21bbdaa611c288246e1932c8b669dd",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/market_data.py",
+      "sha256": "88678948ff7660cc5fc85c5fa4191cf3e3f7aa521e2f8bc7794f7afb834403e7",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/aggregation.py",
+      "sha256": "8481788605ffeeb94a1c19714d2d810dbad1fb3a35aba60b21f58a97cc2ba1dd",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/deduplicator.py",
+      "sha256": "abedfd6d325b7710e65e097cde0a46998e9527bcf40b8183b8dde0c991eace9b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/google_news.py",
+      "sha256": "beb63999e717a08c0be9f61cd152f216b788b360f73245c23f7a0a1b156cf4ea",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/impact.py",
+      "sha256": "8b8397cf1cacb58c1447fb69f2e2605154daef10d821dd9675739193b32bfd8b",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/market_taxonomy.py",
+      "sha256": "ee40e76832398db6051c06488ee6e5ae0bdf2ab8f337dcc98355d268053b69f9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/official.py",
+      "sha256": "5ffae61cd1dbbf73ed616e3698dcb9679e4a69e24bca3a6c54ecba5e2833b3af",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/provider.py",
+      "sha256": "b5dc16969a6a939d4dee17f8ed31b15f80e0a7f553327db04adaf619d50f3d12",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/relevance.py",
+      "sha256": "f30134be978316d5860cb39fe34d8477c6a696c5d5d88b9d3b90f3af7c2ed974",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/resolver.py",
+      "sha256": "6846f8fba3c179797c92fc123a17d54c4f56c8322a47d7537d74c8f877c2e118",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/sentiment.py",
+      "sha256": "c4ef7034343522ad8871bf63ad7b968b7e5a5c68ecb90e35422d385b14ab63a9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/service.py",
+      "sha256": "06af127ce7ad02664455e23095ccee4672b9209c59caf039279c66b284224649",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/news/__init__.py",
+      "sha256": "910dd9ca257fd6be618d59eeddf6848c6e98a591632add22c2b0e5ca1e9bb571",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/scheduler.py",
+      "sha256": "c36e220d7ed42d1623bf801c4c9b5a5cb3a33afd5d280bfdfc058a4fef509016",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/terminal.py",
+      "sha256": "3195d815b3b545be7c4bf8582b8458c9e5fefc8a11a5fd2cfe0458a50e82dddf",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/terminal_api.py",
+      "sha256": "90dde2ab12b06356837a8b668a3ec430f0e58f198b4741dcf2d570123bdb14fd",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/volume.py",
+      "sha256": "13357556d3d3516af973b4fc9178004c2f59258b2cfaa4edd9562d76d9799a15",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/quantplus_intelligence/__init__.py",
+      "sha256": "0715a58dafbefef7c79639775b824dca1a8a5ea9ab9999833e8a202886247739",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/conftest.py",
+      "sha256": "2b6a04ee35001c7c399e1e68cbcfeeeda4a4c79ef67e570ff8fea0d89f1d33c9",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/test_backend_pit_regressions.py",
+      "sha256": "7916c837c643245b1a5d201d12d36096c50f992b151b8f8dd978a0045a7a88f0",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/test_integrity_regressions.py",
+      "sha256": "6c95a8649ab61d46b0758dbc05f1a297cb40568a4941bb32988bc11035df5a04",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/test_intelligence.py",
+      "sha256": "b4f0192592ab9ff2550c297ab83d52aecb476f6c0f2f788ac30af11984b65ab2",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/test_sentiment_upgrade.py",
+      "sha256": "853f94056984eab2a5e915faec6a96812d8379592ea0fc272dbe9895c1d54e91",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    },
+    {
+      "path": "backend-extension/tests/test_terminal.py",
+      "sha256": "00e7291a5adc81dcd6965ccfee433dd89e76b7e796a7badb69fe36d14070a5cc",
+      "routes": [],
+      "actions": [],
+      "quantitativeFields": []
+    }
+  ]
+}

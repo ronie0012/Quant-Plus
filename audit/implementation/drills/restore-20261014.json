@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-10-14T17:05:35.606Z",
+  "steps": [
+    {
+      "name": "migration replay from v1 backup",
+      "pass": true,
+      "source_sha256": "d0daf80b8ca40dc915639370c8e2daca0963aaa343fe99d0040379009376f21e",
+      "replay_money_digest": "18f1b26ff7ca0c8e2c3d35b192063bd1c1eaa043e3f2411926d232a2316ee69b",
+      "live_money_digest": "18f1b26ff7ca0c8e2c3d35b192063bd1c1eaa043e3f2411926d232a2316ee69b",
+      "identical": true,
+      "cash_paise": 99291050,
+      "holdings": [
+        "10 HDFCBANK"
+      ]
+    },
+    {
+      "name": "loss and restore",
+      "pass": true,
+      "snapshot_sha256": "4ce7184d75a7901c8090e049c411784c5d4192609a2de2e1b60e47ad0ab8e523",
+      "restored_identical": true,
+      "writes_after_restore_reconcile": true
+    },
+    {
+      "name": "corrupted file refused",
+      "pass": true,
+      "reads_refused": true,
+      "writes_refused": true,
+      "file_retained": true,
+      "restored_from_backup": true
+    },
+    {
+      "name": "operator pause",
+      "pass": true,
+      "orders_refused": true,
+      "reads_available": true
+    }
+  ],
+  "all_passed": true
+}

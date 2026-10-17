@@ -1,0 +1,21 @@
+{
+  "run_at": "2026-10-14",
+  "machine": "11th Gen Intel Core i5-11300H, 8 GB, Windows 11 22631, Node v22.14.0",
+  "results": {
+    "typecheck": "pass",
+    "lint_max_warnings_0": "pass",
+    "npm_test_unit": { "passed": 27, "failed": 0 },
+    "npm_test_script_suites": { "suites": 14, "failed": 0, "includes": "fault-injection matrix" },
+    "test_intelligence_pytest": { "passed": 103, "failed": 0 },
+    "test_backend_hermetic_pytest": { "passed": 442, "failed": 0 },
+    "browser_playwright": { "passed": 42, "failed": 0 },
+    "production_build": "pass",
+    "restore_drill": "pass",
+    "accelerated_soak_10_simulated_sessions": "pass"
+  },
+  "not_run": [
+    "10 consecutive real trading-session soak with live provider data",
+    ">=200-answer human-reviewed Quant AI answer set",
+    "Options (excluded from release scope)"
+  ]
+}

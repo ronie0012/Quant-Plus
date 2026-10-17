@@ -1,0 +1,12 @@
+[
+  {
+    "path": "app/data/fyers_provider.py",
+    "before_sha256": "9629355a6bb92787bf4bf1e5c9bc8543d2c48fed83ad94c866f0eba48bbf741b",
+    "after_sha256": "60949a196922ac1703450ab5ffd296e6af3a254064befacfda3c0aad64999730"
+  },
+  {
+    "path": "tests/test_fyers_budget.py",
+    "before_sha256": null,
+    "after_sha256": "5fab96275bb4522dbce106a17534de1b00651ec84f71929f0dbc0c88e07e43ea"
+  }
+]

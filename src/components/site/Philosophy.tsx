@@ -38,6 +38,16 @@ export function Philosophy() {
             );
           })}
         </div>
+        <div aria-hidden="true" className="relative mt-10 h-px w-full bg-border">
+          <span
+            className="absolute inset-y-0 left-0 w-full origin-left bg-gradient-to-r from-border-strong via-primary-soft to-primary"
+            style={{ transform: `scaleX(${t.toFixed(3)})` }}
+          />
+          <span
+            className="absolute -top-[3px] h-[7px] w-[7px] rounded-full bg-primary shadow-[0_0_14px_var(--color-primary)]"
+            style={{ left: `calc(${(t * 100).toFixed(2)}% - 3px)` }}
+          />
+        </div>
       </div>
     </section>
   );

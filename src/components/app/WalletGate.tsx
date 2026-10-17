@@ -66,7 +66,7 @@ export function WalletGate() {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
         />
         <div className="px-6 pt-7 pb-6 sm:px-8">
-          <p className="flex items-center gap-2 font-mono text-[9px] tracking-[0.22em] uppercase text-primary-soft">
+          <p className="flex items-center gap-2 font-medium text-[11px] tracking-[0.06em] uppercase text-primary-soft">
             <Wallet className="h-3.5 w-3.5" /> Fund your wallet
           </p>
           <h2 id="wallet-gate-title" className="mt-3 text-[1.6rem] leading-tight tracking-tight">
@@ -90,7 +90,7 @@ export function WalletGate() {
                   }}
                   aria-pressed={active}
                   className={cn(
-                    "h-10 font-mono text-[11px] tracking-[0.14em]",
+                    "h-10 font-mono text-[11px] tracking-[0.04em]",
                     active && "border-primary/50 bg-primary/10 text-primary-soft",
                   )}
                 >
@@ -101,7 +101,7 @@ export function WalletGate() {
           </div>
 
           <label className="mt-5 block">
-            <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+            <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
               Or enter an amount
             </span>
             <span className="mt-2 flex items-center border border-border bg-background/40 px-3">
@@ -125,7 +125,7 @@ export function WalletGate() {
           <Button
             onClick={() => void submit()}
             disabled={fund.isPending}
-            className="mt-6 h-12 w-full font-mono text-[11px] tracking-[0.18em]"
+            className="mt-6 h-12 w-full font-mono text-[11px] tracking-[0.04em]"
           >
             {fund.isPending ? <Loader2 className="animate-spin" /> : null}
             Add {formatINR(value)} to wallet

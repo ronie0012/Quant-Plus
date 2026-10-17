@@ -2,7 +2,6 @@ import { Coins, PiggyBank, TrendingUp, Wallet } from "lucide-react";
 import { AnimatedNumber } from "@/components/site/AnimatedNumber";
 import { Card, EmptyState, Skeleton } from "@/components/app/cards";
 import { formatINR, useAccount, type Account } from "@/hooks/use-dashboard-data";
-import { series, toPath } from "@/data/market";
 import { cn } from "@/lib/utils";
 
 type CardSpec = {
@@ -11,8 +10,7 @@ type CardSpec = {
   support: string;
   icon: typeof Wallet;
   fill: number;
-  seed: number;
-  tone?: "positive";
+  tone?: "positive" | "negative";
 };
 
 function specs(a: Account): CardSpec[] {
@@ -25,7 +23,6 @@ function specs(a: Account): CardSpec[] {
       support: "Account value",
       icon: Wallet,
       fill: 100,
-      seed: 7,
     },
     {
       label: "Total funds used",
@@ -33,60 +30,23 @@ function specs(a: Account): CardSpec[] {
       support: `${deployed.toFixed(0)}% deployed`,
       icon: Coins,
       fill: deployed,
-      seed: 19,
     },
     {
-      label: "Profit made",
+      label: "Realised P&L",
       value: Number(a.profit),
-      support: `+${Number(a.profit_pct).toFixed(1)}% overall`,
+      support: `${Number(a.profit_pct) >= 0 ? "+" : ""}${Number(a.profit_pct).toFixed(1)}% overall`,
       icon: TrendingUp,
-      fill: Math.min(100, Number(a.profit_pct) * 5),
-      seed: 31,
-      tone: "positive",
+      fill: Math.min(100, Math.abs(Number(a.profit_pct)) * 5),
+      tone: Number(a.profit) >= 0 ? "positive" : "negative",
     },
     {
       label: "Wallet balance",
       value: available,
-      support: "Wallet balance",
+      support: "Available to trade",
       icon: PiggyBank,
       fill: a.total_funds > 0 ? (available / Number(a.total_funds)) * 100 : 0,
-      seed: 43,
     },
   ];
-}
-
-/** Ring that visualises the share of capital each metric represents. */
-function Ring({ pct, tone }: { pct: number; tone?: "positive" | undefined }) {
-  const r = 13;
-  const circ = 2 * Math.PI * r;
-  const clamped = Math.max(0, Math.min(100, pct));
-  return (
-    <span className="relative flex h-9 w-9 items-center justify-center">
-      <svg viewBox="0 0 32 32" className="h-9 w-9 -rotate-90" aria-hidden="true">
-        <circle cx="16" cy="16" r={r} fill="none" stroke="var(--color-border)" strokeWidth="2" />
-        <circle
-          cx="16"
-          cy="16"
-          r={r}
-          fill="none"
-          stroke={tone === "positive" ? "var(--color-positive)" : "var(--color-primary)"}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={circ - (circ * clamped) / 100}
-          style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.16,1,0.3,1)" }}
-        />
-      </svg>
-      <span
-        className={cn(
-          "absolute font-mono text-[8px] num-tabular",
-          tone === "positive" ? "text-positive" : "text-primary-soft",
-        )}
-      >
-        {clamped >= 99.5 ? "" : clamped.toFixed(0)}
-      </span>
-    </span>
-  );
 }
 
 export function FundsRow() {
@@ -121,78 +81,43 @@ export function FundsRow() {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {specs(data).map((s, i) => {
-        const spark = series(s.seed, 40, s.tone === "positive" ? 1.6 : 0.6);
-        const path = toPath(spark, 320, 80);
         return (
-          <Card
-            key={s.label}
-            glow={s.tone === "positive"}
-            delay={140 + i * 80}
-            className={cn("p-5", s.tone === "positive" && "border-positive/25")}
-          >
-            {/* micro chart backdrop */}
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 320 80"
-              preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 w-full opacity-25 transition-opacity duration-500 group-hover:opacity-50"
-            >
-              <path
-                d={`${path} L320,80 L0,80 Z`}
-                fill={
-                  s.tone === "positive"
-                    ? "color-mix(in oklab, var(--color-positive) 18%, transparent)"
-                    : "color-mix(in oklab, var(--color-primary) 16%, transparent)"
-                }
-              />
-              <path
-                d={path}
-                fill="none"
-                strokeWidth="1.2"
-                stroke={
-                  s.tone === "positive" ? "var(--color-positive)" : "var(--color-primary-soft)"
-                }
-                className="animate-draw"
-                style={{ ["--draw-length" as string]: "900" }}
-              />
-            </svg>
-
+          <Card key={s.label} glow={s.tone === "positive"} delay={140 + i * 80} className="p-5">
             <div className="relative">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <span className="label-tech">{s.label}</span>
-                <Ring pct={s.fill} tone={s.tone} />
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground/[0.05]">
+                  <s.icon
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      s.tone === "positive" ? "text-positive" : "text-subtle",
+                    )}
+                    aria-hidden="true"
+                  />
+                </span>
               </div>
 
               <p
                 className={cn(
-                  "mt-4 font-mono text-[clamp(1.4rem,2.1vw,1.85rem)] num-tabular tracking-tight",
+                  "mt-3 font-mono text-[26px] leading-tight font-semibold num-tabular tracking-tight",
                   s.tone === "positive" && "text-positive",
+                  s.tone === "negative" && "text-negative",
                 )}
               >
                 {s.tone === "positive" && "+"}
                 <AnimatedNumber value={s.value} locale="en-IN" prefix="₹" decimals={0} />
               </p>
 
-              <div className="mt-4 flex items-center gap-2">
-                <s.icon
-                  className={cn(
-                    "h-3 w-3 shrink-0",
-                    s.tone === "positive" ? "text-positive/70" : "text-subtle",
-                  )}
-                  aria-hidden="true"
-                />
-                <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-subtle">
-                  {s.support}
-                </span>
-              </div>
+              <p className="mt-1 text-[12px] text-subtle">{s.support}</p>
 
-              <span className="mt-3 block h-[3px] w-full overflow-hidden rounded-full bg-border/70" aria-hidden="true">
+              <span
+                className="mt-4 block h-1 w-full overflow-hidden rounded-full bg-border"
+                aria-hidden="true"
+              >
                 <span
                   className={cn(
                     "grow-bar block h-full rounded-full",
-                    s.tone === "positive"
-                      ? "bg-gradient-to-r from-positive/40 to-positive"
-                      : "bg-gradient-to-r from-primary/30 to-primary",
+                    s.tone === "positive" ? "bg-positive" : "bg-primary",
                   )}
                   style={{
                     width: `${Math.max(4, Math.min(100, s.fill))}%`,

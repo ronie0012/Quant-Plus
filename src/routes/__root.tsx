@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import { RouteAnnouncer } from "@/components/site/RouteAnnouncer";
+import { BackToTop } from "@/components/site/BackToTop";
 
 function NotFoundComponent() {
   return (
@@ -100,6 +102,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon.svg" },
     ],
   }),
   shellComponent: RootShell,
@@ -115,7 +119,12 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <a href="#terminal-content" className="fixed top-2 left-2 z-[100] -translate-y-20 bg-primary px-4 py-2 text-primary-foreground transition-transform focus:translate-y-0">Skip to workspace</a>
+        <a
+          href="#main-content"
+          className="fixed top-2 left-2 z-[100] -translate-y-20 bg-primary px-4 py-2 text-primary-foreground transition-transform focus:translate-y-0"
+        >
+          Skip to main content
+        </a>
         {children}
         <Scripts />
       </body>
@@ -132,11 +141,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {!isAppSurface && <Navbar />}
-      <main>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      {/* The terminal renders its own <main>; only public pages use this one. */}
+      {isAppSurface ? (
         <Outlet />
-      </main>
+      ) : (
+        <main id="main-content" tabIndex={-1} className="outline-none">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </main>
+      )}
       {!isAppSurface && <Footer />}
+      {!isAppSurface && <BackToTop />}
+      <RouteAnnouncer />
       <Toaster position="top-right" />
     </QueryClientProvider>
   );

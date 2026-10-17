@@ -15,13 +15,19 @@ export function SectionShell({
   children,
   className,
   id,
+  labelledBy,
 }: {
   children: ReactNode;
   className?: string;
   id?: string;
+  labelledBy?: string;
 }) {
   return (
-    <section id={id} className={cn("relative w-full py-24 md:py-36", className)}>
+    <section
+      id={id}
+      aria-labelledby={labelledBy}
+      className={cn("relative w-full py-24 md:py-36", className)}
+    >
       <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-12">{children}</div>
     </section>
   );
@@ -147,11 +153,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={cn(
-        "border border-border",
-        elevated ? "bg-panel-elevated" : "bg-panel",
-        className,
-      )}
+      className={cn("border border-border", elevated ? "bg-panel-elevated" : "bg-panel", className)}
     >
       {children}
     </div>

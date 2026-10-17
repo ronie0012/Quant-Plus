@@ -28,7 +28,7 @@ export function NewsPanel() {
         <EmptyState
           title="No market news"
           hint="News source temporarily unavailable."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       )}
 
@@ -53,18 +53,25 @@ export function NewsPanel() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-[13.5px] leading-snug text-foreground/90 transition-colors group-hover/row:text-foreground">
-                    {n.headline}
+                    <a
+                      href={n.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-primary-soft"
+                    >
+                      {n.headline}
+                    </a>
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Pill>{n.category}</Pill>
-                    <span className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
+                    <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                       {n.source} · {relativeTime(n.published_at)}
                     </span>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <Pill tone={tone}>{n.sentiment}</Pill>
-                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-subtle">
+                  <span className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
                     Impact {n.impact}
                   </span>
                 </div>

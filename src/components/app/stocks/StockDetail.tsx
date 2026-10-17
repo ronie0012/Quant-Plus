@@ -1,423 +1,411 @@
+import { useJournal, useTradingPreferences } from "@/hooks/use-trading-product";
+import { useCalendar } from "@/hooks/use-quant-data";
+import { classifyEvent, EVENT_LABELS } from "@/lib/quant/events";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Bot, Gauge, Layers, Newspaper } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Card, CardHead, Pill, SourceTag } from "@/components/app/cards";
 import { MetricStrip, ProgressBar, Segmented } from "@/components/app/pages/workspace";
 import { OrderPanel } from "@/components/app/stocks/OrderPanel";
 import { ProfessionalChart } from "@/components/app/stocks/ProfessionalChart";
-import { AnimatedNumber } from "@/components/site/AnimatedNumber";
-import { series, toPath } from "@/data/market";
-import {
-  agentViews,
-  committeeVerdict,
-  marketDepth,
-  stockNews,
-  stockSentiment,
-  stockStats,
-  type Nifty50Stock,
-} from "@/data/nifty50";
+import { type InstrumentMeta, type Nifty50Stock } from "@/data/nifty50";
 import { formatNum } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
+import {
+  useStockPrediction,
+  useStockQuote,
+  useMarketHistory,
+  useStockMetrics,
+  useStockFundamentals,
+} from "@/hooks/use-agent-stock";
+import { AgentPrediction } from "@/components/app/stocks/AgentPrediction";
+import { StockMarketData } from "@/components/app/stocks/StockMarketData";
+import { StockNewsIntelligence } from "@/components/app/stocks/StockNewsIntelligence";
+import { paperQuoteError } from "@/lib/paper-trading";
 
 const ranges = ["1D", "1W", "1M", "6M", "1Y"] as const;
-const pointsFor = { "1D": 84, "1W": 104, "1M": 128, "6M": 156, "1Y": 190 } as const;
-
-function PriceChart({ stock, range }: { stock: Nifty50Stock; range: (typeof ranges)[number] }) {
-  const [hover, setHover] = useState<number | null>(null);
-  const up = stock.changePct >= 0;
-  const width = 1000;
-  const height = 320;
-
-  const points = useMemo(
-    () => series(stock.seed + range.length * 7, pointsFor[range], up ? 0.45 : -0.3, 1),
-    [stock.seed, range, up],
-  );
-  const path = toPath(points, width, height);
-  const spread = stock.price * (range === "1D" ? 0.012 : range === "1W" ? 0.035 : 0.14);
-  const priceAt = (index: number) => stock.price + ((points[index] ?? 0.5) - 0.5) * spread * 2;
-
-  return (
-    <div className="relative min-w-0 px-2 pb-2">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
-        className="h-[240px] w-full sm:h-[320px]"
-        role="img"
-        aria-label={`${stock.symbol} ${range} demonstrative price trend`}
-        onMouseLeave={() => setHover(null)}
-        onMouseMove={(event) => {
-          const rect = event.currentTarget.getBoundingClientRect();
-          const ratio = (event.clientX - rect.left) / rect.width;
-          setHover(
-            Math.max(0, Math.min(points.length - 1, Math.round(ratio * (points.length - 1)))),
-          );
-        }}
-      >
-        <defs>
-          <linearGradient id={`sd-fill-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-            <stop
-              offset="0%"
-              stopColor={up ? "var(--color-positive)" : "var(--color-negative)"}
-              stopOpacity="0.24"
-            />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[0.2, 0.4, 0.6, 0.8].map((line) => (
-          <line
-            key={line}
-            x1="0"
-            x2={width}
-            y1={height * line}
-            y2={height * line}
-            stroke="var(--color-border)"
-          />
-        ))}
-        <path d={`${path} L${width},${height} L0,${height} Z`} fill={`url(#sd-fill-${stock.symbol})`} />
-        <path
-          key={`${stock.symbol}-${range}`}
-          d={path}
-          fill="none"
-          strokeWidth="1.7"
-          className={cn("animate-draw", up ? "stroke-positive" : "stroke-negative")}
-          style={{ ["--draw-length" as string]: "2800" }}
-        />
-        {hover !== null && (
-          <>
-            <line
-              x1={(hover / (points.length - 1)) * width}
-              x2={(hover / (points.length - 1)) * width}
-              y1="0"
-              y2={height}
-              stroke="var(--color-border-strong)"
-            />
-            <circle
-              cx={(hover / (points.length - 1)) * width}
-              cy={height - (points[hover] ?? 0) * height}
-              r="4"
-              className={up ? "fill-positive" : "fill-negative"}
-            />
-          </>
-        )}
-      </svg>
-      {hover !== null && (
-        <span className="pointer-events-none absolute top-3 right-4 border border-border bg-background/85 px-2.5 py-1.5 font-mono text-[10px] num-tabular">
-          ₹{formatNum(priceAt(hover))}
-        </span>
-      )}
-    </div>
-  );
-}
-
 /** Dedicated instrument workspace: price, agent prediction, sentiment, news and dealing. */
-export function StockDetail({ stock }: { stock: Nifty50Stock }) {
-  const [range, setRange] = useState<(typeof ranges)[number]>("1D");
-  const stats = useMemo(() => stockStats(stock), [stock]);
-  const committee = useMemo(() => committeeVerdict(stock), [stock]);
-  const views = useMemo(() => agentViews(stock), [stock]);
-  const summary = useMemo(() => {
-    const bulls = views.filter((v) => v.stance === "BULLISH").length;
-    const bears = views.filter((v) => v.stance === "BEARISH").length;
-    const lean =
-      committee.verdict === "BUY"
-        ? "constructive"
-        : committee.verdict === "SELL"
-          ? "cautious"
-          : "balanced";
-    return `Quant AI reads ${stock.symbol} as ${lean}. Weighing fundamentals, price trend, news flow and risk together, ${bulls} of the signal checks lean positive and ${bears} lean negative, giving a demonstrative target of ₹${formatNum(committee.target)}.`;
-  }, [views, committee, stock]);
-  const highlights = useMemo(() => views.slice(0, 3).map((v) => v.note).filter(Boolean), [views]);
-  const sentiment = useMemo(() => stockSentiment(stock), [stock]);
-  const news = useMemo(() => stockNews(stock), [stock]);
-  const depth = useMemo(() => marketDepth(stock), [stock]);
-  const up = stock.changePct >= 0;
-  const rangePos = Math.min(
-    100,
-    Math.max(0, ((stock.price - stats.weekLow) / (stats.weekHigh - stats.weekLow || 1)) * 100),
+export function StockDetail({
+  stock: reference,
+  showDemoPanels = true,
+}: {
+  stock: InstrumentMeta;
+  showDemoPanels?: boolean;
+}) {
+  const feed = useStockQuote(reference.symbol);
+  const { data: preferences } = useTradingPreferences();
+  const calendar = useCalendar();
+  const { data: journal } = useJournal();
+  // Chart overlays: NSE calendar events and your own decision plans for this symbol.
+  const chartEvents = useMemo(
+    () => [
+      ...(calendar.data?.events ?? [])
+        .filter((e) => (e.symbol ?? e.event.split(":")[0]?.trim()) === reference.symbol)
+        .map((e) => ({
+          time: Math.floor(Date.parse(e.event_time) / 1000),
+          label: e.event,
+          kind: EVENT_LABELS[classifyEvent(e.event) ?? "BOARD_MEETING"],
+        })),
+      ...(journal ?? [])
+        .filter((e) => e.symbol === reference.symbol)
+        .map((e) => ({
+          time: Math.floor(Date.parse(e.created_at) / 1000),
+          label: e.thesis.slice(0, 80) || "Decision plan",
+          kind: e.plan?.decision === "NO_TRADE" ? "No-trade decision" : "Decision plan",
+        })),
+    ],
+    [calendar.data, journal, reference.symbol],
   );
+  const analysis = useStockPrediction(reference.symbol);
+  const quote = feed.quote;
+  // Unobserved values stay null; they are never displayed as zero.
+  const stock: Nifty50Stock = {
+    ...reference,
+    price: quote?.price ?? null,
+    changePct: quote?.change_pct ?? null,
+  };
+  const completedAnalysis =
+    analysis.data?.status === "done" ? analysis.data : analysis.data?.previous_result;
+  const verdict = completedAnalysis?.decision?.action.toUpperCase();
+  const [range, setRange] = useState<(typeof ranges)[number]>("1D");
+  const metrics = useStockMetrics(reference.symbol);
+  const fundamentals = useStockFundamentals(reference.symbol);
+  const history = useMarketHistory(reference.symbol, range);
+  const chartCandles = useMemo(() => {
+    const data = history.data?.candles;
+    if (
+      !data?.length ||
+      !quote?.price ||
+      !quote.as_of ||
+      feed.stale ||
+      quote.market_session !== "open"
+    )
+      return data;
+    const last = data[data.length - 1]!;
+    const tradeTime = Date.parse(quote.as_of) / 1000;
+    const duration =
+      { "1m": 60, "15m": 900, "60m": 3600, "1d": 86400 }[history.data!.interval] ?? 60;
+    if (tradeTime < last.time) return data;
+    // Update the provider's current bar with real ticks. Historical candles
+    // retain their original values; an absent bar waits for history refresh.
+    if (tradeTime >= last.time + duration) return data;
+    return [
+      ...data.slice(0, -1),
+      {
+        ...last,
+        close: quote.price,
+        high: Math.max(last.high, quote.price),
+        low: Math.min(last.low, quote.price),
+      },
+    ];
+  }, [history.data, quote, feed.stale]);
+  const up = (stock.changePct ?? 0) >= 0;
+  const weekLow = fundamentals.data?.week_low ?? metrics.data?.week_low;
+  const weekHigh = fundamentals.data?.week_high ?? metrics.data?.week_high;
+  const rangePos =
+    weekLow != null && weekHigh != null && quote?.price != null
+      ? Math.min(100, Math.max(0, ((quote.price - weekLow) / (weekHigh - weekLow || 1)) * 100))
+      : null;
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <header className="dash-rise relative overflow-hidden rounded-xl border border-border bg-panel/60 px-5 py-6 sm:px-7">
-        <div aria-hidden className="pointer-events-none absolute inset-0 grid-lines opacity-20" />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
-        />
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="dash-rise border-b border-border pb-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link
               to="/app/$section"
               params={{ section: "markets" }}
-              className="inline-flex items-center gap-1.5 font-mono text-[9px] tracking-[0.2em] uppercase text-subtle transition-colors hover:text-primary-soft"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-subtle transition-colors hover:text-primary-soft"
             >
               <ArrowLeft className="h-3 w-3" />
               Markets
             </Link>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h1 className="font-mono text-[clamp(1.6rem,3.2vw,2.4rem)] tracking-tight">
+            <div className="mt-2 flex flex-wrap items-center gap-2.5">
+              <h1 className="text-[28px] leading-tight font-semibold tracking-tight">
                 {stock.symbol}
               </h1>
               <Pill tone="primary">NSE · EQ</Pill>
               <Pill>{stock.sector}</Pill>
             </div>
-            <p className="mt-2 text-[13.5px] text-muted-foreground">{stock.company}</p>
+            <p className="mt-1 text-[14px] text-muted-foreground">{stock.company}</p>
           </div>
           <div className="text-left lg:text-right">
-            <p className="font-mono text-[clamp(1.7rem,3.4vw,2.6rem)] num-tabular">
-              ₹<AnimatedNumber value={stock.price} locale="en-IN" />
+            <p className="font-mono text-[32px] leading-tight font-semibold num-tabular tracking-tight">
+              {quote?.price != null ? `₹${formatNum(quote.price)}` : "—"}
             </p>
-            <p className={cn("mt-1 font-mono text-[13px]", up ? "text-positive" : "text-negative")}>
-              {up ? "+" : ""}
-              {formatNum((stock.price * stock.changePct) / 100)} · {up ? "+" : ""}
-              {formatNum(stock.changePct)}%
+            <p
+              className={cn(
+                "mt-1 font-mono text-[14px] font-medium",
+                quote?.change_pct == null ? "text-subtle" : up ? "text-positive" : "text-negative",
+              )}
+            >
+              {quote?.change != null && quote.change_pct != null
+                ? `${up ? "+" : ""}${formatNum(quote.change)} · ${up ? "+" : ""}${formatNum(quote.change_pct)}%`
+                : "Waiting for market quote"}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 lg:justify-end">
-              <SourceTag label="Demonstrative quote" />
+              <SourceTag
+                label={
+                  quote?.source === "fyers"
+                    ? "Fyers"
+                    : quote?.source === "yahoo"
+                      ? "Yahoo fallback · may be delayed"
+                      : "Connecting feed"
+                }
+              />
+              {quote?.as_of && (
+                <span className="font-mono text-[11px] text-subtle">
+                  {new Date(quote.as_of).toLocaleString("en-IN")}
+                </span>
+              )}
+              {quote && (
+                <Pill tone={feed.stale || quote.delayed ? "warning" : "positive"}>
+                  {quote.market_session === "closed"
+                    ? "Market closed · last quote"
+                    : feed.stale
+                      ? "Stale quote"
+                      : quote.delayed
+                        ? "Delayed feed"
+                        : "Live"}
+                </Pill>
+              )}
+              {feed.error && (
+                <p role="alert" className="text-xs text-negative">
+                  {feed.error}
+                </p>
+              )}
             </div>
           </div>
         </div>
-        <div className="relative mt-6">
+        <div className="mt-5">
           <MetricStrip
             items={[
-              { label: "Open", value: `₹${formatNum(stats.open)}` },
-              { label: "Day range", value: `₹${formatNum(stats.low)} – ₹${formatNum(stats.high)}` },
-              { label: "Volume", value: `${(stats.volume / 1e6).toFixed(2)}M` },
+              { label: "Open", value: quote?.open != null ? `₹${formatNum(quote.open)}` : "—" },
               {
-                label: "Quant AI verdict",
-                value: committee.verdict,
-                note: `${committee.conviction}% conviction`,
-                tone:
-                  committee.verdict === "BUY"
-                    ? "positive"
-                    : committee.verdict === "SELL"
-                      ? "negative"
-                      : "primary",
+                label: "Day range",
+                value:
+                  quote?.low != null && quote.high != null
+                    ? `₹${formatNum(quote.low)} – ₹${formatNum(quote.high)}`
+                    : "—",
+              },
+              {
+                label: "Volume",
+                value: quote?.volume != null ? `${(quote.volume / 1e6).toFixed(2)}M` : "—",
+              },
+              {
+                label: analysis.data?.previous_result ? "Previous AI verdict" : "Quant AI verdict",
+                value:
+                  verdict ??
+                  (analysis.error
+                    ? "Unavailable"
+                    : analysis.data?.status.startsWith("failed")
+                      ? "Failed"
+                      : "Analysing"),
+                note: completedAnalysis?.thesis
+                  ? `Agent opinion ${Math.round(completedAnalysis.thesis.conviction * 100)}/100 (uncalibrated)`
+                  : "Agentic AI",
+                tone: verdict === "BUY" ? "positive" : verdict === "SELL" ? "negative" : "primary",
               },
             ]}
           />
         </div>
       </header>
 
+      <section
+        aria-label="Latest agent prediction"
+        className="rounded-lg border border-primary/30 bg-primary/5 p-4 sm:p-5"
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <Sparkles className="h-4 w-4 text-primary-soft" aria-hidden="true" />
+          <h2 className="text-sm text-primary-soft">Latest full research</h2>
+          {verdict ? (
+            <Pill
+              tone={verdict === "BUY" ? "positive" : verdict === "SELL" ? "negative" : "neutral"}
+            >
+              {verdict}
+            </Pill>
+          ) : (
+            <Loader2 className="h-4 w-4 animate-spin text-subtle" aria-label="Analysis pending" />
+          )}
+          <span className="ml-auto text-xs text-subtle">Research only · daily timeframe</span>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          {completedAnalysis?.decision?.rationale ??
+            "No completed prediction yet. Full research includes analyst, debate and risk review; findings appear as each stage finishes."}
+        </p>
+        {completedAnalysis && (
+          <p className="mt-2 font-mono text-[10px] text-subtle">
+            Data cutoff {new Date(completedAnalysis.as_of).toLocaleString("en-IN")}
+            {analysis.data?.status !== "done"
+              ? " · refreshing in background"
+              : completedAnalysis.serving?.freshness === "stale"
+                ? " · older research; refresh pending"
+                : ""}
+          </p>
+        )}
+        {analysis.error && (
+          <p role="alert" className="mt-2 text-xs text-warning">
+            {analysis.error.message}
+          </p>
+        )}
+      </section>
+
       <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(320px,.8fr)]">
         <div className="flex min-w-0 flex-col gap-5">
           <Card glow delay={160}>
             <CardHead
               title={`${stock.symbol} price action`}
-              meta={`${range} · demonstrative series`}
-              action={<Segmented items={ranges} value={range} onChange={setRange} label="Chart range" />}
-            />
-            <ProfessionalChart stock={stock} />
-            <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
-              {[
-                { label: "Momentum", value: stats.momentum },
-                { label: "Volatility", value: stats.volatility },
-                { label: "Liquidity", value: stats.liquidity },
-              ].map((metric, index) => (
-                <div key={metric.label} className="bg-panel/80 p-4">
-                  <div className="flex justify-between font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                    <span>{metric.label}</span>
-                    <span className="text-muted-foreground">{metric.value}</span>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar
-                      value={metric.value}
-                      tone={metric.value > 60 ? "positive" : "primary"}
-                      delay={420 + index * 90}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card delay={220}>
-            <CardHead
-              title="Quant AI view"
-              meta={`Target ₹${formatNum(committee.target)} · updated now`}
+              meta={`${range} · ${history.data?.source === "fyers" ? "Fyers candles" : "Yahoo fallback · may be delayed"}`}
               action={
-                <span className="flex items-center gap-2 font-mono text-[9px] tracking-[0.16em] uppercase text-primary-soft">
-                  <Bot className="h-3.5 w-3.5" /> Single analysis
-                </span>
+                <Segmented items={ranges} value={range} onChange={setRange} label="Chart range" />
               }
             />
-            <div className="p-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <Pill
-                  tone={
-                    committee.verdict === "BUY"
-                      ? "positive"
-                      : committee.verdict === "SELL"
-                        ? "negative"
-                        : "neutral"
-                  }
-                >
-                  {committee.verdict}
-                </Pill>
-                <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-subtle">
-                  Conviction {committee.conviction}%
-                </span>
-              </div>
-              <div className="mt-3">
-                <ProgressBar
-                  value={committee.conviction}
-                  tone={committee.verdict === "SELL" ? "negative" : "primary"}
-                  delay={320}
-                />
-              </div>
-              <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
-                {summary}
-              </p>
-              <ul className="mt-4 grid gap-2">
-                {highlights.map((point, index) => (
-                  <li
-                    key={point}
-                    className="dash-rise flex gap-2 text-[12.5px] leading-relaxed text-muted-foreground"
-                    style={{ ["--d" as string]: `${300 + index * 70}ms` }}
-                  >
-                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-primary-soft" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <p className="border-t border-border px-5 py-4 text-[11.5px] leading-relaxed text-subtle">
-               Evidence: synthetic price structure, demonstrative fundamentals and labelled contextual news. Invalidation: the conclusion should be reconsidered if momentum reverses or the stated risk case materialises. Educational only; not investment advice.
-            </p>
-          </Card>
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Card delay={260}>
-              <CardHead
-                title="Sentiment"
-                meta={`${sentiment.label} · score ${sentiment.score}`}
-                action={<Gauge className="h-4 w-4 text-primary-soft" />}
-              />
-              <div className="p-5">
-                <div className="flex items-end justify-between">
-                  <p className="font-mono text-4xl num-tabular">{sentiment.score}</p>
-                  <Pill
-                    tone={
-                      sentiment.label === "GREED"
-                        ? "positive"
-                        : sentiment.label === "FEAR"
-                          ? "negative"
-                          : "neutral"
+            {chartCandles?.length ? (
+              <ProfessionalChart
+                stock={stock}
+                marketCandles={chartCandles}
+                events={chartEvents}
+                marketSource={
+                  history.data?.source === "fyers" ? "Fyers OHLCV" : "Yahoo OHLCV · may be delayed"
+                }
+                {...(preferences
+                  ? {
+                      defaultChartType: preferences.chart_type,
+                      showVolume: preferences.show_volume,
                     }
-                  >
-                    {sentiment.label}
-                  </Pill>
-                </div>
-                <div className="mt-4">
-                  <ProgressBar
-                    value={sentiment.score}
-                    tone={sentiment.score >= 66 ? "positive" : sentiment.score <= 34 ? "negative" : "primary"}
-                    delay={340}
-                  />
-                </div>
-                <ul className="mt-5 space-y-4">
-                  {sentiment.breakdown.map((row, index) => (
-                    <li key={row.label}>
-                      <div className="flex justify-between font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                        <span>{row.label}</span>
-                        <span className="text-muted-foreground">{row.value}</span>
-                      </div>
-                      <div className="mt-2">
-                        <ProgressBar value={row.value} tone="primary" delay={400 + index * 80} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Card>
-
-            <Card delay={300}>
-              <CardHead
-                title="Market depth"
-                meta="Five levels · demonstrative"
-                action={<Layers className="h-4 w-4 text-primary-soft" />}
+                  : {})}
+                {...(history.data?.interval
+                  ? {
+                      intervalSeconds:
+                        { "1m": 60, "15m": 900, "60m": 3600, "1d": 86400 }[history.data.interval] ??
+                        60,
+                    }
+                  : {})}
               />
-              <table className="w-full min-w-0 border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-background/30 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                    <th scope="col" className="px-4 py-2 text-left font-normal">Bid qty</th>
-                    <th scope="col" className="px-4 py-2 text-right font-normal">Bid</th>
-                    <th scope="col" className="px-4 py-2 text-right font-normal">Ask</th>
-                    <th scope="col" className="px-4 py-2 text-right font-normal">Ask qty</th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono text-[11px] num-tabular">
-                  {depth.map((level) => (
-                    <tr key={level.bid} className="border-b border-border/60 last:border-0">
-                      <td className="px-4 py-2.5 text-left text-subtle">{level.bidQty}</td>
-                      <td className="px-4 py-2.5 text-right text-positive">{formatNum(level.bid)}</td>
-                      <td className="px-4 py-2.5 text-right text-negative">{formatNum(level.ask)}</td>
-                      <td className="px-4 py-2.5 text-right text-subtle">{level.askQty}</td>
-                    </tr>
+            ) : (
+              <p className="p-6 text-sm text-muted-foreground">
+                {history.error?.message ?? "Loading market history…"}
+              </p>
+            )}
+            {history.data && history.error && (
+              <p className="px-5 py-2 text-xs text-warning">
+                History refresh failed; showing cached candles.
+              </p>
+            )}
+            {showDemoPanels && (
+              <>
+                <p className="px-5 py-2 text-xs text-subtle">
+                  Technical factors use completed provider candles; unavailable factors are left
+                  blank.
+                </p>
+                <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
+                  {[
+                    { label: "Momentum", value: metrics.data?.momentum },
+                    { label: "Volatility", value: metrics.data?.volatility },
+                    { label: "RSI", value: metrics.data?.rsi },
+                  ].map((metric, index) => (
+                    <div key={metric.label} className="bg-panel/80 p-4">
+                      <div className="flex justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                        <span>{metric.label}</span>
+                        <span className="text-muted-foreground">
+                          {metric.value == null ? "Unavailable" : formatNum(metric.value)}
+                        </span>
+                      </div>
+                      {metric.label === "RSI" && metric.value != null && (
+                        <div className="mt-3">
+                          <ProgressBar
+                            value={metric.value}
+                            tone="primary"
+                            delay={420 + index * 90}
+                          />
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-
-          <Card delay={340}>
-            <CardHead
-              title="News & drivers"
-              meta={`${news.length} items`}
-              action={<Newspaper className="h-4 w-4 text-primary-soft" />}
-            />
-            <ul className="divide-y divide-border">
-              {news.map((item) => (
-                <li key={item.id} className="p-4 transition-colors hover:bg-panel-elevated">
-                  <p className="text-[13px] leading-relaxed">{item.headline}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-subtle">
-                      {item.source} · {item.minutesAgo} min ago
-                    </span>
-                    <Pill tone={item.tone === "POSITIVE" ? "positive" : "warning"}>{item.tone}</Pill>
-                    <Pill tone={item.impact === "HIGH" ? "warning" : "neutral"}>{item.impact}</Pill>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+              </>
+            )}
           </Card>
+
+          <AgentPrediction analysis={analysis} />
+          <StockMarketData quote={quote} stale={feed.stale} />
+
+          <StockNewsIntelligence symbol={reference.symbol} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
-          <OrderPanel stock={stock} />
+          <OrderPanel
+            key={stock.symbol}
+            stock={stock}
+            quoteError={
+              !feed.connected ? "Connecting to live market prices…" : paperQuoteError(quote)
+            }
+            marketClosed={quote?.market_session === "closed"}
+            practiceQuoteError={
+              !feed.connected
+                ? "Connecting to market prices…"
+                : paperQuoteError(quote, Date.now(), "LAST_SESSION_PRACTICE")
+            }
+          />
 
-          <Card delay={320}>
-            <CardHead title="Key statistics" meta="Demonstrative fundamentals" />
-            <dl className="grid grid-cols-2 gap-px bg-border">
-              {[
-                ["Market cap", `₹${(stats.marketCapCr / 100000).toFixed(2)}L Cr`],
-                ["P/E ratio", formatNum(stats.peRatio, 1)],
-                ["Dividend yield", `${formatNum(stats.dividendYield)}%`],
-                ["Beta", formatNum(stats.beta)],
-                ["Index weight", `${formatNum(stock.weight)}%`],
-                ["52W range", `₹${formatNum(stats.weekLow, 0)} – ₹${formatNum(stats.weekHigh, 0)}`],
-              ].map(([label, value]) => (
-                <div key={label} className="bg-panel/80 px-4 py-3.5">
-                  <dt className="font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                    {label}
-                  </dt>
-                  <dd className="mt-1.5 font-mono text-[12.5px] num-tabular">{value}</dd>
+          {showDemoPanels && (
+            <Card delay={320}>
+              <CardHead title="Key statistics" meta="Provider fundamentals" />
+              <dl className="grid grid-cols-2 gap-px bg-border">
+                {[
+                  [
+                    "Market cap",
+                    fundamentals.data?.market_cap != null
+                      ? `₹${(fundamentals.data.market_cap / 10000000).toFixed(2)} Cr`
+                      : "—",
+                  ],
+                  [
+                    "P/E ratio",
+                    fundamentals.data?.pe_ratio != null
+                      ? formatNum(fundamentals.data.pe_ratio, 1)
+                      : "—",
+                  ],
+                  [
+                    "Dividend yield",
+                    fundamentals.data?.dividend_yield != null
+                      ? `${formatNum(fundamentals.data.dividend_yield * 100)}%`
+                      : "—",
+                  ],
+                  [
+                    "Beta",
+                    fundamentals.data?.beta != null ? formatNum(fundamentals.data.beta) : "—",
+                  ],
+                  [
+                    "52W range",
+                    weekLow != null && weekHigh != null
+                      ? `₹${formatNum(weekLow, 0)} – ₹${formatNum(weekHigh, 0)}`
+                      : "—",
+                  ],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-panel/80 px-4 py-3.5">
+                    <dt className="font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                      {label}
+                    </dt>
+                    <dd className="mt-1.5 font-mono text-[12.5px] num-tabular">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="border-t border-border p-5">
+                <div className="flex justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                  <span>52-week position</span>
+                  <span className="text-muted-foreground">
+                    {rangePos == null ? "—" : `${Math.round(rangePos)}%`}
+                  </span>
                 </div>
-              ))}
-            </dl>
-            <div className="border-t border-border p-5">
-              <div className="flex justify-between font-mono text-[9px] tracking-[0.16em] uppercase text-subtle">
-                <span>52-week position</span>
-                <span className="text-muted-foreground">{Math.round(rangePos)}%</span>
+                <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-panel-elevated">
+                  <span
+                    className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
+                    style={{ width: `${rangePos ?? 0}%` }}
+                  />
+                </div>
               </div>
-              <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-panel-elevated">
-                <span
-                  className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
-                  style={{ width: `${rangePos}%` }}
-                />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </div>

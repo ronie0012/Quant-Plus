@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-10-15T14:20:00.966Z",
+  "iterations": 300,
+  "book_size": {
+    "orders": 320,
+    "ledger": 1,
+    "events": 645,
+    "bytes": 950586
+  },
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.22631",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz",
+    "cores": 8,
+    "memory_gb": 8,
+    "node": "v22.14.0"
+  },
+  "scope": "Local single-user book on the local disk; provider quote fetch stubbed, so network and provider latency are excluded.",
+  "results": {
+    "order_ack_resting_limit": {
+      "n": 300,
+      "p50_ms": 146.227,
+      "p95_ms": 253.721,
+      "p99_ms": 325.286,
+      "max_ms": 373.239
+    },
+    "read_holdings": {
+      "n": 300,
+      "p50_ms": 18.231,
+      "p95_ms": 24.48,
+      "p99_ms": 27.955,
+      "max_ms": 31.063
+    },
+    "read_account": {
+      "n": 300,
+      "p50_ms": 17.991,
+      "p95_ms": 23.786,
+      "p99_ms": 26.918,
+      "max_ms": 31.227
+    },
+    "read_orders_page": {
+      "n": 300,
+      "p50_ms": 18.004,
+      "p95_ms": 23.272,
+      "p99_ms": 25.018,
+      "max_ms": 29.198
+    },
+    "worker_tick": {
+      "n": 100,
+      "p50_ms": 31.5,
+      "p95_ms": 40.774,
+      "p99_ms": 43.823,
+      "max_ms": 54.406
+    }
+  }
+}

@@ -1,0 +1,303 @@
+[
+  {
+    "id": "EXEC-01",
+    "evidence": "P0; reproduced",
+    "finding": "Two identical submissions settle twice. There is no idempotency contract, so a retry or two browser monitors can create another trade. This is a missing replay safeguard; intentional repeat orders must still be allowed with different intent IDs.",
+    "module": "`src/routes/api/paper/$.ts:280`; `src/lib/local-store.server.ts:159`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-02",
+    "evidence": "P0; reproduced",
+    "finding": "Trading pause blocks a sell that reduces an existing holding. Browser bracket exits submit the same sell path, so protection can be disabled by the pause intended to reduce risk.",
+    "module": "`src/lib/local-store.server.ts:90`; `src/components/app/TradingMonitor.tsx`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-03",
+    "evidence": "P0; reproduced",
+    "finding": "A fresh buy fills after a realised loss of 50 with `daily_loss_limit=1`. That setting is stored and advertised as a guardrail but not enforced by local execution.",
+    "module": "`src/lib/local-store.server.ts:86`; `src/components/app/pages/ProductPages.tsx:57`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-04",
+    "evidence": "P1; reproduced",
+    "finding": "A DAY order created October 1 remains fillable October 14. No session expiry or expiration state is implemented.",
+    "module": "`src/lib/local-store.server.ts:202`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-05",
+    "evidence": "P0; reproduced",
+    "finding": "The server accepts an open quote one day in the future and a closed-session quote from 2020. Client validation has a future-time check, but the authority boundary does not; closed quotes have no maximum age.",
+    "module": "`src/routes/api/paper/$.ts:168`; `src/lib/paper-trading.ts`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-06",
+    "evidence": "P1; code-verified",
+    "finding": "The Orders page reconstructs positions from only the newest 60 orders. Older buys can disappear while later sells remain. Its average is all historical buys divided by buy quantity, rather than the remaining holding's cost basis after sales/rebuys.",
+    "module": "`src/hooks/use-orders.ts:55`; `src/components/app/pages/OrdersPage.tsx:15,224`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-07",
+    "evidence": "P0/P1; code-verified",
+    "finding": "Alerts/brackets run in a browser interval. Peaks and completed exits live in browser storage; closing the tab stops monitoring. Multiple tabs share account state without a server claim/lease. Protection is not a durable server capability.",
+    "module": "`src/components/app/TradingMonitor.tsx`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-08",
+    "evidence": "P1; code-verified",
+    "finding": "Charges are estimated with one constant and are not debited. Orders store the fill price but not the complete quote/provenance snapshot. Position limits use cost basis, not current marked equity. No spread, liquidity, partial-fill, or settlement model exists.",
+    "module": "`src/lib/local-store.server.ts:86,108,153`; `src/hooks/use-orders.ts:9`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "EXEC-09",
+    "evidence": "P1; code-verified",
+    "finding": "Basket legs execute sequentially and may partially succeed. Unknown prices contribute zero to the estimate. Client eligibility is different from the shared quote validator; retrying the entire basket can duplicate successful legs.",
+    "module": "`src/components/app/pages/NextPages.tsx:312`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "STORE-01",
+    "evidence": "P1; reproduced",
+    "finding": "`trade_journal` accepts `risks:null`. The review UI reads `risks.length` and `risks.join`, producing a runtime type error. Generic local mutations lack table-specific schemas.",
+    "module": "`src/lib/local-store.server.ts:306`; `src/components/app/TradeReviewPanel.tsx:23`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "STORE-02",
+    "evidence": "P1; reproduced",
+    "finding": "Negative daily-loss and confirmation thresholds are accepted and persisted. Validating two positive fields does not validate the whole risk policy.",
+    "module": "`src/lib/local-store.server.ts:308`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "STORE-03",
+    "evidence": "P1; code-verified risk",
+    "finding": "Every operation reads/parses the whole JSON file; mutations synchronously replace the whole file. There is no interprocess writer lock, backup/restore workflow, fsync durability policy, full state validation, or schema migration beyond `version=1`. Multi-process races and crash durability have not been tested.",
+    "module": "`src/lib/local-store.server.ts:59`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "STORE-04",
+    "evidence": "P2; code-verified",
+    "finding": "The local client is cast to a full Supabase client while implementing only a subset. `select` ignores projection, `single` and `maybeSingle` have identical semantics, and future SDK method calls can typecheck but fail at runtime.",
+    "module": "`src/lib/local-client.ts:20,62,122`; `src/integrations/supabase/client.ts`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-01",
+    "evidence": "P1; code-verified",
+    "finding": "`ProfessionalChart` generates synthetic OHLCV when `marketCandles` is undefined. `SparkChart` generates seeded series for watchlist/research pages.",
+    "module": "Remove product fallbacks; use real history or unavailable states.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-02",
+    "evidence": "P1; code-verified",
+    "finding": "Markets has fixed momentum 68/42 and volatility 31/46, with missing breadth replaced by 50. Watchlist focus has fixed momentum. Quant AI context shows fixed 100/70 completeness values. Data Sources assigns fixed health percentages.",
+    "module": "Replace with measured fields/coverage, or remove the metric.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-03",
+    "evidence": "P1; code-verified",
+    "finding": "Options Lab uses reference spot, seeded IV, guessed strike spacing and lot size. Replay uses generated bars.",
+    "module": "Disable until real data/contracts are available; replace replay with recorded point-in-time sessions. A “simulation” label alone does not meet the user's zero-dummy requirement.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-04",
+    "evidence": "P1; code-verified",
+    "finding": "Public `MarketTicker`, `MarketExplorer`, `MarketIntelligence`, `DashboardPreview`, portfolio/research illustrations use static data, drifting pseudo-quotes, or seeded charts.",
+    "module": "Use real read-only snapshots/history or nonquantitative product illustrations.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-05",
+    "evidence": "P1; code-verified",
+    "finding": "`nifty50.ts` mixes metadata with seed prices/weights and generated metrics, analysts, news, sentiment and depth. Runtime universe fallbacks preserve a static list and static weights. Some generators are legacy/dead code; some data remains reachable.",
+    "module": "Split verified instrument metadata from observations, validate membership effective dates, remove unused generators, and prohibit runtime fixture imports.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-06",
+    "evidence": "P1; code-verified",
+    "finding": "Screener volatility is always null, and missing momentum/volatility/conviction passes its filters. A user selecting low volatility or high conviction can therefore get unqualified rows. “Momentum” is also a one-day change transformation.",
+    "module": "Define factor formulas and coverage; exclude unknown values under an active constraint unless the user explicitly asks to include unknowns.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DATA-07",
+    "evidence": "P1; code-verified risk",
+    "finding": "`useStockQuotes` creates a stream per hook and does not normalize/deduplicate/sort/cap names. The backend permits 50 names per stream; larger watchlists fail instead of partitioning.",
+    "module": "Shared subscription manager and plan-aware batching, with measured subscription/resource limits.",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "NEWS-01",
+    "evidence": "P1; code-verified, feed semantics require live confirmation",
+    "finding": "Official announcement parsing treats timezone-less dates as UTC. For IST wall times that shifts availability by 5.5 hours. The official path also lacks the RSS path's future-time/max-age filter and does not preserve first observation time.",
+    "module": "`backend-extension/quantplus_intelligence/news/official.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "NEWS-02",
+    "evidence": "P1; code-verified",
+    "finding": "Discovery is mainly Google RSS plus best-effort NSE metadata. Publisher articles/attachments are not read by this news adapter, and the news cache is not a durable raw archive. This caps context and historical reproducibility.",
+    "module": "`news/google_news.py`; `news/official.py`; `news/service.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "NEWS-03",
+    "evidence": "P1; code-verified risk",
+    "finding": "Entity relevance and sentiment are keyword/alias rules. Dedup normalizes punctuation before comparing numbers, and discards duplicates instead of preserving event lineage. Semantic rewrites/amendments and mixed Hindi/English are not evaluated on a labelled real corpus.",
+    "module": "`news/{resolver,relevance,sentiment,deduplicator}.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "NEWS-04",
+    "evidence": "P1; code-verified",
+    "finding": "Article impact can include the stock's whole-day price change; price confirmation is a daily-direction proxy. That is not an event-specific causal effect and can mix news with pre-publication price movement.",
+    "module": "`news/impact.py`; `news/service.py:91`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "SENT-01",
+    "evidence": "P0 for evaluation; reproduced",
+    "finding": "A snapshot at 10:00 IST gets an EOD label from a 10:15 IST candle. The function does not require the session to have ended. Its EOD target is formed as 15:30 in the snapshot timestamp's timezone, and 1d is a calendar-day offset. It lacks exchange-session maturity rules.",
+    "module": "`calibration.py:36`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "SENT-02",
+    "evidence": "P1; reproduced",
+    "finding": "Thirty bullish observations and zero bearish observations return bearish reliability 0 rather than unavailable. Minimum count is checked for the combined regime, not each signal's denominator.",
+    "module": "`calibration.py:51`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "SENT-03",
+    "evidence": "P1; code-verified",
+    "finding": "Default history is process memory; the persistence option is cloud-specific. The extension has no runtime caller for `evaluate_snapshot`, so forward-outcome maturation is not wired into its scheduler.",
+    "module": "`history.py`; `scheduler.py`; call-site scan",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "SENT-04",
+    "evidence": "P1; code-verified / quality unverified",
+    "finding": "Market/news scores and coverage confidence are deterministic heuristics, not calibrated outcome probabilities. Source credibility and component weights are priors. No inspected evidence establishes labelled Indian-news performance or predictive value of this sentiment index.",
+    "module": "`config.py`; `market.py`; `news/aggregation.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "AI-01",
+    "evidence": "P0 for historical evidence; reproduced",
+    "finding": "The Yahoo provider accepts a full daily candle for an intraday historical cutoff because it filters using the candle index timestamp, not actual bar completion/availability. PIT assertions consequently do not prove that all values in the candle were knowable.",
+    "module": "`D:\\QP\\agent-service\\app\\data\\yfinance_provider.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "AI-02",
+    "evidence": "P1; code-verified",
+    "finding": "Fundamentals analyst requests 65 bars, then labels extrema of those bars `hi52`/`lo52`. Recent historical cutoffs within 30 days may receive today's `.info`, explicitly labelled non-PIT but still later information.",
+    "module": "`app/agents/analysts.py:23,33,42`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "AI-03",
+    "evidence": "P1; artifact",
+    "finding": "`data/baseline_analysis.json` has 11 entries with `beats_best_constant=false` in all 11. A prior report identifies an oracle-contaminated positive run. Calibration documentation reports insufficient resolved outcomes at its date.",
+    "module": "`data/baseline_analysis.json`; `data/baseline_and_m4_report_20261006.md`; `data/next_phase_report_20261010.md`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "AI-04",
+    "evidence": "P1; code-verified gap",
+    "finding": "Generic reports validate shapes, but signal names/numbers/evidence references are mostly free-form model output. Prompt instructions and a signal tally do not establish claim-level grounding or calibrated conviction. Research latency warming is delivery optimization, not demonstrated quality improvement.",
+    "module": "`app/schemas.py`; `app/agents/_util.py`; `PREDICTION_PERFORMANCE.md`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "CHAT-01",
+    "evidence": "P1; code-verified",
+    "finding": "Symbol extraction uppercases ordinary words, then takes the first three nonignored matches. Words such as TELL, ABOUT, PLEASE can occupy the three slots before the actual stock; company names are not reliably resolved.",
+    "module": "`src/routes/api/chat.ts:89`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "CHAT-02",
+    "evidence": "P1; code-verified",
+    "finding": "Chat reads market overview/sentiment/news and portfolio, plus stock quote/news sentiment. It does not retrieve saved agent reports, filings, technical history, orders, or a structured evidence library even though the UI advertises committee reasoning.",
+    "module": "`src/routes/api/chat.ts:125`; `src/components/app/pages/IntelligencePages.tsx`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "CHAT-03",
+    "evidence": "P1; code-verified gap",
+    "finding": "Free-text streaming relies on prompt instructions for factual grounding. There is no response-level evidence/citation validator, numerical tool provenance, persistent conversation store, model budget ledger equivalent to research, or explicit tool trace.",
+    "module": "`src/routes/api/chat.ts`; `src/lib/chat-api.ts`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "CHAT-04",
+    "evidence": "P1/P2; code-verified gap",
+    "finding": "UI consumers duplicate stream handling. Chat has a timeout but no user-provided AbortSignal/Stop contract. Conversations live in component state; navigation can lose history. The server stream lacks an explicit consumer-cancel handler.",
+    "module": "`chat-api.ts`; `QuantAIDock.tsx`; `TradeReviewPanel.tsx`; `IntelligencePages.tsx`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "UX-01",
+    "evidence": "P1; code-verified",
+    "finding": "RSI is selectable in the chart but neither calculated nor rendered; selecting it removes the moving-average line.",
+    "module": "`ProfessionalChart.tsx:48,103,204`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "UX-02",
+    "evidence": "P1/P2; code-verified",
+    "finding": "Generate brief has no action. Some settings persist values without visible consumers, while Save signals success before the asynchronous preference mutation completes and does not catch rejection.",
+    "module": "`TerminalPages.tsx:797`; `SystemPages.tsx:90`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "UX-03",
+    "evidence": "P2; code-verified",
+    "finding": "Missing change values can be styled positive; realised losses are labelled “Profit made” with a positive tone and a prefixed plus. Wallet value still says “At demonstrative prices” after provider marking.",
+    "module": "`FundsRow.tsx:43`; `WatchlistPanel.tsx`; `WalletPage.tsx:95`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "OPS-01",
+    "evidence": "P1; reproduced configuration behavior",
+    "finding": "Tests can write raw artifacts/generated clients into the working backend and depend on .env key count. One default test performs live external I/O. The suite is not fully hermetic.",
+    "module": "`tests/test_acquisition_filings.py`; `tests/test_api_ws.py`; `tests/test_gateway_limits.py`; `tests/test_technical.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "OPS-02",
+    "evidence": "P1; code-verified boundary gap",
+    "finding": "Website adapters enforce the backend key, but legacy session/eval/control/research/WS routes do not have the same boundary. These can mutate state or consume compute if the backend is exposed. Local scope reduces exposure; it does not convert them into authenticated endpoints.",
+    "module": "`app/api/v1.py`; `app/api/research.py`; `app/main.py`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "OPS-03",
+    "evidence": "P2; code-verified / unverified robustness",
+    "finding": "Seven lint warnings, overlapping lockfiles, beta Nitro, Python lower-bound-only dependencies, no inspected browser-test setup, and no demonstrated crash/load/failure soak for the complete local app.",
+    "module": "`package.json`; `requirements.txt`; `eslint.config.js`; repository inventory",
+    "status": "open until desired-behavior evidence and phase gate review"
+  },
+  {
+    "id": "DOC-01",
+    "evidence": "P2; code-verified",
+    "finding": "Earlier roadmaps mark features complete despite synthetic inputs or missing workers. INTELLIGENCE/VERIFICATION and prior plans still describe Supabase prerequisites/session behavior that no longer match the local runtime.",
+    "module": "`roadmap.md`; `Plan.md`; `INTELLIGENCE.md`; `VERIFICATION.md`",
+    "status": "open until desired-behavior evidence and phase gate review"
+  }
+]

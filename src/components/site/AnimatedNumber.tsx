@@ -41,7 +41,12 @@ export function AnimatedNumber({
 
   return (
     <span
-      className={cn("num-tabular", flash === "up" && "flash-up", flash === "down" && "flash-down", className)}
+      className={cn(
+        "num-tabular",
+        flash === "up" && "flash-up",
+        flash === "down" && "flash-down",
+        className,
+      )}
     >
       {prefix}
       {signed && value >= 0 ? "+" : ""}

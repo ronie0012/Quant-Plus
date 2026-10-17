@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "stage": "D:\\Quant-Plus\\.intelligence-test\\backend-e4c92d1257d84a098e99ef0b39fb103e",
+  "patches": [
+    "audit/implementation/backend-patch-extension"
+  ],
+  "python_executable": "D:\\Quant-Plus\\.local-data\\backend-runtime\\Scripts\\python.exe",
+  "excluded_live_test": "tests/test_technical.py"
+}

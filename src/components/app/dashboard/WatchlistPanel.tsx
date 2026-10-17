@@ -1,13 +1,14 @@
 import { Card, CardHead, EmptyState, Skeleton } from "@/components/app/cards";
 import { formatNum, useWatchlist } from "@/hooks/use-dashboard-data";
-import { series, toPath } from "@/data/market";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useTradingDesk } from "@/components/app/TradingDesk";
+import { useTradingDesk } from "@/components/app/trading-desk-context";
+import { useStockQuotes } from "@/hooks/use-agent-stock";
 
 export function WatchlistPanel() {
   const { data, isLoading, isError, refetch } = useWatchlist();
   const { openTicket } = useTradingDesk();
+  const feed = useStockQuotes((data ?? []).map((item) => item.symbol));
 
   return (
     <Card delay={460} className="flex h-full flex-col">
@@ -25,40 +26,30 @@ export function WatchlistPanel() {
         <EmptyState
           title="Watchlist is empty"
           hint="Add instruments to follow them here."
-          onRetry={() => void refetch()}
+          onRetry={isError ? () => void refetch() : undefined}
         />
       )}
 
       {data && data.length > 0 && (
         <ul className="divide-y divide-border">
           {data.map((w) => {
-            const up = Number(w.change_pct) >= 0;
-            const spark = series(
-              w.symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 3),
-              24,
-              w.change_pct,
-            );
+            const quote = feed.quotes[w.symbol];
+            const price = quote?.price ?? null;
+            const change = quote?.change_pct ?? null;
+            const up = (change ?? 0) >= 0;
             return (
               <li
                 key={w.id}
                 className="group/row flex items-center gap-3 px-5 py-3 transition-colors duration-300 hover:bg-panel-elevated/60"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block font-mono text-[11px] tracking-[0.14em] uppercase">
+                  <span className="block font-medium text-[11px] tracking-[0.06em] uppercase">
                     {w.symbol}
                   </span>
                   <span className="mt-0.5 block truncate text-[11px] text-subtle">{w.company}</span>
                 </span>
-                <svg viewBox="0 0 60 16" className="hidden h-4 w-12 shrink-0 2xl:block" aria-hidden="true">
-                  <path
-                    d={toPath(spark, 60, 16)}
-                    fill="none"
-                    strokeWidth="1.2"
-                    className={cn("opacity-70 transition-opacity group-hover/row:opacity-100", up ? "stroke-positive" : "stroke-negative")}
-                  />
-                </svg>
                 <span className="w-20 text-right font-mono text-[12px] num-tabular">
-                  ₹{formatNum(Number(w.price))}
+                  {price == null ? "—" : `₹${formatNum(price)}`}
                 </span>
                 <span
                   className={cn(
@@ -67,14 +58,14 @@ export function WatchlistPanel() {
                   )}
                 >
                   {up ? "+" : ""}
-                  {formatNum(Number(w.change_pct))}%
+                  {change == null ? "—" : `${formatNum(change)}%`}
                 </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => openTicket({ symbol: w.symbol, price: Number(w.price) })}
-                  className="hidden h-7 shrink-0 px-2 font-mono text-[9px] tracking-[0.16em] uppercase text-subtle opacity-0 transition-all duration-300 group-hover/row:opacity-100 hover:border-primary/50 hover:text-primary-soft md:inline-flex"
+                  onClick={() => openTicket({ symbol: w.symbol, price: price ?? 0 })}
+                  className="hidden h-7 shrink-0 px-2 font-medium text-[11px] tracking-[0.06em] uppercase text-subtle opacity-0 transition-all duration-300 group-hover/row:opacity-100 hover:border-primary/50 hover:text-primary-soft md:inline-flex"
                 >
                   Trade
                 </Button>

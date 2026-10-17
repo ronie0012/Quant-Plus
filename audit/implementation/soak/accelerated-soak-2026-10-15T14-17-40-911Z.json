@@ -1,0 +1,98 @@
+{
+  "status": "complete",
+  "requested_sessions": 10,
+  "simulated_step_seconds": 1800,
+  "session_expiry_proofs": [
+    {
+      "order_id": "91324ed5-8271-4321-987e-1291d90df948",
+      "expires_at": "2026-10-01T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "81414aa7-1e11-408b-94b5-0d3232e7a498",
+      "expires_at": "2026-10-05T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "70f08447-5258-4471-8e79-fe7b45a5918d",
+      "expires_at": "2026-10-06T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "3bf21770-5129-47b4-9fce-c7913b0f6fe7",
+      "expires_at": "2026-10-07T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "dbc2a488-6123-42ab-a1e5-c1b3ed3b8ac5",
+      "expires_at": "2026-10-08T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "ed32cc45-8805-43fa-9584-9d6c1d8ee006",
+      "expires_at": "2026-10-09T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "630d9b04-836d-436f-9aa7-009186514b3e",
+      "expires_at": "2026-10-12T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "39b75047-66f5-46a0-86f8-9331b96f46b5",
+      "expires_at": "2026-10-13T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "640e5212-1266-43b0-b309-acd4d18f8990",
+      "expires_at": "2026-10-14T10:00:00.000Z",
+      "status": "EXPIRED"
+    },
+    {
+      "order_id": "08581971-1c22-43be-a90f-7cf3604c8dca",
+      "expires_at": "2026-10-15T10:00:00.000Z",
+      "status": "EXPIRED"
+    }
+  ],
+  "kind": "accelerated simulated-clock soak (not the real-time 10-session soak)",
+  "generated_at": "2026-10-15T14:17:40.911Z",
+  "wall_minutes": 0.38,
+  "simulated_sessions_completed": 10,
+  "simulated_range": {
+    "from": "2026-10-01",
+    "to": "2026-10-16"
+  },
+  "iterations": 130,
+  "requests": 121,
+  "responses_by_status": {
+    "200": 117,
+    "409": 4
+  },
+  "rejection_reasons": {
+    "INSUFFICIENT_QUANTITY": 4
+  },
+  "server_errors": 0,
+  "reconciliation_checkpoints": 12,
+  "reconciliation_failures": 0,
+  "orders": 108,
+  "filled": 72,
+  "expired_day_orders": 31,
+  "duplicate_intent_settlements": 0,
+  "retried_intents_settled_once": true,
+  "route_latency_ms": {
+    "p50": 158.5,
+    "p95": 254.9,
+    "p99": 288.9
+  },
+  "heap_mb": {
+    "first": 38,
+    "last": 41,
+    "max": 42
+  },
+  "book_bytes": 514113,
+  "machine": {
+    "platform": "win32",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz",
+    "node": "v22.14.0"
+  }
+}

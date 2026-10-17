@@ -1,0 +1,234 @@
+import { Bot, Loader2, RefreshCw } from "lucide-react";
+import { Card, CardHead, Pill } from "@/components/app/cards";
+import { Button } from "@/components/ui/button";
+import type { useStockPrediction } from "@/hooks/use-agent-stock";
+import { formatNum } from "@/hooks/use-dashboard-data";
+
+export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useStockPrediction> }) {
+  const result = analysis.data;
+  const running = result?.status === "queued" || result?.status === "running";
+  const failed = result?.status.startsWith("failed");
+  const display = result?.status === "done" ? result : result?.previous_result;
+  const decision = display?.decision;
+  const research = display ?? result;
+  const latest = result?.events.at(-1);
+  const reports = running ? result?.reports : research?.reports;
+  // Claim-validation events record numbers an analyst stated that its input data did not contain.
+  const claimChecks = new Map(
+    (research?.events ?? [])
+      .filter((event) => event.stage === "claim_validation")
+      .map((event) => [event.agent, event]),
+  );
+  return (
+    <Card className="[animation:none] opacity-100">
+      <CardHead
+        title="Quant AI view"
+        meta={
+          (display ?? result)
+            ? `Analysis as of ${new Date((display ?? result)!.as_of).toLocaleString("en-IN")} · daily timeframe`
+            : "Agentic AI analysis"
+        }
+        action={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Refresh analysis status"
+            onClick={() => void analysis.refetch()}
+            disabled={analysis.isFetching}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        }
+      />
+      <div className="space-y-4 p-5" aria-live="polite">
+        {result?.previous_result && result.status !== "done" && (
+          <p className="text-xs text-warning">
+            Showing the last completed prediction from{" "}
+            {new Date(result.previous_result.as_of).toLocaleString("en-IN")}.{" "}
+            {running ? "A new analysis is running." : "The new analysis has not completed."}
+          </p>
+        )}
+        {display?.serving && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Pill tone={display.serving.freshness === "fresh" ? "positive" : "warning"}>
+              {display.serving.freshness === "fresh"
+                ? "Recent completed research"
+                : "Older completed research"}
+            </Pill>
+            {display.serving.refresh_status !== "idle" && (
+              <span className="text-subtle">
+                {display.serving.refresh_status === "capacity"
+                  ? "Refresh waiting for analysis capacity"
+                  : display.serving.refresh_status === "paused"
+                    ? "Refresh paused by operator"
+                    : display.serving.refresh_status === "unavailable"
+                      ? "Refresh service unavailable"
+                      : "Full analysis refreshing"}
+              </span>
+            )}
+          </div>
+        )}
+        {(analysis.isPending || running) && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {latest
+              ? `${latest.agent.replaceAll("_", " ")} · ${latest.status}`
+              : "Starting your agent analysis…"}
+          </p>
+        )}
+        {analysis.error && (
+          <p role="alert" className="text-sm text-negative">
+            {analysis.error.message}
+          </p>
+        )}
+        {running && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p className="text-xs text-primary-soft">
+              {Object.keys(result?.reports ?? {}).length} analyst reports received
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-subtle">
+              Research can take several minutes. Completed findings appear as each analyst finishes.
+            </p>
+          </div>
+        )}
+        {failed && (
+          <div className="space-y-3">
+            <p role="alert" className="text-sm text-negative">
+              Analysis could not complete ({result?.status}). Retry to resume completed stages.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => analysis.retryAnalysis()}
+              disabled={analysis.isRetrying}
+            >
+              Retry analysis
+            </Button>
+            {analysis.retryError && (
+              <p role="alert" className="text-sm text-negative">
+                {analysis.retryError.message}
+              </p>
+            )}
+          </div>
+        )}
+        {decision && (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              <Pill
+                tone={
+                  decision.action === "buy"
+                    ? "positive"
+                    : decision.action === "sell"
+                      ? "negative"
+                      : "neutral"
+                }
+              >
+                {decision.action.toUpperCase()}
+              </Pill>
+              {display?.thesis && (
+                <span
+                  className="font-mono text-xs text-muted-foreground"
+                  title="An agent opinion score, not a calibrated probability of being right"
+                >
+                  Agent opinion strength {Math.round(display.thesis.conviction * 100)}/100 ·
+                  uncalibrated
+                </span>
+              )}
+              <Pill>Research only</Pill>
+            </div>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              {decision.rationale}
+            </p>
+            {display?.proposal &&
+              display.proposal.direction !== "flat" &&
+              decision.action !== "hold" && (
+                <div className="flex flex-wrap gap-3 font-mono text-xs">
+                  <span>Research entry ₹{formatNum(display.proposal.entry)}</span>
+                  <span>Target ₹{formatNum(display.proposal.target)}</span>
+                  <span>Stop ₹{formatNum(display.proposal.stop)}</span>
+                </div>
+              )}
+          </>
+        )}
+        {research?.thesis && (
+          <>
+            {research.thesis.key_evidence.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs text-primary-soft">Evidence</p>
+                <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
+                  {research.thesis.key_evidence.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {research.thesis.key_risks.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs text-warning">Risks</p>
+                <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-muted-foreground">
+                  {research.thesis.key_risks.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+        {research?.challenge && (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Devil’s advocate: {research.challenge.status}. {research.challenge.reasons.join(" ")}
+          </p>
+        )}
+        {running && Object.keys(result?.reports ?? {}).length > 0 && (
+          <p className="text-xs text-subtle">New analysis · analyst findings so far</p>
+        )}
+        {Object.entries(reports ?? {}).map(([name, report]) => (
+          <details key={name} className="border-t border-border pt-3">
+            <summary className="cursor-pointer text-xs capitalize text-primary-soft">
+              <Bot className="mr-2 inline h-3 w-3" />
+              {name} · self-rated {Math.round(report.confidence * 100)}/100
+              {claimChecks.get(name) && (
+                <span
+                  className={
+                    claimChecks.get(name)!.status === "verified"
+                      ? "ml-2 text-positive"
+                      : "ml-2 text-warning"
+                  }
+                >
+                  ·{" "}
+                  {claimChecks.get(name)!.status === "verified"
+                    ? "numbers match its input data"
+                    : "states numbers not in its input data"}
+                </span>
+              )}
+            </summary>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{report.summary}</p>
+          </details>
+        ))}
+      </div>
+      <dl className="grid gap-2 border-t border-border px-5 py-4 text-[11px] text-subtle sm:grid-cols-2">
+        <div>
+          <dt className="font-medium text-[11px] uppercase tracking-[0.06em]">Data cutoff</dt>
+          <dd>
+            {display?.serving?.data_cutoff
+              ? new Date(display.serving.data_cutoff).toLocaleString("en-IN")
+              : display?.as_of
+                ? new Date(display.as_of).toLocaleString("en-IN")
+                : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-medium text-[11px] uppercase tracking-[0.06em]">Forecast status</dt>
+          <dd>
+            Not a validated forecast. In the recorded baseline study (11 configurations) none beat
+            the best constant baseline; calibration is not established.
+          </dd>
+        </div>
+      </dl>
+      <p className="border-t border-border px-5 py-4 text-[11.5px] leading-relaxed text-subtle">
+        Produced by research agents from data available at the cutoff. Opinion and self-rated scores
+        are not probabilities. Live quotes update separately. Research output does not place orders.
+      </p>
+    </Card>
+  );
+}

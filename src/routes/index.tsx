@@ -2,15 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Hero } from "@/components/site/Hero";
 import { MarketTicker } from "@/components/site/MarketTicker";
-import { MarketIntelligence } from "@/components/site/MarketIntelligence";
-import { SignalEngine } from "@/components/site/SignalEngine";
-import { AIAnalyst } from "@/components/site/AIAnalyst";
+import { ProcessStory } from "@/components/site/ProcessStory";
 import { DashboardReveal } from "@/components/site/DashboardReveal";
 import { Capabilities } from "@/components/site/Capabilities";
-import { MarketExplorer } from "@/components/site/MarketExplorer";
-import { ResearchSection } from "@/components/site/ResearchSection";
-import { PortfolioIntelligence } from "@/components/site/PortfolioIntelligence";
-import { RiskEngine } from "@/components/site/RiskEngine";
 import { Coverage } from "@/components/site/Coverage";
 import { Philosophy } from "@/components/site/Philosophy";
 import { ProductShowcase } from "@/components/site/ProductShowcase";
@@ -39,15 +33,10 @@ function Index() {
     <>
       <Hero />
       <MarketTicker />
-      <MarketIntelligence />
-      <SignalEngine />
-      <AIAnalyst />
+      {/* One scroll-driven story replaces seven identical capability blocks. */}
+      <ProcessStory />
       <DashboardReveal />
       <Capabilities />
-      <MarketExplorer />
-      <ResearchSection />
-      <PortfolioIntelligence />
-      <RiskEngine />
       <Coverage />
       <Philosophy />
       <ProductShowcase />

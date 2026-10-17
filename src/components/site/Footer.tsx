@@ -74,8 +74,10 @@ export function Footer() {
           <p className="max-w-3xl text-[11px] leading-relaxed text-subtle">
             Risk disclosure: Quant Plus provides market data, quantitative indicators and
             AI-generated analysis for research purposes only. Nothing on this site is investment
-            advice, a recommendation, or a prediction of future performance. All figures shown are
-            demonstrative sample data. Markets involve risk of loss, including loss of capital.
+            advice, a recommendation, or a prediction of future performance. Paper trading uses
+            virtual funds; market observations come from connected providers and are shown as
+            unavailable when no provider is connected. Markets involve risk of loss, including loss
+            of capital.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <span className="label-tech">© {new Date().getFullYear()} Quant Plus</span>

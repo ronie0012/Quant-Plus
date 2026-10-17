@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-14",
+  "scope": "local project and connected backend; source audit and isolated probes",
+  "findings_count": 43,
+  "finding_ids": [
+    "EXEC-01",
+    "EXEC-02",
+    "EXEC-03",
+    "EXEC-04",
+    "EXEC-05",
+    "EXEC-06",
+    "EXEC-07",
+    "EXEC-08",
+    "EXEC-09",
+    "STORE-01",
+    "STORE-02",
+    "STORE-03",
+    "STORE-04",
+    "DATA-01",
+    "DATA-02",
+    "DATA-03",
+    "DATA-04",
+    "DATA-05",
+    "DATA-06",
+    "DATA-07",
+    "NEWS-01",
+    "NEWS-02",
+    "NEWS-03",
+    "NEWS-04",
+    "SENT-01",
+    "SENT-02",
+    "SENT-03",
+    "SENT-04",
+    "AI-01",
+    "AI-02",
+    "AI-03",
+    "AI-04",
+    "CHAT-01",
+    "CHAT-02",
+    "CHAT-03",
+    "CHAT-04",
+    "UX-01",
+    "UX-02",
+    "UX-03",
+    "OPS-01",
+    "OPS-02",
+    "OPS-03",
+    "DOC-01"
+  ],
+  "reproduced": [
+    {
+      "id": "EXEC-01",
+      "observed": "Two identical submissions settle twice; no request idempotency contract."
+    },
+    {
+      "id": "EXEC-02",
+      "observed": "Trading pause rejects a sell that reduces an existing position, including bracket exit submissions."
+    },
+    {
+      "id": "EXEC-03",
+      "observed": "A new buy fills after a realised loss of 50 with daily_loss_limit set to 1."
+    },
+    {
+      "id": "EXEC-04",
+      "observed": "A DAY order created on October 1 remains fillable on the audit date, October 14."
+    },
+    {
+      "id": "STORE-01",
+      "observed": "Local API accepts risks:null, which is incompatible with the journal/review component's risks.length access."
+    },
+    {
+      "id": "STORE-02",
+      "observed": "Negative daily_loss_limit and confirmation_above values are accepted and persisted."
+    },
+    {
+      "id": "EXEC-05",
+      "observed": "Server accepts both an open-session quote dated one day in the future and a closed-session quote from 2020."
+    },
+    {
+      "id": "SENT-01",
+      "observed": "10:15 IST candle produces a 1% end-of-day label for a 10:00 IST snapshot, before session completion."
+    },
+    {
+      "id": "SENT-02",
+      "observed": "Thirty bullish samples with zero bearish samples report bearish reliability as 0 instead of unavailable."
+    },
+    {
+      "id": "AI-01",
+      "observed": "A mocked full-day June 10 candle is accepted for a June 10 10:30 IST historical decision, before that daily candle closes."
+    }
+  ],
+  "checks": {
+    "typescript": "pass",
+    "frontend_lint_errors": 0,
+    "frontend_lint_warnings": 7,
+    "frontend_unit_tests_passed": 12,
+    "frontend_script_suites_passed": 8,
+    "intelligence_tests_passed": 74,
+    "isolated_backend_tests_passed": 436,
+    "backend_live_test_excluded": "tests/test_technical.py",
+    "node_build": "pass",
+    "backend_live_http": "unreachable",
+    "browser_automation": "not performed"
+  },
+  "baseline_artifact": {
+    "entries": 11,
+    "beats_best_constant_true": 0,
+    "beats_best_constant_false": 11,
+    "fresh_evaluation": false
+  },
+  "source_sha256": {
+    "D:\\Quant-Plus\\src\\lib\\local-store.server.ts": "2a3213704cffba679307a0c51a33e57706cce808add9fede9d85a454fb84f54a",
+    "D:\\Quant-Plus\\src\\routes\\api\\paper\\$.ts": "f5188992f84b43bc60c15ee5d38f2d036bfba9a4ee4572db10196d6d31a8a183",
+    "D:\\Quant-Plus\\src\\hooks\\use-orders.ts": "46dd5b9394af636d26c76ea550a39574f2a38243642463bea37d3c34de96322a",
+    "D:\\Quant-Plus\\src\\components\\app\\pages\\OrdersPage.tsx": "4d6396374eabdb3f7523492ab6af20494d5df011de28c3904e2530c9e3605c39",
+    "D:\\Quant-Plus\\backend-extension\\quantplus_intelligence\\calibration.py": "be9f1c99ff928b4269090c50e953c8f338e611d072bdf8e379ba87b536f1b86f",
+    "D:\\Quant-Plus\\backend-extension\\quantplus_intelligence\\news\\official.py": "5ffae61cd1dbbf73ed616e3698dcb9679e4a69e24bca3a6c54ecba5e2833b3af",
+    "D:\\QP\\agent-service\\app\\data\\yfinance_provider.py": "e2dcb879a1dc19a8f3f545d038bfc136beaecddfbbbf6ca117ba1aecdbcf8b5d",
+    "D:\\QP\\agent-service\\app\\agents\\analysts.py": "2ba24ab93ca198fca5cf18c7e4455f7892bd1b38c249936e334b62a7d45296d2",
+    "D:\\QP\\agent-service\\data\\baseline_analysis.json": "c0ecb53279445ca72b8aafe368962bad827c2304b8daccad4e24e8386314bb4a"
+  },
+  "limitations": [
+    "Test results are not proof of absence of bugs.",
+    "No live model prediction-quality evaluation was performed.",
+    "No current backend provider availability claim.",
+    "Audit probes assert current behavior and require conversion after fixes."
+  ]
+}

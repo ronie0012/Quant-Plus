@@ -9,6 +9,14 @@ type ServerEntry = {
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
+// The paper-book worker owns resting orders, protections, alerts and expiry
+// so they continue with every browser tab closed. QUANT_PLUS_WORKER=off disables it.
+if (typeof process !== "undefined" && process.env["QUANT_PLUS_WORKER"] !== "off") {
+  void import("./lib/paper-worker.server")
+    .then((worker) => worker.startPaperWorker())
+    .catch((error: unknown) => console.error("Paper worker failed to start", error));
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -49,8 +57,10 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       console.error(error);
       return new Response(renderErrorPage(), {
         status: 500,
