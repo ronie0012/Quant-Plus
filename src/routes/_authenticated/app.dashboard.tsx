@@ -12,6 +12,7 @@ import { PortfolioSnapshot } from "@/components/app/dashboard/PortfolioSnapshot"
 import { DashboardHero } from "@/components/app/dashboard/DashboardHero";
 import { displayNameFrom, greetingFor, useSession } from "@/hooks/use-session";
 import { OnboardingChecklist } from "@/components/app/dashboard/OnboardingChecklist";
+import { LicenceStrip } from "@/components/app/learn/LicenceStrip";
 import { useInstruments } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
 import { useWorkspacePrefs, type PanelId } from "@/hooks/use-workspace-prefs";
@@ -120,6 +121,8 @@ function DashboardPage() {
           Start with what needs your attention, then follow the evidence into a decision.
         </p>
       </header>
+
+      <LicenceStrip />
 
       <section aria-labelledby="home-money" className="flex flex-col gap-3">
         <div>

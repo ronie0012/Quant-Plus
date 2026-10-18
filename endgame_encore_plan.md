@@ -410,3 +410,31 @@ breaks.
 - Ripple research: [arXiv 2606.29290](https://arxiv.org/abs/2606.29290), [FinNLP 2025 zero-shot stock graphs](https://preview.aclanthology.org/ingest-emnlp/2025.finnlp-2.2.pdf), [arXiv 2607.10932](https://arxiv.org/abs/2607.10932); Cohen & Frazzini, "Economic Links and Predictable Returns", Journal of Finance (2008)
 - Market twin: [TwinMarket (arXiv 2502.01506)](https://arxiv.org/html/2502.01506v5), [NeurIPS 2025 poster](https://neurips.cc/virtual/2025/poster/116676)
 - Skill vs luck / decision-quality references: [Jesse Monte Carlo docs](https://docs.jesse.trade/docs/monte-carlo/interpreting-results), [Jurnl-It discipline score](https://jurnl.it.com/trading-discipline-score-template)
+
+---
+
+## 13. Implementation status (18 October 2026)
+
+Built locally on `main` (not pushed). Everything is paper practice and stays on the local workspace store.
+
+| Plan item | Status | Where |
+| --- | --- | --- |
+| Ripple Engine: relationship map, propagation, news → events, historical echo | **Built** for NIFTY 50 + 14 macro factors (curated; filing extraction still to do) | `src/lib/quant/ripple.ts`, Discover → Ripple map |
+| Ripple: "What moves this stock" on stock pages | **Built** | `src/components/app/stocks/StockRipplePanel.tsx` |
+| Ripple: lock calls, grade after 3 sessions, record vs always-up baseline | **Built** | Ripple map page; also on Review → Track record as "Ripple Engine" |
+| Plain-language / Hindi AI explanations | **Built** (uses the existing grounded copilot; needs `OPENROUTER_API_KEY`) | `src/components/app/AiExplain.tsx` |
+| Investor DNA: stated capacity/tolerance + revealed behaviour + gap | **Built** | `src/lib/learn/investor-dna.ts`, Learn → Investor DNA |
+| Trading licence with requirements and suggested limits | **Built**; limits apply to the existing server-enforced risk limits on request | `src/lib/learn/licence.ts`, Learn hub, Home strip |
+| "Be the Company" simulation | **Built** (8 quarters, IPO, results vs expectations) | `src/lib/learn/company-sim.ts`, Learn → Be the Company |
+| AI tutor with knowledge tracing | **Built** (BKT mastery for 14 concepts, Socratic chat, English/Hindi) | `src/lib/learn/concepts.ts`, Learn → AI tutor |
+| Daily ripple lesson | **Built** as "Today's ripple question" on the Learn hub | Learn hub |
+| Time Machine stories | **Partial**: links to the existing blind replay; no curated crisis scripts yet | Review → Replay |
+| Tip X-Ray (external tips) | Not started | — |
+| Voice explanations | Not started (text only) | — |
+| Mirror Market | Not started (long-term vision) | — |
+
+Changes from the plan, and why:
+
+- **Licence L3** is "lose less than buy-and-hold in a falling replay" plus "respect your stop in 5 closed planned trades" instead of a calibration score, because both can be measured from data the app already records.
+- **Licence unlocks** are practice risk limits (per order, per stock, daily loss) rather than mid/small-cap access, because the app's universe is NIFTY 50. Limits are applied only when the user presses "Apply".
+- **Learn** is a sixth primary area (Home, Learn, Discover, Portfolio, Review, More) because beginners are a core audience; the browser test was updated accordingly.

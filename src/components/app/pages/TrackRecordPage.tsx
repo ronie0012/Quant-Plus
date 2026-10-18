@@ -11,6 +11,9 @@ import {
   useAllOrders,
 } from "@/hooks/use-quant-data";
 import { useJournal } from "@/hooks/use-trading-product";
+import { useResearchItems } from "@/hooks/use-workspace-prefs";
+import { RIPPLE_MODEL } from "@/hooks/use-ripple";
+import type { RippleCall } from "@/lib/quant/ripple";
 import { deliveryCharges } from "@/lib/paper-fees";
 import {
   actionDirection,
@@ -65,6 +68,7 @@ export function TrackRecordPage() {
   const [segmentKey, setSegmentKey] = useState<SegmentKey>("regime");
   const sessions = useResearchSessions();
   const journal = useJournal();
+  const ripples = useResearchItems("RIPPLE_CALL");
   const fills = useFills();
   const orders = useAllOrders();
   const nifty = useIndexBars("NIFTY");
@@ -72,8 +76,10 @@ export function TrackRecordPage() {
     const set = new Set<string>();
     for (const s of sessions.data ?? []) set.add(s.instrument.replace(/\.NS$/, ""));
     for (const e of journal.data ?? []) set.add(e.symbol);
+    for (const item of ripples.data ?? [])
+      for (const call of (item.body as { calls?: RippleCall[] }).calls ?? []) set.add(call.symbol);
     return [...set].filter((s) => stockBySymbol(s)).slice(0, 50);
-  }, [sessions.data, journal.data]);
+  }, [sessions.data, journal.data, ripples.data]);
   const histories = useHistories(symbols, "1Y");
   const cost = roundTripCostRate();
 
@@ -133,6 +139,24 @@ export function TrackRecordPage() {
           probability: strengthProbability(s.thesis?.conviction),
         });
     }
+    // Our own Ripple Engine sits on the same scorecard as the committee and the user.
+    for (const item of ripples.data ?? []) {
+      const calls = (item.body as { calls?: RippleCall[] }).calls ?? [];
+      calls.forEach((call, i) =>
+        forecasts.push({
+          id: `ripple:${item.id}:${i}`,
+          symbol: call.symbol,
+          as_of: call.as_of,
+          role: "Ripple Engine",
+          model_version: RIPPLE_MODEL,
+          direction: call.direction,
+          probability: null,
+          sector: stockBySymbol(call.symbol)?.sector ?? "Unclassified",
+          liquidity: bucket(call.symbol),
+          coverage: "PARTIAL",
+        }),
+      );
+    }
     for (const e of journal.data ?? []) {
       if (!e.plan || e.plan.decision !== "TRADE") continue;
       forecasts.push({
@@ -159,7 +183,7 @@ export function TrackRecordPage() {
       ...matureForecasts(forecasts, bars, horizon, regimeAt, cost),
       total: forecasts.length,
     };
-  }, [sessions.data, journal.data, histories.bars, nifty.data, horizon, cost]);
+  }, [sessions.data, journal.data, ripples.data, histories.bars, nifty.data, horizon, cost]);
 
   const committee = result.matured.filter((m) => m.role === "Committee final decision");
   const stats = trackStats(committee);

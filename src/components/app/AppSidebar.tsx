@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BookOpen,
   Compass,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
@@ -24,6 +25,7 @@ import { signOutWorkspace } from "@/lib/workspace-session";
 
 const ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
+  learn: GraduationCap,
   markets: Compass,
   portfolio: PieChart,
   journal: BookOpen,

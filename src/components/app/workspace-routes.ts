@@ -1,5 +1,12 @@
 /** The only destinations promoted to the persistent sidebar. */
-export const WORKSPACE_AREAS = ["Home", "Discover", "Portfolio", "Review", "More"] as const;
+export const WORKSPACE_AREAS = [
+  "Home",
+  "Learn",
+  "Discover",
+  "Portfolio",
+  "Review",
+  "More",
+] as const;
 export type WorkspaceArea = (typeof WORKSPACE_AREAS)[number];
 
 export type WorkspaceRoute = {
@@ -36,6 +43,15 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
     aliases: ["home", "today"],
   },
   {
+    section: "learn",
+    label: "Learn",
+    area: "Learn",
+    group: "Decisions",
+    keywords: "learn beginner driving school licence lessons basics newcomer",
+    primary: true,
+    aliases: ["school", "licence", "license"],
+  },
+  {
     section: "markets",
     label: "Discover",
     area: "Discover",
@@ -70,6 +86,33 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
     keywords: "more advanced tools system settings help",
     primary: true,
     aliases: ["advanced", "tools"],
+  },
+  {
+    section: "investor-dna",
+    label: "Investor DNA",
+    area: "Learn",
+    group: "Decisions",
+    keywords: "investor dna profile risk appetite risk tolerance capacity questionnaire",
+    primary: false,
+    aliases: ["profile", "risk-profile"],
+  },
+  {
+    section: "be-the-company",
+    label: "Be the Company",
+    area: "Learn",
+    group: "Decisions",
+    keywords: "be the company simulation ipo shares dilution chai beginner",
+    primary: false,
+    aliases: ["company-sim"],
+  },
+  {
+    section: "tutor",
+    label: "AI tutor",
+    area: "Learn",
+    group: "Intelligence",
+    keywords: "ai tutor concepts quiz mastery hindi learn",
+    primary: false,
+    aliases: ["ai-tutor"],
   },
   {
     section: "ripple",

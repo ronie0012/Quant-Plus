@@ -97,6 +97,30 @@ const behavior = z
   })
   .strict();
 
+const investorProfile = z
+  .object({
+    answers: z.record(z.string().max(40), z.string().max(40)),
+    completed_at: iso,
+  })
+  .strict();
+
+const learning = z
+  .object({
+    company_completed_at: iso.nullable(),
+    company_result: z
+      .object({
+        name: z.string().max(60),
+        multiple: z.number().finite(),
+        ownership_pct: nonnegative.max(100),
+      })
+      .strict()
+      .nullable(),
+    mastery: z.record(z.string().max(40), z.number().min(0).max(1)),
+    checks_answered: nonnegative.int().max(1_000_000),
+  })
+  .partial()
+  .strict();
+
 const workspace = z
   .object({
     mode: z.enum(["LEARNER", "TRADER", "RESEARCHER", "PORTFOLIO_MANAGER", "CUSTOM"]),
@@ -186,6 +210,8 @@ const schemas = {
         .strict(),
       behavior,
       workspace,
+      investor_profile: investorProfile,
+      learning,
     })
     .partial()
     .strict(),

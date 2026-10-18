@@ -36,6 +36,10 @@ import { ResearchNetworkPage } from "@/components/app/pages/ResearchNetworkPage"
 import { CapabilitiesPage } from "@/components/app/pages/CapabilitiesPage";
 import { ReviewHub } from "@/components/app/pages/ReviewHub";
 import { RipplePage } from "@/components/app/pages/RipplePage";
+import { LearnPage } from "@/components/app/learn/LearnPage";
+import { InvestorDnaPage } from "@/components/app/learn/InvestorDnaPage";
+import { CompanySimPage } from "@/components/app/learn/CompanySimPage";
+import { TutorPage } from "@/components/app/learn/TutorPage";
 import {
   SECONDARY_WORKSPACE_ROUTES,
   WORKSPACE_AREAS,
@@ -83,7 +87,7 @@ function MorePage() {
         title="Advanced workspace tools"
         body="Keep the primary loop focused while every deeper route remains one click away."
       />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {groups.map((group) => (
           <Card key={group.area} className="h-full">
             <div className="border-b border-border px-5 py-4">
@@ -202,6 +206,26 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description:
       "Replay the information environment with no future information, partial fills and a separate replay wallet.",
   },
+  learn: {
+    title: "Learn — Quant Plus Terminal",
+    description:
+      "A market driving school: lessons by doing and a trading licence earned through discipline.",
+  },
+  "investor-dna": {
+    title: "Investor DNA — Quant Plus Terminal",
+    description:
+      "Stated risk capacity and tolerance compared with your revealed paper-trading behaviour.",
+  },
+  "be-the-company": {
+    title: "Be the Company — Quant Plus Terminal",
+    description:
+      "Run a chai brand to its IPO and learn shares, dilution, EPS and P/E from the inside.",
+  },
+  tutor: {
+    title: "AI Tutor — Quant Plus Terminal",
+    description:
+      "Concept checks with knowledge tracing and a Socratic AI tutor in English or Hindi.",
+  },
   ripple: {
     title: "Ripple Map — Quant Plus Terminal",
     description:
@@ -276,6 +300,10 @@ export const Route = createFileRoute("/_authenticated/app/$section")({
 });
 
 const pages: Record<string, () => React.JSX.Element> = {
+  learn: LearnPage,
+  "investor-dna": InvestorDnaPage,
+  "be-the-company": CompanySimPage,
+  tutor: TutorPage,
   markets: MarketsPage,
   ripple: RipplePage,
   portfolio: PortfolioPage,

@@ -70,6 +70,15 @@ export type TradingPreferences = {
   notifications: Record<string, boolean>;
   behavior?: BehaviorPolicy;
   workspace?: WorkspacePreferences;
+  investor_profile?: { answers: Record<string, string>; completed_at: string };
+  learning?: LearningState;
+};
+
+export type LearningState = {
+  company_completed_at?: string | null;
+  company_result?: { name: string; multiple: number; ownership_pct: number } | null;
+  mastery?: Record<string, number>;
+  checks_answered?: number;
 };
 
 export type RiskLimits = {
