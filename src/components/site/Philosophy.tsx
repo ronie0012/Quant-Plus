@@ -30,7 +30,7 @@ export function Philosophy() {
                     ? i === words.length - 1
                       ? "text-primary opacity-100"
                       : "text-foreground opacity-100"
-                    : "translate-y-3 text-subtle opacity-25",
+                    : "translate-y-3 text-muted-foreground opacity-100",
                 )}
               >
                 {word}

@@ -1,19 +1,57 @@
 import { test, expect } from "@playwright/test";
 
-test("public product overview switches panels without fabricated prices", async ({ page }) => {
+test("public product overview switches tabs without fabricated prices", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  const overview = page.getByRole("group", { name: "Workspace overview" }).first();
-  await overview.getByRole("button", { name: "Markets", exact: true }).click();
-  await expect(overview.getByRole("button", { name: "Markets", exact: true })).toHaveAttribute(
-    "aria-pressed",
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  const overview = page.getByRole("tablist", { name: "Workspace overview" }).first();
+  await expect(page.locator('[data-dashboard-hydrated="true"]').first()).toBeVisible();
+  const marketsTab = overview.getByRole("tab", { name: "Markets", exact: true });
+  await marketsTab.evaluate((element) =>
+    element.scrollIntoView({ block: "center", behavior: "instant" }),
+  );
+  await marketsTab.click();
+  await expect(overview.getByRole("tab", { name: "Markets", exact: true })).toHaveAttribute(
+    "aria-selected",
     "true",
   );
   await expect(
     page.getByText("Market observations require a connected provider.", { exact: false }).first(),
   ).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("landing page stays usable on a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/");
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+
+  await expect(
+    page.getByRole("heading", { name: "Make market decisions defensible." }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+
+  const principlesToggle = page.getByRole("button", { name: "Pause moving principles" });
+  await principlesToggle.click();
+  await expect(page.getByRole("button", { name: "Resume moving principles" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  const menuToggle = page.getByRole("button", { name: "Open menu" });
+  await menuToggle.focus();
+  await menuToggle.press("Enter");
+  const menu = page.getByRole("dialog", { name: "Mobile navigation" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("link", { name: /Markets/ })).toBeFocused();
+
+  await page.keyboard.press("Shift+Tab");
+  await expect(menu.getByRole("link", { name: "Log in" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menuToggle).toBeFocused();
 });
 
 for (const [route, text] of [

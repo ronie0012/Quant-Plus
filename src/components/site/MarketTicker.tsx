@@ -1,3 +1,6 @@
+import { Pause, Play } from "lucide-react";
+import { useState } from "react";
+
 const PHRASES = [
   "Local paper trading",
   "Provider market data with source and freshness",
@@ -11,6 +14,7 @@ const PHRASES = [
 
 /** Product principles as a slow marquee; a static list for reduced motion and screen readers. */
 export function MarketTicker() {
+  const [paused, setPaused] = useState(false);
   const row = (hidden: boolean) => (
     <ul
       aria-hidden={hidden || undefined}
@@ -28,7 +32,7 @@ export function MarketTicker() {
   );
   return (
     <div
-      className="marquee relative overflow-hidden border-y border-border bg-surface py-4"
+      className={`marquee relative overflow-hidden border-y border-border bg-surface py-4 ${paused ? "marquee-paused" : ""}`}
       aria-label="Quant Plus principles"
       role="region"
     >
@@ -44,6 +48,19 @@ export function MarketTicker() {
         {row(false)}
         <div className="motion-reduce:hidden">{row(true)}</div>
       </div>
+      <button
+        type="button"
+        aria-label={paused ? "Resume moving principles" : "Pause moving principles"}
+        aria-pressed={paused}
+        onClick={() => setPaused((value) => !value)}
+        className="absolute top-1/2 right-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-border-strong bg-surface/95 text-muted-foreground backdrop-blur-sm transition-colors duration-200 hover:border-primary hover:text-foreground focus-visible:outline-none sm:right-5"
+      >
+        {paused ? (
+          <Play aria-hidden="true" className="h-3.5 w-3.5" />
+        ) : (
+          <Pause aria-hidden="true" className="h-3.5 w-3.5" />
+        )}
+      </button>
     </div>
   );
 }

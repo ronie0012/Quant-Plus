@@ -10,10 +10,15 @@ const columns = [
       { label: "AI Analyst", to: "/ai" as const },
     ],
   },
+  {
+    title: "Access",
+    links: [
+      { label: "Home", to: "/" as const },
+      { label: "Get started", to: "/auth" as const },
+      { label: "Log in", to: "/auth" as const },
+    ],
+  },
 ];
-
-const secondary = ["About", "Contact", "Privacy", "Terms"];
-const social = ["LinkedIn", "GitHub", "X"];
 
 export function Footer() {
   return (
@@ -22,7 +27,7 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
             <span className="font-mono text-sm tracking-[0.22em] uppercase">
-              Quant<span className="text-primary-soft">+</span> Plus
+              Quant<span className="text-primary-soft">+</span>
             </span>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               AI-powered market intelligence. Turn market complexity into clarity.
@@ -30,7 +35,7 @@ export function Footer() {
           </div>
 
           {columns.map((col) => (
-            <div key={col.title} className="md:col-span-3">
+            <div key={col.title} className="md:col-span-2">
               <span className="label-tech">{col.title}</span>
               <ul className="mt-5 space-y-3">
                 {col.links.map((l) => (
@@ -47,26 +52,19 @@ export function Footer() {
             </div>
           ))}
 
-          <div className="md:col-span-2">
-            <span className="label-tech">Company</span>
-            <ul className="mt-5 space-y-3">
-              {secondary.map((l) => (
-                <li key={l}>
-                  <span className="text-sm text-muted-foreground">{l}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="md:col-span-2">
-            <span className="label-tech">Social</span>
-            <ul className="mt-5 space-y-3">
-              {social.map((l) => (
-                <li key={l}>
-                  <span className="text-sm text-muted-foreground">{l}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="md:col-span-3">
+            <div className="border border-border bg-background/35 p-5">
+              <span className="label-tech text-primary-soft">Built for clarity</span>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Follow the evidence, see the data state, and keep risk visible before you decide.
+              </p>
+              <Link
+                to="/auth"
+                className="mt-5 inline-flex min-h-11 items-center border border-primary-soft bg-primary-soft px-4 font-mono text-[11px] tracking-[0.16em] text-background uppercase transition-colors duration-200 hover:border-foreground hover:bg-foreground"
+              >
+                Enter the workspace
+              </Link>
+            </div>
           </div>
         </div>
 

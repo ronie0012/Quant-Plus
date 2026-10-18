@@ -7,12 +7,11 @@ import { DashboardReveal } from "@/components/site/DashboardReveal";
 import { Capabilities } from "@/components/site/Capabilities";
 import { Coverage } from "@/components/site/Coverage";
 import { Philosophy } from "@/components/site/Philosophy";
-import { ProductShowcase } from "@/components/site/ProductShowcase";
 import { CallToAction } from "@/components/site/CallToAction";
 
 const title = "Quant Plus — AI-Powered Market Intelligence";
 const description =
-  "Real-time market data, quantitative signals and AI analysis in one intelligent research platform. See the market differently.";
+  "Source-aware market data when connected, quantitative signals and AI research in one decision workspace. Make market decisions you can defend.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,13 +32,12 @@ function Index() {
     <>
       <Hero />
       <MarketTicker />
-      {/* One scroll-driven story replaces seven identical capability blocks. */}
-      <ProcessStory />
       <DashboardReveal />
+      {/* The product surface proves the promise before the scroll-driven story explains it. */}
+      <ProcessStory />
       <Capabilities />
       <Coverage />
       <Philosophy />
-      <ProductShowcase />
       <CallToAction />
     </>
   );

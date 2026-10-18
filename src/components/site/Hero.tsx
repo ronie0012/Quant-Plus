@@ -6,7 +6,7 @@ import { Magnetic } from "@/components/site/Magnetic";
 import { usePrefersReducedMotion, useScrollProgress } from "@/hooks/use-reveal";
 import { cn } from "@/lib/utils";
 
-const FIRST_LINE = ["See", "the", "market"];
+const FIRST_LINE = ["Make", "market", "decisions"];
 
 export function Hero() {
   const [step, setStep] = useState(0);
@@ -89,13 +89,13 @@ export function Hero() {
               <span className="pulse-ring absolute inset-0 rounded-full bg-primary" />
               <span className="h-2 w-2 rounded-full bg-primary" />
             </span>
-            AI-powered market intelligence
+            Source-aware market intelligence
           </p>
 
           <h1
             id="hero-title"
             className="display-hero mt-7"
-            aria-label="See the market differently."
+            aria-label="Make market decisions defensible."
           >
             <span aria-hidden="true" className="block overflow-hidden pb-2">
               {FIRST_LINE.map((word, i) => (
@@ -110,7 +110,7 @@ export function Hero() {
             </span>
             <span aria-hidden="true" className="block overflow-hidden pb-2">
               <span className="word-rise" style={{ ["--d" as string]: "860ms" }}>
-                <span className="text-signal">differently</span>
+                <span className="text-signal">defensible</span>
                 <span className="text-primary">.</span>
               </span>
             </span>
@@ -122,8 +122,8 @@ export function Hero() {
               step >= 4 ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
           >
-            Quant Plus combines real-time market data, quantitative signals and AI analysis into one
-            intelligent research platform.
+            Quant Plus brings provider-aware market data, quantitative signals and AI research into
+            one decision workspace — with evidence, risk and uncertainty kept visible.
           </p>
 
           <div
@@ -134,10 +134,10 @@ export function Hero() {
           >
             <Magnetic>
               <PrimaryAction to="/auth" className="shadow-[0_18px_50px_-18px_var(--color-primary)]">
-                Get Started
+                Enter the workspace
               </PrimaryAction>
             </Magnetic>
-            <GhostAction to="/platform">Explore Quant Plus</GhostAction>
+            <GhostAction to="/platform">See the platform</GhostAction>
           </div>
         </div>
 
@@ -149,9 +149,9 @@ export function Hero() {
         >
           <div className="flex flex-wrap gap-x-10 gap-y-3">
             {[
-              ["Data", "Market ingestion"],
-              ["Signals", "Quantitative"],
-              ["Intelligence", "AI reasoning"],
+              ["Data", "Provider-aware"],
+              ["Signals", "Quant context"],
+              ["Intelligence", "Traceable research"],
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col gap-1.5">
                 <span className="label-tech">{k}</span>
@@ -164,7 +164,7 @@ export function Hero() {
             onClick={next}
             className="group flex items-center gap-3 label-tech transition-colors hover:text-foreground"
           >
-            Scroll to enter the system
+            Scroll to see the system
             <span
               aria-hidden="true"
               className="relative flex h-9 w-5 justify-center overflow-hidden rounded-full border border-border-strong transition-colors group-hover:border-primary"

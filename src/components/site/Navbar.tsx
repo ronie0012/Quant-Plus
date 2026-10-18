@@ -15,6 +15,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
   const progress = useDocumentProgress();
   const toggle = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -36,16 +37,44 @@ export function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    if (open) menu.current?.querySelector<HTMLElement>("a")?.focus();
-    else if (wasOpen.current) toggle.current?.focus();
+    const main = document.getElementById("main-content");
+    const footer = document.querySelector<HTMLElement>("footer");
+    if (menu.current) menu.current.inert = !open;
+    if (open) {
+      main?.setAttribute("inert", "");
+      footer?.setAttribute("inert", "");
+      menu.current?.querySelector<HTMLElement>("a")?.focus();
+    } else {
+      main?.removeAttribute("inert");
+      footer?.removeAttribute("inert");
+      if (wasOpen.current) toggle.current?.focus();
+    }
     wasOpen.current = open;
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        menu.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      main?.removeAttribute("inert");
+      footer?.removeAttribute("inert");
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -55,11 +84,15 @@ export function Navbar() {
       <header
         className={cn(
           "vt-site-nav fixed inset-x-0 top-0 z-50 transition-all duration-500 [transition-timing-function:var(--ease-out-expo)]",
-          hidden && !open ? "-translate-y-full" : "translate-y-0",
+          hidden && !open && !hasFocus ? "-translate-y-full" : "translate-y-0",
           scrolled
             ? "border-b border-border bg-background/72 backdrop-blur-xl"
             : "border-b border-transparent bg-transparent",
         )}
+        onFocus={() => setHasFocus(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false);
+        }}
       >
         <nav
           aria-label="Primary"
@@ -119,7 +152,7 @@ export function Navbar() {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="flex h-9 w-9 items-center justify-center border border-border-strong text-muted-foreground transition-colors hover:text-foreground md:hidden"
+            className="flex h-11 w-11 items-center justify-center border border-border-strong text-muted-foreground transition-colors hover:text-foreground md:hidden"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -137,10 +170,12 @@ export function Navbar() {
       <div
         id="mobile-menu"
         ref={menu}
-        inert={!open}
         aria-hidden={!open}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation"
         className={cn(
-          "fixed inset-x-0 top-14 bottom-0 z-[45] border-t border-border bg-background/97 backdrop-blur-xl transition-all duration-500 md:hidden",
+          "fixed inset-x-0 top-14 bottom-0 z-[45] border-t border-border bg-background/97 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl transition-all duration-500 md:hidden",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >

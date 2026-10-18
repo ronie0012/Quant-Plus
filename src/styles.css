@@ -376,6 +376,9 @@
 .marquee:focus-within .marquee-track {
   animation-play-state: paused;
 }
+.marquee-paused .marquee-track {
+  animation-play-state: paused;
+}
 
 /* Hover lifts only for real pointers; touch devices get no sticky hover. */
 @media (hover: none) {
