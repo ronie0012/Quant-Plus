@@ -111,7 +111,8 @@ export function useBehaviorPolicy() {
   return { policy, save, loading: preferences.isLoading };
 }
 
-export type ResearchKind = "MEMO" | "COMMENT" | "STRATEGY" | "BUNDLE" | "REPLAY_RESULT";
+export type ResearchKind =
+  "MEMO" | "COMMENT" | "STRATEGY" | "BUNDLE" | "REPLAY_RESULT" | "RIPPLE_CALL";
 export type ResearchStatus =
   "DRAFT" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "ARCHIVED" | "SHADOW";
 

@@ -35,6 +35,7 @@ import { TrustControlRoom } from "@/components/app/pages/TrustControlRoom";
 import { ResearchNetworkPage } from "@/components/app/pages/ResearchNetworkPage";
 import { CapabilitiesPage } from "@/components/app/pages/CapabilitiesPage";
 import { ReviewHub } from "@/components/app/pages/ReviewHub";
+import { RipplePage } from "@/components/app/pages/RipplePage";
 import {
   SECONDARY_WORKSPACE_ROUTES,
   WORKSPACE_AREAS,
@@ -201,6 +202,11 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description:
       "Replay the information environment with no future information, partial fills and a separate replay wallet.",
   },
+  ripple: {
+    title: "Ripple Map — Quant Plus Terminal",
+    description:
+      "How one news event spreads to connected NIFTY 50 companies, with the reasoning chain and a graded record.",
+  },
   watchlist: {
     title: "Watchlist — Quant Plus Terminal",
     description: "Track instruments, inspect movement and begin structured analysis.",
@@ -271,6 +277,7 @@ export const Route = createFileRoute("/_authenticated/app/$section")({
 
 const pages: Record<string, () => React.JSX.Element> = {
   markets: MarketsPage,
+  ripple: RipplePage,
   portfolio: PortfolioPage,
   watchlist: WatchlistPage,
   orders: OrdersPage,

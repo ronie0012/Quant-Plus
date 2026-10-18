@@ -27,6 +27,7 @@ const SECTIONS = [
   "help",
   "more",
   "review",
+  "ripple",
 ];
 const ROUTES = [
   "/",

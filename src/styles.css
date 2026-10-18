@@ -633,6 +633,23 @@
   animation-delay: var(--d, 0ms);
 }
 
+@keyframes ripple-pulse {
+  from {
+    transform: scale(0.75);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@utility ripple-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ripple-pulse 2.4s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

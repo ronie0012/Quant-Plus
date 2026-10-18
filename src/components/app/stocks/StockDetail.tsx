@@ -22,6 +22,7 @@ import { AgentPrediction } from "@/components/app/stocks/AgentPrediction";
 import { StockMarketData } from "@/components/app/stocks/StockMarketData";
 import { StockNewsIntelligence } from "@/components/app/stocks/StockNewsIntelligence";
 import { DecisionCanvas } from "@/components/app/stocks/DecisionCanvas";
+import { StockRipplePanel } from "@/components/app/stocks/StockRipplePanel";
 import { paperQuoteError } from "@/lib/paper-trading";
 
 const ranges = ["1D", "1W", "1M", "6M", "1Y"] as const;
@@ -357,6 +358,8 @@ export function StockDetail({
                 : paperQuoteError(quote, Date.now(), "LAST_SESSION_PRACTICE")
             }
           />
+
+          <StockRipplePanel symbol={reference.symbol} />
 
           {showDemoPanels && (
             <Card delay={320}>

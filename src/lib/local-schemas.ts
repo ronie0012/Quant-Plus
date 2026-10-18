@@ -149,7 +149,7 @@ const schemas = {
     .strict(),
   research_items: z
     .object({
-      kind: z.enum(["MEMO", "COMMENT", "STRATEGY", "BUNDLE", "REPLAY_RESULT"]),
+      kind: z.enum(["MEMO", "COMMENT", "STRATEGY", "BUNDLE", "REPLAY_RESULT", "RIPPLE_CALL"]),
       title: z.string().trim().min(1).max(300),
       ref: z.string().max(200).nullable(),
       status: z.enum(["DRAFT", "IN_REVIEW", "APPROVED", "REJECTED", "ARCHIVED", "SHADOW"]),

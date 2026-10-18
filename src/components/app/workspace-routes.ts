@@ -72,6 +72,15 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
     aliases: ["advanced", "tools"],
   },
   {
+    section: "ripple",
+    label: "Ripple map",
+    area: "Discover",
+    group: "Intelligence",
+    keywords: "ripple map news impact supply chain connected stocks second order what-if",
+    primary: false,
+    aliases: ["ripple-map", "news-impact"],
+  },
+  {
     section: "watchlist",
     label: "Watchlist",
     area: "Discover",
