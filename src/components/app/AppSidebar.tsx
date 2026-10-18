@@ -3,7 +3,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BookOpen,
   Compass,
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
@@ -25,7 +24,6 @@ import { signOutWorkspace } from "@/lib/workspace-session";
 
 const ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
-  learn: GraduationCap,
   markets: Compass,
   portfolio: PieChart,
   journal: BookOpen,
@@ -108,7 +106,9 @@ export function AppSidebar({
       <div className="flex-1 overflow-y-auto px-2.5 py-3 [scrollbar-width:thin]">
         <ul className="space-y-0.5" aria-label="Primary areas">
           {PRIMARY_WORKSPACE_ROUTES.map((route) => {
-            const active = route.area === location.area;
+            // Learning belongs to Home in the hierarchy: new users reach it from there.
+            const active =
+              route.area === location.area || (location.area === "Learn" && route.area === "Home");
             const Icon = ICONS[route.section] ?? LayoutDashboard;
             const linkProps =
               route.section === "dashboard"

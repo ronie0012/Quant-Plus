@@ -17,7 +17,7 @@ const presets = [
  * First-run funding step. A brand new account has no cash, so the terminal asks
  * how much simulated capital to start with before any order can be placed.
  */
-export function WalletGate() {
+export function WalletGate({ step }: { step?: { current: number; total: number } } = {}) {
   const { data: account, isLoading } = useAccount();
   const fund = useFundWallet();
   const [amount, setAmount] = useState(20_000_000);
@@ -66,8 +66,22 @@ export function WalletGate() {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
         />
         <div className="px-6 pt-7 pb-6 sm:px-8">
+          {step && (
+            <div className="mb-5 flex items-center gap-2" aria-hidden="true">
+              {Array.from({ length: step.total }, (_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-1 flex-1 rounded-full",
+                    i < step.current ? "bg-primary" : "bg-border",
+                  )}
+                />
+              ))}
+            </div>
+          )}
           <p className="flex items-center gap-2 font-medium text-[11px] tracking-[0.06em] uppercase text-primary-soft">
-            <Wallet className="h-3.5 w-3.5" /> Fund your wallet
+            <Wallet className="h-3.5 w-3.5" />{" "}
+            {step ? `Step ${step.current} of ${step.total} · ` : ""}Fund your wallet
           </p>
           <h2 id="wallet-gate-title" className="mt-3 text-[1.6rem] leading-tight tracking-tight">
             How much capital do you want to start with?

@@ -92,6 +92,8 @@ export function useLearning() {
         company_completed_at: new Date().toISOString(),
         company_result: result,
       }),
+    setOnboarding: (onboarding: "WELCOME" | "DONE") =>
+      save.mutateAsync({ ...learning, onboarding }),
     saving: save.isPending,
   };
 }

@@ -79,6 +79,8 @@ export type LearningState = {
   company_result?: { name: string; multiple: number; ownership_pct: number } | null;
   mastery?: Record<string, number>;
   checks_answered?: number;
+  /** First-run flow: WELCOME shows the learning-path step once; DONE ends it. */
+  onboarding?: "WELCOME" | "DONE";
 };
 
 export type RiskLimits = {

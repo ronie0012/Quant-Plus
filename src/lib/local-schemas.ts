@@ -117,6 +117,7 @@ const learning = z
       .nullable(),
     mastery: z.record(z.string().max(40), z.number().min(0).max(1)),
     checks_answered: nonnegative.int().max(1_000_000),
+    onboarding: z.enum(["WELCOME", "DONE"]),
   })
   .partial()
   .strict();

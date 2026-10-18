@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { AppTopbar } from "@/components/app/AppTopbar";
 import { QuantAIDock } from "@/components/app/QuantAIDock";
 import { TradingDeskProvider } from "@/components/app/TradingDesk";
-import { WalletGate } from "@/components/app/WalletGate";
+import { OnboardingFlow } from "@/components/app/learn/OnboardingFlow";
 import { TradingMonitor } from "@/components/app/TradingMonitor";
 import { ConnectionStatus } from "@/components/app/ConnectionStatus";
 import { cn } from "@/lib/utils";
@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <ServiceWorkerRegistrar />
         <BandwidthPolicy />
         <OfflineSnapshot />
-        <WalletGate />
+        <OnboardingFlow />
         <TradingMonitor />
       </div>
     </TradingDeskProvider>

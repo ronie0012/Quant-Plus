@@ -154,14 +154,13 @@ test("unavailable providers produce honest states, not invented prices", async (
   expect(errors).toEqual([]);
 });
 
-test("primary navigation exposes the six-area information architecture", async ({ page }) => {
+test("primary navigation exposes the five-area information architecture", async ({ page }) => {
   await page.goto("/app/dashboard");
   const nav = page.getByRole("navigation", { name: "Primary areas" });
   const primaryLinks = nav.locator('ul[aria-label="Primary areas"] a');
-  await expect(primaryLinks).toHaveCount(6);
+  await expect(primaryLinks).toHaveCount(5);
   await expect(primaryLinks.allTextContents()).resolves.toEqual([
     "Home",
-    "Learn",
     "Discover",
     "Portfolio",
     "Review",

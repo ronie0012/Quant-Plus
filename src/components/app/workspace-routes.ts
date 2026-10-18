@@ -48,7 +48,7 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
     area: "Learn",
     group: "Decisions",
     keywords: "learn beginner driving school licence lessons basics newcomer",
-    primary: true,
+    primary: false,
     aliases: ["school", "licence", "license"],
   },
   {

@@ -57,18 +57,24 @@ export function InvestorDnaPage() {
   );
 }
 
-function Questionnaire({
+export function Questionnaire({
   initial,
   saving,
   failed,
   onCancel,
   onSubmit,
+  cancelLabel = "Cancel",
+  submitLabel = "See my DNA",
+  className,
 }: {
   initial: Answers;
   saving: boolean;
   failed: boolean;
   onCancel: (() => void) | undefined;
   onSubmit: (answers: Answers) => Promise<void>;
+  cancelLabel?: string;
+  submitLabel?: string;
+  className?: string;
 }) {
   const [answers, setAnswers] = useState<Answers>(initial);
   const [index, setIndex] = useState(0);
@@ -77,7 +83,7 @@ function Questionnaire({
   const chosen = answers[question.id];
 
   return (
-    <Card glow className="mx-auto w-full max-w-2xl">
+    <Card glow className={cn("mx-auto w-full max-w-2xl", className)}>
       <div className="flex flex-col gap-2 border-b border-border px-5 py-4">
         <div className="flex items-center justify-between text-[12px] text-subtle">
           <span>
@@ -145,7 +151,7 @@ function Questionnaire({
           )}
           {onCancel && (
             <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-              Cancel
+              {cancelLabel}
             </Button>
           )}
         </div>
@@ -161,7 +167,7 @@ function Questionnaire({
           onClick={() => (last ? void onSubmit(answers) : setIndex(index + 1))}
           className="gap-1.5"
         >
-          {last ? (saving ? "Saving…" : "See my DNA") : "Next"}
+          {last ? (saving ? "Saving…" : submitLabel) : "Next"}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </div>
