@@ -539,7 +539,7 @@ export function ResearchNetworkPage() {
             title="Leaderboard"
             meta="Matured forecasts and strategy verdicts, not raw returns"
           />
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" role="region" aria-label="Research results" tabIndex={0}>
             <table className="w-full min-w-[520px] text-left text-[12px]">
               <thead className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                 <tr>

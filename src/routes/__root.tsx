@@ -60,7 +60,7 @@ function ErrorComponent({ error, reset }: import("@tanstack/react-router").Error
               router.invalidate();
               reset();
             }}
-            className="border border-primary bg-primary px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-primary-foreground"
+            className="border border-primary-action bg-primary-action px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-primary-foreground"
           >
             Try again
           </button>
@@ -81,11 +81,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Quant Plus — AI-Powered Market Intelligence" },
+      { title: "Quant Plus — Research, Learn & Practise" },
       {
         name: "description",
         content:
-          "Quant Plus combines real-time market data, quantitative signals and AI analysis into one intelligent research platform.",
+          "Learn about Indian equities, inspect provider-labelled research and practise decisions with virtual funds. Market data and AI availability depend on connected services.",
       },
       { name: "author", content: "Quant Plus" },
       { property: "og:site_name", content: "Quant Plus" },
@@ -121,7 +121,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         <a
           href="#main-content"
-          className="fixed top-2 left-2 z-[100] -translate-y-20 bg-primary px-4 py-2 text-primary-foreground transition-transform focus:translate-y-0"
+          className="fixed top-2 left-2 z-[100] -translate-y-20 bg-primary-action px-4 py-2 text-primary-foreground transition-transform focus:translate-y-0"
         >
           Skip to main content
         </a>

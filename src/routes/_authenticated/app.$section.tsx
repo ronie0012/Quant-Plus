@@ -1,8 +1,7 @@
-import { useEffect } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Card } from "@/components/app/cards";
-import { EmptyModule, PageIntro } from "@/components/app/pages/workspace";
+import { EmptyModule, PageIntro, Segmented } from "@/components/app/pages/workspace";
 import {
   MarketsPage,
   PortfolioPage,
@@ -40,19 +39,39 @@ import { LearnPage } from "@/components/app/learn/LearnPage";
 import { InvestorDnaPage } from "@/components/app/learn/InvestorDnaPage";
 import { CompanySimPage } from "@/components/app/learn/CompanySimPage";
 import { TutorPage } from "@/components/app/learn/TutorPage";
-import {
-  SECONDARY_WORKSPACE_ROUTES,
-  WORKSPACE_AREAS,
-  resolveWorkspaceRoute,
-} from "@/components/app/workspace-routes";
+import { resolveWorkspaceRoute } from "@/components/app/workspace-routes";
+import { WorkspaceToolsPage } from "@/components/app/pages/WorkspaceToolsPage";
 
 function JournalPage() {
+  const search = useRouterState({ select: (state) => state.location.searchStr });
+  const [view, setView] = useState("Decision plans");
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.has("symbol") || params.has("plan")) setView("Decision plans");
+  }, [search]);
   return (
-    <>
-      <ReviewHub />
-      <DecisionLifecyclePage />
-      <TradeReviewPanel />
-    </>
+    <div className="space-y-6">
+      <Segmented
+        items={["Decision plans", "Review overview", "Execution review"]}
+        value={view}
+        onChange={setView}
+        label="Review workspace view"
+      />
+      <section hidden={view !== "Decision plans"}>
+        <DecisionLifecyclePage />
+      </section>
+      <section hidden={view !== "Review overview"}>
+        <ReviewHub />
+      </section>
+      <section hidden={view !== "Execution review"}>
+        <PageIntro
+          eyebrow="Review"
+          title="Execution review"
+          body="Compare the paper fill with the plan and record what you learned."
+        />
+        <TradeReviewPanel />
+      </section>
+    </div>
   );
 }
 
@@ -66,58 +85,29 @@ function XrayPage() {
 }
 
 function TrustPage() {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   return (
     <div className="flex flex-col gap-5">
-      <TrustControlRoom />
       <DataSourcesPage />
+      <details
+        className="rounded-lg border border-border bg-panel/40"
+        onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
+          Detailed operational diagnostics
+        </summary>
+        {detailsOpen && (
+          <div className="border-t border-border p-4 sm:p-5">
+            <TrustControlRoom />
+          </div>
+        )}
+      </details>
     </div>
   );
 }
 
 function MorePage() {
-  const groups = WORKSPACE_AREAS.filter((area) => area !== "Home").map((area) => ({
-    area,
-    routes: SECONDARY_WORKSPACE_ROUTES.filter((route) => route.area === area),
-  }));
-
-  return (
-    <div className="flex flex-col gap-5">
-      <PageIntro
-        eyebrow="More"
-        title="Advanced workspace tools"
-        body="Keep the primary loop focused while every deeper route remains one click away."
-      />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {groups.map((group) => (
-          <Card key={group.area} className="h-full">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[14px] font-semibold">{group.area}</h2>
-              <p className="mt-1 text-[12px] text-subtle">Secondary routes</p>
-            </div>
-            <ul className="divide-y divide-border">
-              {group.routes.map((route) => (
-                <li key={route.section}>
-                  <Link
-                    to="/app/$section"
-                    params={{ section: route.section }}
-                    className="group flex items-center gap-3 px-5 py-3 text-[13px] transition-colors hover:bg-panel-elevated"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-foreground">{route.label}</span>
-                      {route.available === false && (
-                        <span className="mt-0.5 block text-[11px] text-warning">Unavailable</span>
-                      )}
-                    </span>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary-soft" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  return <WorkspaceToolsPage />;
 }
 
 const pageMeta: Record<string, { title: string; description: string }> = {

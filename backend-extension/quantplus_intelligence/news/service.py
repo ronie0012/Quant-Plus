@@ -3,17 +3,18 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import asdict
+from datetime import datetime
 
 from ..cache import cache
 from ..common import log, utcnow
 from ..config import config, MARKET_QUERIES
-from ..market_data import market_data
+from ..market_data import market_data, quote_valid
 from .provider import ProviderResult
 from .google_news import GoogleNewsProvider
 from .resolver import Company, resolve
 from .deduplicator import deduplicate
 from .relevance import language, relevance
-from .sentiment import analyze
+from .sentiment import analyze, category as event_category
 from .impact import impact
 from .events import extract_event
 from .aggregation import aggregate
@@ -95,7 +96,12 @@ class NewsService:
             article = {**article, "symbol": company.symbol, "company": company.company}
             article["language"] = language(f"{article['title']} {article.get('snippet', '')}")
             article["relevance_score"] = relevance(article, company)
-            article.update(analyze(article, company))
+            if article["language"] == "en":
+                article.update(analyze(article, company))
+            else:
+                article.update(sentiment="unavailable", sentiment_score=None, confidence=0,
+                               category=event_category(article["title"]), sentiment_method="unsupported_script_not_scored",
+                               analysis_reasons=["Headline language is unsupported by the English rules"])
             article.update(impact(article))
             article["event"] = extract_event(article, company) if company.symbol != "MARKET" else None
             # The article score is headline tone from transparent rules; it is not an
@@ -136,26 +142,33 @@ class NewsService:
         news, snapshot = await asyncio.gather(self.stock_news(symbol), self.data.stock(resolve(symbol).symbol))
         quote = snapshot["quote"]
         articles = [{**a, **impact(a, quote)} for a in news["articles"]]
-        result = aggregate(articles, news["symbol"], quote)
+        session = snapshot["market_session"]
+        confirmation_quote = None
+        if session == "closed":
+            confirmation_status = "unavailable_market_closed"
+        elif session != "open":
+            confirmation_status = "unavailable_market_session"
+        elif quote_valid(quote, session):
+            # ISO strings with different offsets do not sort by observation
+            # time. Compare aware instants before asserting price confirmation.
+            try:
+                observed = datetime.fromisoformat(quote["as_of"])
+                newer_news = any(datetime.fromisoformat(a["published_at"]) > observed
+                                 for a in articles if a["influences_sentiment"])
+                confirmation_status = "unavailable_news_newer_than_price" if newer_news else "daily_direction_proxy"
+                if not newer_news:
+                    confirmation_quote = quote
+            except (KeyError, TypeError, ValueError):
+                confirmation_status = "unavailable_timestamps"
+        else:
+            confirmation_status = "unavailable"
+        result = aggregate(articles, news["symbol"], confirmation_quote)
         result.update(provider_status=news["provider_status"], news_updated_at=news["updated_at"],
-                      market_data_status=snapshot["data_quality"], price_as_of=quote.get("as_of") if quote else None)
+                      market_data_status=snapshot["data_quality"], market_session=session,
+                      price_as_of=quote.get("as_of") if quote else None,
+                      price_confirmation_status=confirmation_status)
         if news["data_quality"] == "DEGRADED":
             result["data_quality"] = "DEGRADED"
-        if snapshot["market_session"] == "closed":
-            result["price_confirmation"] = None
-            result["news_price_divergence"] = False
-            result["price_confirmation_status"] = "unavailable_market_closed"
-        elif quote:
-            # Price movement only confirms news published before this observation.
-            dated = [a for a in articles if a["influences_sentiment"] and a["published_at"] <= quote["as_of"]]
-            if len(dated) != sum(a["influences_sentiment"] for a in articles):
-                result["price_confirmation"] = None
-                result["news_price_divergence"] = False
-                result["price_confirmation_status"] = "unavailable_news_newer_than_price"
-            else:
-                result["price_confirmation_status"] = "daily_direction_proxy"
-        else:
-            result["price_confirmation_status"] = "unavailable"
         return result
 
 

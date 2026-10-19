@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ArrowUp, Sparkles, Square, X } from "lucide-react";
 import { useCopilot } from "@/hooks/use-copilot";
@@ -24,6 +24,12 @@ export function QuantAIDock() {
   const { messages, busy, error } = copilot;
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const launcher = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const close = () => {
+    setOpen(false);
+    requestAnimationFrame(() => launcher.current?.focus());
+  };
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -41,7 +47,15 @@ export function QuantAIDock() {
   }
 
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-40 flex w-[calc(100vw-2rem)] max-w-[420px] flex-col items-end gap-3 sm:right-6 sm:bottom-6">
+    <div
+      className="pointer-events-none fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex w-[calc(100vw-2rem)] max-w-[420px] flex-col items-end gap-3 sm:right-6 sm:bottom-6"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          close();
+        }
+      }}
+    >
       {/* conversation panel expands upward */}
       <div
         className={cn(
@@ -52,6 +66,9 @@ export function QuantAIDock() {
         )}
         aria-hidden={!open}
         inert={!open}
+        id={panelId}
+        role="region"
+        aria-label="Quant AI assistant"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
@@ -60,9 +77,9 @@ export function QuantAIDock() {
           </span>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={close}
             aria-label="Close Quant AI"
-            className="text-subtle transition-colors hover:text-foreground"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -105,7 +122,10 @@ export function QuantAIDock() {
             <button
               key={s}
               type="button"
-              onClick={() => void send(s)}
+              onClick={() => {
+                setInput(s);
+                inputRef.current?.focus();
+              }}
               disabled={busy}
               className="rounded-full border border-border px-3 py-1.5 text-[11px] text-subtle transition-colors hover:border-primary/50 hover:text-primary-soft"
             >
@@ -118,9 +138,12 @@ export function QuantAIDock() {
       {/* closed: a small launcher, so the dock never covers page content */}
       {!open && (
         <button
+          ref={launcher}
           type="button"
           onClick={() => setOpen(true)}
-          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full border border-border-strong bg-panel-elevated px-4 text-[13px] font-medium text-foreground shadow-[0_12px_32px_-16px_rgba(0,0,0,0.9)] transition-colors hover:border-primary/60"
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="pointer-events-auto flex min-h-11 items-center gap-2 rounded-full border border-border-strong bg-panel-elevated px-4 text-[13px] font-medium text-foreground shadow-[0_12px_32px_-16px_rgba(0,0,0,0.9)] transition-colors hover:border-primary/60"
         >
           <Sparkles className="h-4 w-4 text-primary-soft" aria-hidden="true" />
           Ask Quant AI

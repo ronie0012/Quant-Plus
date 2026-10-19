@@ -1,38 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { WORKSPACE_ROUTES } from "../../src/components/app/workspace-routes";
 
 // Every app section plus the dashboard, a stock page and the public pages.
-const SECTIONS = [
-  "markets",
-  "portfolio",
-  "watchlist",
-  "orders",
-  "wallet",
-  "risk",
-  "alerts",
-  "journal",
-  "replay",
-  "screener",
-  "options",
-  "basket",
-  "xray",
-  "research",
-  "decisions",
-  "history",
-  "quant-ai",
-  "committee",
-  "agent-activity",
-  "settings",
-  "data-sources",
-  "help",
-  "more",
-  "review",
-  "ripple",
-  "learn",
-  "investor-dna",
-  "be-the-company",
-  "tutor",
-];
+const SECTIONS = WORKSPACE_ROUTES.filter((route) => route.section !== "dashboard").map(
+  (route) => route.section,
+);
 const ROUTES = [
   "/",
   "/markets",
@@ -143,6 +116,7 @@ test("settings persist through the server and survive reload", async ({ page }) 
 test("unavailable providers produce honest states, not invented prices", async ({ page }) => {
   const errors = await watchErrors(page);
   await page.goto("/app/stocks/RELIANCE");
+  await page.locator("summary").filter({ hasText: "Paper order ticket" }).click();
   // With the market-data service unreachable no price can be shown or traded.
   await expect(page.getByRole("button", { name: /Paper trade · buy/ })).toBeDisabled();
   await expect(
@@ -168,11 +142,9 @@ test("primary navigation exposes the five-area information architecture", async 
   ]);
   await expect(nav.getByText("Options", { exact: true })).toHaveCount(0);
   await page.goto("/app/review");
-  await expect(
-    page.getByRole("heading", { name: "Turn outcomes into better decisions." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Decision journal", exact: true })).toBeVisible();
   await page.goto("/app/more");
-  await expect(page.getByRole("heading", { name: "Advanced workspace tools" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Workspace tools", exact: true })).toBeVisible();
 });
 
 test("paper API refuses execution without an eligible quote and keeps the book reconciled", async ({

@@ -1,17 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Capabilities } from "@/components/site/Capabilities";
 import { DashboardReveal } from "@/components/site/DashboardReveal";
-import { PortfolioIntelligence } from "@/components/site/PortfolioIntelligence";
-import { RiskEngine } from "@/components/site/RiskEngine";
 import { Coverage } from "@/components/site/Coverage";
-import { ProductShowcase } from "@/components/site/ProductShowcase";
+import { ProcessStory } from "@/components/site/ProcessStory";
 import { CallToAction } from "@/components/site/CallToAction";
 import { PageHeader } from "@/components/site/PageHeader";
 
 const title = "Platform — Quant Plus";
 const description =
-  "One workspace for market data, quantitative signals, AI research, portfolio intelligence and risk — built for clarity over noise.";
+  "A personal Indian-equity workspace for learning, research and paper trading. Explore how market context, a paper portfolio and risk controls fit together.";
 
 export const Route = createFileRoute("/platform")({
   head: () => ({
@@ -32,16 +29,14 @@ function PlatformPage() {
     <>
       <PageHeader
         eyebrow="Platform"
-        heading="One workspace for the whole market."
-        body="Data, signals, research, portfolio and risk in a single interface — designed so the important thing is always the most visible thing."
-        meta={["6 modules", "Web · Responsive", "No sample data"]}
+        heading="A workspace for better market habits."
+        body="Move from learning to research to paper practice. Keep your market context, virtual portfolio and risk limits together, without losing sight of the next useful step."
+        action={{ label: "Open paper terminal", to: "/app/dashboard" }}
+        secondary={{ label: "Start learning", to: "/app/learn" }}
       />
-      <Capabilities />
       <DashboardReveal />
-      <PortfolioIntelligence />
-      <RiskEngine />
+      <ProcessStory />
       <Coverage />
-      <ProductShowcase />
       <CallToAction />
     </>
   );

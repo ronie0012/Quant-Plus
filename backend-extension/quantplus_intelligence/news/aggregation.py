@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
-from ..common import label, utcnow
+from ..common import label, number, utcnow
 from ..config import config, RULES
 
 
@@ -14,7 +14,9 @@ def article_weight(article, now=None):
 
 def aggregate(articles, symbol, quote=None, now=None, market=False):
     now = now or utcnow()
-    relevant = [a for a in articles if a["relevance_score"] >= config.relevance_threshold]
+    relevant = [a for a in articles if a["relevance_score"] >= config.relevance_threshold
+                and a.get("influences_sentiment", True) and a.get("language", "en") == "en"
+                and number(a.get("sentiment_score")) is not None and (number(a.get("confidence")) or 0) > 0]
     weights = [article_weight(a, now) for a in relevant]
     if market and weights:
         # Winsorise article weights to cap dominance from one story in a market feed.

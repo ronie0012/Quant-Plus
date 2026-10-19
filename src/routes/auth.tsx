@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Loader2, Lock, Mail, ShieldCheck, User } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck, User } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import {
   hostedAuthConfig,
@@ -10,9 +10,14 @@ import {
 } from "@/lib/workspace-session";
 import { cn } from "@/lib/utils";
 import { EmailVerificationForm } from "@/components/app/EmailVerificationForm";
+import { safeWorkspaceReturn } from "@/lib/workspace-return";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
+    typeof search["redirect"] === "string"
+      ? { redirect: safeWorkspaceReturn(search["redirect"]) }
+      : {},
   head: () => ({
     meta: [
       { title: "Sign in — Quant Plus" },
@@ -65,6 +70,7 @@ const proofPoints = [
 
 function AuthPage() {
   const navigate = useNavigate();
+  const redirect = safeWorkspaceReturn(Route.useSearch().redirect);
   const { session, loading: sessionLoading } = useSession();
   const pendingVerification = readPendingVerification();
   const [mode, setMode] = useState<Mode>("signin");
@@ -80,8 +86,8 @@ function AuthPage() {
   const [verificationMessage, setVerificationMessage] = useState("");
 
   useEffect(() => {
-    if (session) void navigate({ to: "/app/dashboard", replace: true });
-  }, [session, navigate]);
+    if (session) void navigate({ to: redirect, replace: true });
+  }, [session, navigate, redirect]);
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -110,11 +116,11 @@ function AuthPage() {
             /* verification remains available without persistence */
           }
         } else {
-          void navigate({ to: "/app/dashboard", replace: true });
+          void navigate({ to: redirect, replace: true });
         }
       } else {
         await signInHosted(email, password);
-        void navigate({ to: "/app/dashboard", replace: true });
+        void navigate({ to: redirect, replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -154,10 +160,10 @@ function AuthPage() {
             <span className="h-px w-8 bg-border-strong" aria-hidden="true" />
             The terminal
           </p>
-          <h1 className="mt-7 text-[clamp(2.2rem,3.4vw,3.2rem)] leading-[1.02] tracking-[-0.03em]">
+          <p className="mt-7 text-[clamp(2.2rem,3.4vw,3.2rem)] leading-[1.02] tracking-[-0.03em]">
             Your money and the market,
             <span className="block text-muted-foreground">on one screen.</span>
-          </h1>
+          </p>
           <ul className="mt-9 space-y-3">
             {proofPoints.map((p) => (
               <li key={p} className="flex items-start gap-3 text-sm text-muted-foreground">
@@ -175,7 +181,11 @@ function AuthPage() {
       </aside>
 
       {/* form column */}
-      <main className="relative flex min-h-screen items-center justify-center px-5 py-16 sm:px-10">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="relative flex min-h-dvh items-center justify-center px-5 py-16 outline-none sm:px-10"
+      >
         <div className="w-full max-w-[420px]">
           <Link to="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
             <span className="h-4 w-4 border border-primary/70" aria-hidden="true" />
@@ -189,6 +199,7 @@ function AuthPage() {
               <button
                 key={m}
                 type="button"
+                disabled={busy !== null}
                 onClick={() => {
                   setMode(m);
                   setError(null);
@@ -214,9 +225,9 @@ function AuthPage() {
             ))}
           </div>
 
-          <h2 className="mt-9 text-2xl tracking-tight">
+          <h1 className="mt-9 text-2xl tracking-tight">
             {mode === "signin" ? "Welcome back." : "Open your terminal."}
-          </h2>
+          </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {mode === "signin"
               ? "Sign in to view your portfolio and the market overview."
@@ -254,67 +265,69 @@ function AuthPage() {
             </div>
           ) : (
             <>
-              <form onSubmit={handleEmail} className="mt-8 space-y-3">
-                {verificationMessage && (
-                  <p role="status" className="text-sm text-positive">
-                    {verificationMessage}
-                  </p>
-                )}
-                {mode === "signup" && (
-                  <Field
-                    icon={<User className="h-3.5 w-3.5" />}
-                    label="Name"
-                    value={name}
-                    onChange={setName}
-                    type="text"
-                    placeholder="Ronit Ashani"
-                    autoComplete="name"
-                  />
-                )}
-                <Field
-                  icon={<Mail className="h-3.5 w-3.5" />}
-                  label="Email"
-                  value={email}
-                  onChange={setEmail}
-                  type="email"
-                  placeholder="you@firm.com"
-                  autoComplete="email"
-                  required
-                />
-                <Field
-                  icon={<Lock className="h-3.5 w-3.5" />}
-                  label="Password"
-                  value={password}
-                  onChange={setPassword}
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                  required
-                />
-
-                {error && (
-                  <p
-                    role="alert"
-                    className="border border-negative/40 bg-negative/5 px-3 py-2.5 text-xs text-negative"
-                  >
-                    {error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={busy !== null || sessionLoading}
-                  className="group mt-2 flex w-full items-center justify-center gap-2.5 border border-primary/60 bg-primary px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-primary-foreground transition-all duration-500 hover:border-primary-soft hover:bg-primary-soft disabled:opacity-60"
-                >
-                  {busy === "email" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      {mode === "signin" ? "Enter terminal" : "Create account"}
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
-                    </>
+              <form onSubmit={handleEmail} className="mt-8" aria-busy={busy !== null}>
+                <fieldset disabled={busy !== null} className="space-y-3">
+                  {verificationMessage && (
+                    <p role="status" className="text-sm text-positive">
+                      {verificationMessage}
+                    </p>
                   )}
-                </button>
+                  {mode === "signup" && (
+                    <Field
+                      icon={<User className="h-3.5 w-3.5" />}
+                      label="Name"
+                      value={name}
+                      onChange={setName}
+                      type="text"
+                      placeholder="Your name"
+                      autoComplete="name"
+                    />
+                  )}
+                  <Field
+                    icon={<Mail className="h-3.5 w-3.5" />}
+                    label="Email"
+                    value={email}
+                    onChange={setEmail}
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                  <Field
+                    icon={<Lock className="h-3.5 w-3.5" />}
+                    label="Password"
+                    value={password}
+                    onChange={setPassword}
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                    required
+                  />
+
+                  {error && (
+                    <p
+                      role="alert"
+                      className="border border-negative/40 bg-negative/5 px-3 py-2.5 text-xs text-negative"
+                    >
+                      {error}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={busy !== null || sessionLoading}
+                    className="group mt-2 flex w-full items-center justify-center gap-2.5 border border-primary/60 bg-primary px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-primary-foreground transition-all duration-500 hover:border-primary-soft hover:bg-primary-soft disabled:opacity-60"
+                  >
+                    {busy === "email" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        {mode === "signin" ? "Enter terminal" : "Create account"}
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
+                      </>
+                    )}
+                  </button>
+                </fieldset>
               </form>
             </>
           )}
@@ -347,6 +360,7 @@ function Field({
   autoComplete?: string;
   required?: boolean;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
   return (
     <label className="block">
       <span className="label-tech">{label}</span>
@@ -355,12 +369,27 @@ function Field({
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          type={type}
+          type={type === "password" && showPassword ? "text" : type}
           placeholder={placeholder}
           autoComplete={autoComplete}
           required={required}
           className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-subtle"
         />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-subtle hover:text-foreground"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+        )}
       </span>
     </label>
   );

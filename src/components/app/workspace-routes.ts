@@ -1,4 +1,4 @@
-/** The only destinations promoted to the persistent sidebar. */
+/** Lifecycle areas; Learn has a dedicated secondary entry instead of a sixth primary item. */
 export const WORKSPACE_AREAS = [
   "Home",
   "Learn",
@@ -362,6 +362,16 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
 
 export const PRIMARY_WORKSPACE_ROUTES = WORKSPACE_ROUTES.filter((route) => route.primary);
 export const SECONDARY_WORKSPACE_ROUTES = WORKSPACE_ROUTES.filter((route) => !route.primary);
+
+/** Small, contextual toolsets. The full catalog stays in More and search. */
+export const AREA_NAVIGATION: Record<WorkspaceArea, readonly string[]> = {
+  Home: ["dashboard", "learn"],
+  Learn: ["learn", "investor-dna", "be-the-company", "tutor"],
+  Discover: ["markets", "watchlist", "screener", "ripple", "events", "research"],
+  Portfolio: ["portfolio", "orders", "wallet", "risk", "alerts"],
+  Review: ["journal", "history", "behavior", "replay", "track-record"],
+  More: ["more", "settings", "data-sources", "help"],
+};
 
 export function resolveWorkspaceRoute(section: string | undefined) {
   if (!section) return undefined;

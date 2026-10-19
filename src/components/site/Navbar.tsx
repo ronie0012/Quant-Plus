@@ -1,224 +1,189 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
-import { useDocumentProgress } from "@/hooks/use-live";
-import { cn } from "@/lib/utils";
+import { PrimaryAction } from "./primitives";
 
 const links = [
+  { label: "Platform", to: "/platform" },
   { label: "Markets", to: "/markets" },
   { label: "Research", to: "/research" },
-  { label: "AI", to: "/ai" },
-  { label: "Platform", to: "/platform" },
+  { label: "AI Analyst", to: "/ai" },
 ] as const;
 
+const navLink =
+  "inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-soft [&[aria-current=page]]:text-primary-soft [&[aria-current=page]]:underline [&[aria-current=page]]:underline-offset-8";
+
 export function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
-  const [hasFocus, setHasFocus] = useState(false);
-  const progress = useDocumentProgress();
-  const toggle = useRef<HTMLButtonElement>(null);
-  const menu = useRef<HTMLDivElement>(null);
-  const wasOpen = useRef(false);
+  const [ready, setReady] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const destination = useRef<string | null>(null);
 
   useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 24);
-      // Hide while reading downwards, return as soon as the reader scrolls up.
-      if (Math.abs(y - last) > 6) setHidden(y > last && y > 240);
-      last = y;
+    setReady(true);
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setOpen(false);
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    const main = document.getElementById("main-content");
-    const footer = document.querySelector<HTMLElement>("footer");
-    if (menu.current) menu.current.inert = !open;
-    if (open) {
-      main?.setAttribute("inert", "");
-      footer?.setAttribute("inert", "");
-      menu.current?.querySelector<HTMLElement>("a")?.focus();
-    } else {
-      main?.removeAttribute("inert");
-      footer?.removeAttribute("inert");
-      if (wasOpen.current) toggle.current?.focus();
-    }
-    wasOpen.current = open;
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-      if (event.key !== "Tab") return;
-      const focusable = Array.from(
-        menu.current?.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ) ?? [],
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      main?.removeAttribute("inert");
-      footer?.removeAttribute("inert");
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const follow = (to: string) => {
+    destination.current = to === pathname ? null : to;
+    setOpen(false);
+  };
 
   return (
-    <>
-      <header
-        className={cn(
-          "vt-site-nav fixed inset-x-0 top-0 z-50 transition-all duration-500 [transition-timing-function:var(--ease-out-expo)]",
-          hidden && !open && !hasFocus ? "-translate-y-full" : "translate-y-0",
-          scrolled
-            ? "border-b border-border bg-background/72 backdrop-blur-xl"
-            : "border-b border-transparent bg-transparent",
-        )}
-        onFocus={() => setHasFocus(true)}
-        onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false);
-        }}
-      >
-        <nav
-          aria-label="Primary"
-          className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-12"
+    <header className="vt-site-nav fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
+      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
+        <Link
+          to="/"
+          aria-label="Quant Plus home"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2.5"
         >
-          <Link to="/" className="group flex items-center gap-2.5" onClick={() => setOpen(false)}>
-            <span className="relative flex h-4 w-4 items-center justify-center">
-              <span className="absolute inset-0 border border-primary/70" aria-hidden="true" />
-              <span className="h-1 w-1 bg-primary transition-transform duration-500 group-hover:scale-150" />
-            </span>
-            <span className="font-mono text-[13px] tracking-[0.2em] uppercase">
-              Quant<span className="text-primary-soft">+</span>
-            </span>
-          </Link>
-
-          <ul className="hidden items-center gap-9 md:flex">
-            {links.map((link) => (
-              <li key={link.to}>
-                <Link
-                  to={link.to}
-                  className="group relative font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground transition-colors duration-300 hover:text-foreground"
-                  activeProps={{ className: "text-foreground" }}
-                >
-                  {link.label}
-                  <span
-                    aria-hidden="true"
-                    className="absolute -bottom-1.5 left-0 h-px w-0 bg-primary transition-all duration-500 group-hover:w-full"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <div className="hidden items-center gap-6 md:flex">
-            <Link
-              to="/auth"
-              className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground transition-colors duration-300 hover:text-foreground"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/auth"
-              className="group flex items-center gap-2 border border-border-strong px-4 py-2 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors duration-500 hover:border-primary hover:text-primary-soft"
-            >
-              Get Started
-              <span
-                aria-hidden="true"
-                className="h-px w-4 bg-border-strong transition-all duration-500 group-hover:w-6 group-hover:bg-primary"
-              />
-            </Link>
-          </div>
-
-          <button
-            ref={toggle}
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            aria-controls="mobile-menu"
-            className="flex h-11 w-11 items-center justify-center border border-border-strong text-muted-foreground transition-colors hover:text-foreground md:hidden"
+          <span
+            aria-hidden="true"
+            className="grid h-4 w-4 place-items-center border border-primary-soft"
           >
-            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </button>
+            <span className="h-1 w-1 bg-primary-soft" />
+          </span>
+          <span className="font-mono text-sm tracking-[0.18em] uppercase">
+            Quant<span className="text-primary-soft">+</span>
+          </span>
+        </Link>
+
+        <nav aria-label="Primary" className="hidden items-center gap-7 lg:flex">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              aria-current={pathname === link.to ? "page" : undefined}
+              className={navLink}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            to="/app/$section"
+            params={{ section: "learn" }}
+            preload={false}
+            className={navLink}
+          >
+            Learn
+          </Link>
         </nav>
 
-        <div
-          aria-hidden="true"
-          className={cn(
-            "absolute inset-x-0 bottom-0 h-px origin-left bg-primary transition-opacity duration-500",
-            scrolled ? "opacity-100" : "opacity-0",
-          )}
-          style={{ transform: `scaleX(${progress})` }}
-        />
-      </header>
-      <div
-        id="mobile-menu"
-        ref={menu}
-        aria-hidden={!open}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Mobile navigation"
-        className={cn(
-          "fixed inset-x-0 top-14 bottom-0 z-[45] border-t border-border bg-background/97 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl transition-all duration-500 md:hidden",
-          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
-        <div className="flex h-full flex-col justify-between px-5 py-10">
-          <ul className="flex flex-col">
-            {links.map((link, i) => (
-              <li
-                key={link.to}
-                className={cn(
-                  "border-b border-border transition-all duration-700 [transition-timing-function:var(--ease-out-expo)]",
-                  open ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
-                )}
-                style={{ transitionDelay: open ? `${80 + i * 70}ms` : "0ms" }}
+        <div className="hidden lg:block">
+          <PrimaryAction to="/app/dashboard">Open paper terminal</PrimaryAction>
+        </div>
+
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Trigger asChild>
+            <button
+              type="button"
+              aria-label="Open menu"
+              disabled={!ready}
+              className="grid h-11 w-11 place-items-center border border-border-strong text-foreground lg:hidden"
+            >
+              <Menu aria-hidden="true" className="h-5 w-5" />
+            </button>
+          </Dialog.Trigger>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 z-[60] bg-background/80" />
+            <Dialog.Content
+              aria-describedby="mobile-nav-description"
+              className="fixed inset-y-0 right-0 z-[61] flex w-full max-w-sm flex-col overflow-y-auto border-l border-border bg-background px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:px-8"
+              onCloseAutoFocus={(event) => {
+                if (window.matchMedia("(min-width: 1024px)").matches) {
+                  event.preventDefault();
+                  const current = document.querySelector<HTMLElement>(
+                    'nav[aria-label="Primary"] [aria-current="page"]',
+                  );
+                  (current ?? document.getElementById("main-content"))?.focus({
+                    preventScroll: true,
+                  });
+                  destination.current = null;
+                  return;
+                }
+                if (!destination.current) return;
+                // Let route focus management lead on navigation; Escape returns to the trigger.
+                event.preventDefault();
+                destination.current = null;
+                document.getElementById("main-content")?.focus({ preventScroll: true });
+              }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <Dialog.Title className="font-mono text-sm tracking-[0.14em] uppercase">
+                  Explore Quant Plus
+                </Dialog.Title>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    aria-label="Close menu"
+                    className="grid h-11 w-11 shrink-0 place-items-center border border-border-strong"
+                  >
+                    <X aria-hidden="true" className="h-5 w-5" />
+                  </button>
+                </Dialog.Close>
+              </div>
+              <Dialog.Description
+                id="mobile-nav-description"
+                className="mt-5 text-sm leading-relaxed text-muted-foreground"
+              >
+                Research Indian equities, learn the process, and practise with virtual funds.
+              </Dialog.Description>
+              <nav
+                aria-label="Mobile primary"
+                className="my-6 flex flex-col divide-y divide-border border-y border-border"
               >
                 <Link
-                  to={link.to}
-                  onClick={() => setOpen(false)}
-                  className="flex items-baseline justify-between py-5 text-3xl tracking-tight"
+                  to="/"
+                  onClick={() => follow("/")}
+                  aria-current={pathname === "/" ? "page" : undefined}
+                  className={`${navLink} py-3`}
                 >
-                  {link.label}
-                  <span className="label-tech">{String(i + 1).padStart(2, "0")}</span>
+                  Home
                 </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-col gap-3">
-            <Link
-              to="/auth"
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-center border border-primary bg-primary px-6 py-4 font-mono text-[11px] tracking-[0.2em] uppercase text-primary-foreground"
-            >
-              Get Started
-            </Link>
-            <Link
-              to="/auth"
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-center border border-border-strong px-6 py-4 font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground"
-            >
-              Log in
-            </Link>
-          </div>
-        </div>
+                {links.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => follow(link.to)}
+                    aria-current={pathname === link.to ? "page" : undefined}
+                    className={`${navLink} py-3`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Link
+                  to="/app/$section"
+                  params={{ section: "learn" }}
+                  preload={false}
+                  onClick={() => follow("/app/learn")}
+                  className={`${navLink} py-3`}
+                >
+                  Learn
+                </Link>
+              </nav>
+              <div className="mt-auto space-y-3">
+                <Link
+                  to="/app/dashboard"
+                  preload={false}
+                  onClick={() => follow("/app/dashboard")}
+                  className="flex min-h-12 items-center justify-center border border-primary-soft bg-primary-soft px-4 py-3 text-sm font-medium text-background hover:bg-foreground"
+                >
+                  Open paper terminal
+                </Link>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Paper trading only · No real broker orders
+                </p>
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       </div>
-    </>
+    </header>
   );
 }

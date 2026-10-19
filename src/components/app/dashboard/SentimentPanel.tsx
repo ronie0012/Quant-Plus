@@ -2,6 +2,7 @@ import { Card, CardHead, EmptyState, Skeleton, SourceTag } from "@/components/ap
 import { relativeTime, useSentiment } from "@/hooks/use-dashboard-data";
 import { useMarketSentimentHistory } from "@/hooks/use-intelligence";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 
 function historyPath(values: Array<{ score: number | null }>) {
   const usable = values.filter((item) => item.score !== null);
@@ -32,7 +33,7 @@ function readValue(score: number | null): {
 }
 
 export function SentimentPanel() {
-  const { data, isLoading, isError, refetch } = useSentiment();
+  const { data, isLoading, isError, isFetching, refetch } = useSentiment();
   const history = useMarketSentimentHistory("1h");
 
   if (isLoading) {
@@ -45,14 +46,44 @@ export function SentimentPanel() {
     );
   }
 
-  if (isError || !data) {
+  if (!data || data.score === null) {
     return (
       <Card>
+        <CardHead
+          title="Market sentiment"
+          meta={data?.market_status ?? "Quantitative market data"}
+        />
         <EmptyState
-          title="No sentiment data"
-          hint="Sentiment source temporarily unavailable."
+          title="Market sentiment unavailable"
+          hint={
+            isError
+              ? "Could not reach market intelligence. Check the backend connection and retry."
+              : "Fresh quantitative market coverage is insufficient. News alone is not presented as a live market score."
+          }
           onRetry={() => void refetch()}
         />
+        {data && (
+          <div className="space-y-3 border-t border-border p-5 text-xs text-muted-foreground">
+            {data.components["news_sentiment"]?.score != null && (
+              <p>
+                News tone {Math.round(data.components["news_sentiment"].score)}/100 · not a
+                composite market score.
+              </p>
+            )}
+            <ul className="space-y-2" aria-label="Sentiment data warnings">
+              {data.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+            <Link
+              to="/app/$section"
+              params={{ section: "data-sources" }}
+              className="inline-block text-primary-soft hover:underline"
+            >
+              Check data sources and broker connection
+            </Link>
+          </div>
+        )}
       </Card>
     );
   }
@@ -83,8 +114,32 @@ export function SentimentPanel() {
       <CardHead
         title="Market sentiment"
         meta={`Overall market · updated ${relativeTime(data.updated_at)}`}
-        action={<SourceTag label={data.data_quality} />}
+        action={
+          <>
+            <SourceTag label={data.data_quality} />
+            <button
+              type="button"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+              aria-label="Refresh market sentiment"
+              className="rounded-md border border-border px-2 py-2 text-xs text-subtle hover:text-foreground disabled:opacity-50"
+            >
+              {isFetching ? "Updating" : "Refresh"}
+            </button>
+          </>
+        }
       />
+      {(isError || data.warnings.length > 0) && (
+        <div
+          role="status"
+          className="space-y-1 border-b border-border px-5 py-3 text-xs text-warning"
+        >
+          {isError && <p>Refresh failed · showing the previous analysis.</p>}
+          {data.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-col items-center px-5 pt-7">
         <div className="relative w-full max-w-[260px]">

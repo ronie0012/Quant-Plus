@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 import time
 from datetime import datetime, timezone
 
@@ -16,7 +17,7 @@ from .cache import cache
 from .common import clamp, label, log, number, utcnow
 from .config import config, RULES
 from .history import SentimentSnapshot, downsample, history_repository as default_history_repository, range_start
-from .market_data import market_data, MarketSnapshotCollector, IST, market_status
+from .market_data import market_data, MarketSnapshotCollector, IST, market_status, INDEX_CANDLE_METHOD
 from .news.aggregation import aggregate
 from .news.service import news_service
 from .volume import analyze_volume
@@ -109,7 +110,10 @@ def breadth(quotes, universe_count, previous=None):
     breadth_change = pct_advancing - previous.get("pct_advancing") if previous and pct_advancing is not None and previous.get("pct_advancing") is not None else None
     breadth_trend = "IMPROVING" if breadth_change is not None and breadth_change >= RULES["trend_change_threshold"] else \
         "DETERIORATING" if breadth_change is not None and breadth_change <= -RULES["trend_change_threshold"] else "STABLE"
+    reason = ("Official NIFTY membership is unavailable" if not universe_count else
+              f"Fresh directional quotes {len(usable)}/{universe_count}; at least {math.ceil(universe_count * RULES['min_breadth_coverage'])} required")
     return {"score": score, "confidence": coverage * .9 if score is not None else 0,
+            **({"reason": reason} if score is None else {}),
             "advancing": advancing, "declining": declining, "unchanged": unchanged,
             "advance_decline_ratio": advancing / declining if declining else None,
             "coverage": coverage, "observed": len(usable), "universe_size": universe_count,
@@ -333,8 +337,8 @@ class MarketEngine:
                 momentum_score = momentum(q)
                 score = momentum_score
                 sector_symbols = [symbol for symbol, industry in (membership.get("industries") or {}).items()
-                                  if sector_for_industry(industry) == name and symbol in quotes]
-                sector_quotes = {symbol: quotes[symbol] for symbol in sector_symbols}
+                                   if sector_for_industry(industry) == name]
+                sector_quotes = {symbol: quotes[symbol] for symbol in sector_symbols if symbol in quotes}
                 sector_breadth = breadth(sector_quotes, len(sector_symbols))["score"] if len(sector_symbols) >= 3 else None
                 sector_articles = [article for article in news.get("articles", []) if name in article.get("affected_sectors", [])]
                 sector_news_result = aggregate(sector_articles, name, market=True) if sector_articles else {"score": None, "confidence": 0}
@@ -350,6 +354,9 @@ class MarketEngine:
                     "volume_confirmation": None, "change_1h": None, "trend": "STABLE",
                     "updated_at": utcnow().isoformat()}
                 sectors[name]["news"] = sector_news
+                if q and q.get("observation_method") == INDEX_CANDLE_METHOD:
+                    sectors[name].update(data_quality="PARTIAL", confidence=min(sectors[name]["confidence"], .55),
+                                         observation_method=INDEX_CANDLE_METHOD, observation_source="fyers_history")
             await self._sector_trends(sectors)
             available_sectors = [s for s in sectors.values() if s["score"] is not None]
             sector_score = None
@@ -361,7 +368,12 @@ class MarketEngine:
                 "observed": len(available_sectors), "total": 8, "bullish": sum(s["score"] >= 60 for s in available_sectors),
                 "neutral": sum(41 <= s["score"] <= 59 for s in available_sectors), "bearish": sum(s["score"] <= 40 for s in available_sectors),
                 "method": "50% sector participation; 50% mean sector momentum"}
+            if sector_score is None:
+                components["sector_breadth"]["reason"] = f"Fresh sector indices {len(available_sectors)}/8; at least {RULES['min_sector_count']} required"
             components["india_vix"] = vix_sentiment(indices.get("VIX"), vix_history)
+            if components["india_vix"]["score"] is None:
+                diagnostic = snapshot.get("diagnostics", {}).get("indices", {}).get("VIX", {})
+                components["india_vix"]["reason"] = diagnostic.get("reason") or "No fresh timestamped FYERS VIX observation with a previous-close reference"
             news_result = aggregate(news.get("articles", []), "MARKET", market=True)
             count = news.get("counts", {}).get("relevant", 0)
             components["news_sentiment"] = {"score": news_result["score"] if count >= RULES["min_market_news_articles"] else None,
@@ -369,10 +381,30 @@ class MarketEngine:
                 "as_of": news.get("updated_at"), "method": news_result["methodology"],
                 **({"reason": "Fewer than three independent relevant headlines"} if count < RULES["min_market_news_articles"] else {})}
             components["volume_momentum"] = await self.volume(quotes, session, snapshot.get("history_by_symbol", {}), snapshot.get("intraday_by_symbol", {}))
+            if components["volume_momentum"]["score"] is None:
+                volume = components["volume_momentum"]
+                progress = snapshot.get("diagnostics", {}).get("baselines", {})
+                volume["reason"] = (f"Usable quote + volume baseline pairs {volume.get('sample_size', 0)}/{volume.get('required_samples', RULES['min_volume_samples'])} required; "
+                                    f"baseline warmup {progress.get('usable_samples', 0)}/{progress.get('requested', len(membership.get('symbols', [])))} stocks ready")
             bank = indices.get("BANK")
             components["bank_nifty"] = {"score": momentum(bank), "confidence": .75 if bank else 0,
                                        "change_pct": bank.get("change_pct") if bank else None,
                                        "as_of": bank.get("as_of") if bank else None, "method": "Bank Nifty daily change and price versus open"}
+
+            fallback_indices = []
+            for name, key in (("NIFTY", "nifty_momentum"), ("BANK", "bank_nifty"), ("VIX", "india_vix")):
+                quote = indices.get(name)
+                if not quote:
+                    continue
+                component = components[key]
+                component.update({field: quote[field] for field in (
+                    "source", "observation_method", "observation_source", "as_of", "bar_start", "bar_end",
+                    "interval_seconds", "previous_close_source", "previous_close_as_of") if field in quote})
+                if quote.get("observation_method") == INDEX_CANDLE_METHOD:
+                    fallback_indices.append(name)
+                    component.update(confidence=min(component["confidence"], .55), data_quality="PARTIAL")
+                    if name != "VIX":
+                        component["method"] = "completed FYERS 1m close versus same-day REST previous close; no session-open proxy"
 
             result = weighted_calculation(components)
             result["signal_alignment"] = signal_alignment(components)
@@ -385,6 +417,8 @@ class MarketEngine:
                 result["divergences"] = detect_divergences(components, sectors)
                 result["regime"], regime_drivers = classify_regime(result)
             quality_score, coverage = data_quality_score(components, session, news)
+            if fallback_indices or any(not component["available"] for component in components.values()):
+                quality_score = min(84, quality_score)
             result["data_quality_score"] = quality_score
             result["coverage"] = coverage
             result["data_quality"] = "GOOD" if quality_score >= 85 else "PARTIAL" if quality_score >= 60 else "DEGRADED"
@@ -395,8 +429,17 @@ class MarketEngine:
                 warnings.append("FYERS market session unavailable; quote freshness cannot be fully verified")
             if session == "closed":
                 warnings.append("Market closed: market signals refer to the last trading session; news may be newer")
-            if news.get("provider_status", {}).get("status") != "available":
+            if fallback_indices:
+                warnings.append(f"{', '.join(fallback_indices)} use completed FYERS 1-minute candles, not live ticks; "
+                                "daily direction uses same-day REST previous closes; confidence reduced")
+            news_status = news.get("provider_status", {}).get("status")
+            if news_status == "partial":
+                warnings.append("Market news provider coverage is partial")
+            elif news_status != "available":
                 warnings.append("Market news unavailable; score uses market data only")
+            feed = snapshot.get("diagnostics", {}).get("feed", {})
+            if session == "open" and feed.get("reason"):
+                warnings.append(f"Shared FYERS feed: {feed['reason']}")
             updated_at = utcnow().isoformat()
             result.update(regime_confidence=result["confidence"], warnings=warnings, sectors=sectors,
                           important_news=news_result["top_drivers"], market_session=session,
@@ -419,7 +462,7 @@ class MarketEngine:
             return result
         session = await self.data.session()
         ttl = config.closed_market_ttl_seconds if session == "closed" else config.market_ttl_seconds
-        return await self.cache.get_or_load("market-sentiment", ttl, load)
+        return await self.cache.get_or_load("market-sentiment:" + str(session), ttl, load)
 
     @staticmethod
     def _drivers(components):
@@ -485,9 +528,11 @@ class MarketEngine:
         return [snapshot.to_dict() for snapshot in downsample(snapshots, interval)]
 
     async def volume(self, quotes, session, collected_histories=None, collected_intraday=None):
+        if collected_histories is not None:
+            # This is a pure calculation on the shared snapshot. A second
+            # five-minute cache would hide newly warmed baselines and fresh ticks.
+            return analyze_volume(quotes, collected_histories, collected_intraday)
         async def load():
-            if collected_histories is not None:
-                return analyze_volume(quotes, collected_histories, collected_intraday)
             sample = sorted(quotes)[:RULES["min_volume_samples"]]
             async def get_history(symbol):
                 try:
@@ -502,7 +547,7 @@ class MarketEngine:
             histories = [collected_histories.get(s) for s in sample] if collected_histories is not None else await asyncio.gather(*(get_history(s) for s in sample))
             rows = [(symbol, quotes[symbol], history) for symbol, history in zip(sample, histories)]
             return volume_analysis(rows, quotes, session)
-        return await self.cache.get_or_load("volume-momentum", 300, load)
+        return await self.cache.get_or_load("volume-momentum:" + str(session), 300, load)
 
 
 market_engine = MarketEngine()

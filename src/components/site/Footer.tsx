@@ -1,86 +1,79 @@
 import { Link } from "@tanstack/react-router";
 
-const columns = [
-  {
-    title: "Platform",
-    links: [
-      { label: "Platform", to: "/platform" as const },
-      { label: "Markets", to: "/markets" as const },
-      { label: "Research", to: "/research" as const },
-      { label: "AI Analyst", to: "/ai" as const },
-    ],
-  },
-  {
-    title: "Access",
-    links: [
-      { label: "Home", to: "/" as const },
-      { label: "Get started", to: "/auth" as const },
-      { label: "Log in", to: "/auth" as const },
-    ],
-  },
-];
+const explore = [
+  { label: "Platform", to: "/platform" },
+  { label: "Markets", to: "/markets" },
+  { label: "Research", to: "/research" },
+  { label: "AI Analyst", to: "/ai" },
+] as const;
+const footerLink =
+  "inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-foreground";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-surface">
-      <div className="mx-auto w-full max-w-[1400px] px-5 py-16 sm:px-8 lg:px-12">
-        <div className="grid gap-12 md:grid-cols-12">
-          <div className="md:col-span-5">
-            <span className="font-mono text-sm tracking-[0.22em] uppercase">
+    <footer className="border-t border-border bg-background">
+      <div className="mx-auto w-full max-w-[1400px] px-5 py-12 sm:px-8 lg:px-12">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
+          <div>
+            <Link
+              to="/"
+              aria-label="Quant Plus home"
+              className="inline-flex min-h-11 items-center font-mono text-sm tracking-[0.18em] uppercase"
+            >
               Quant<span className="text-primary-soft">+</span>
-            </span>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              AI-powered market intelligence. Turn market complexity into clarity.
+            </Link>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              A personal workspace for Indian-equity research, learning and paper trading.
             </p>
           </div>
-
-          {columns.map((col) => (
-            <div key={col.title} className="md:col-span-2">
-              <span className="label-tech">{col.title}</span>
-              <ul className="mt-5 space-y-3">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    <Link
-                      to={l.to}
-                      className="text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          <div className="md:col-span-3">
-            <div className="border border-border bg-background/35 p-5">
-              <span className="label-tech text-primary-soft">Built for clarity</span>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                Follow the evidence, see the data state, and keep risk visible before you decide.
-              </p>
-              <Link
-                to="/auth"
-                className="mt-5 inline-flex min-h-11 items-center border border-primary-soft bg-primary-soft px-4 font-mono text-[11px] tracking-[0.16em] text-background uppercase transition-colors duration-200 hover:border-foreground hover:bg-foreground"
-              >
-                Enter the workspace
-              </Link>
-            </div>
-          </div>
+          <nav aria-label="Footer explore">
+            <h2 className="label-tech">Explore</h2>
+            <ul className="mt-3">
+              {explore.map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to} className={footerLink}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="Footer workspace">
+            <h2 className="label-tech">Get into the workspace</h2>
+            <ul className="mt-3">
+              <li>
+                <Link to="/app/dashboard" preload={false} className={footerLink}>
+                  Open paper terminal
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/app/$section"
+                  params={{ section: "learn" }}
+                  preload={false}
+                  className={footerLink}
+                >
+                  Start learning
+                </Link>
+              </li>
+              <li>
+                <Link to="/auth" preload={false} className={footerLink}>
+                  Sign in
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
-
-        <div className="mt-16 border-t border-border pt-8">
-          <p className="max-w-3xl text-[11px] leading-relaxed text-subtle">
-            Risk disclosure: Quant Plus provides market data, quantitative indicators and
-            AI-generated analysis for research purposes only. Nothing on this site is investment
-            advice, a recommendation, or a prediction of future performance. Paper trading uses
-            virtual funds; market observations come from connected providers and are shown as
-            unavailable when no provider is connected. Markets involve risk of loss, including loss
-            of capital.
+        <div className="mt-10 border-t border-border pt-6">
+          <p className="max-w-4xl text-xs leading-relaxed text-muted-foreground">
+            For research and education, not investment advice. Paper trading uses virtual funds and
+            does not place real broker orders. Quotes and history depend on connected providers;
+            unavailable data remains unavailable. AI analysis can be wrong and is not a validated
+            prediction of future performance.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-            <span className="label-tech">© {new Date().getFullYear()} Quant Plus</span>
-            <span className="label-tech">Built for research, not speculation</span>
-          </div>
+          <p className="mt-5 font-mono text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Quant Plus
+          </p>
         </div>
       </div>
     </footer>

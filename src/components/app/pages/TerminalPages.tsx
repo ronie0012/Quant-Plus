@@ -24,11 +24,9 @@ import {
   useWatchlist,
   useMarkedHoldings,
   useIndexHistory,
-  useAddWatchlistItem,
   useAnalyses,
 } from "@/hooks/use-dashboard-data";
 import { toPath } from "@/data/market";
-import { nifty50 } from "@/data/nifty50";
 import { StockBoard } from "@/components/app/stocks/StockBoard";
 import { cn } from "@/lib/utils";
 import { useStockMetrics, useStockQuotes } from "@/hooks/use-agent-stock";
@@ -37,6 +35,7 @@ import { useCalendar } from "@/hooks/use-quant-data";
 import { useJournal } from "@/hooks/use-trading-product";
 import { useOrders } from "@/hooks/use-orders";
 import { PortfolioIntelligence } from "@/components/app/pages/PortfolioIntelligence";
+import { WatchlistPicker } from "@/components/app/stocks/WatchlistPicker";
 
 const marketRanges = ["1D", "1W", "1M", "3M", "1Y"] as const;
 
@@ -107,13 +106,14 @@ export function MarketsPage() {
   const { data: news } = useNews();
   const [selected, setSelected] = useState(0);
   const [range, setRange] = useState<(typeof marketRanges)[number]>("1D");
+  const [contextOpen, setContextOpen] = useState(false);
   const instrument = data?.[selected];
   if (isLoading)
     return (
       <div className="flex flex-col gap-5">
         <PageIntro
           eyebrow="Markets desk"
-          title="Market pulse"
+          title="Discover stocks"
           body="Building a unified view of current market structure."
         >
           <Skeleton className="h-24 w-full" />
@@ -126,7 +126,7 @@ export function MarketsPage() {
       <div className="flex flex-col gap-5">
         <PageIntro
           eyebrow="Markets desk"
-          title="Market pulse"
+          title="Discover stocks"
           body="Index-level context is unavailable, so the constituent board is shown on its own."
         />
         <Card>
@@ -144,9 +144,9 @@ export function MarketsPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
-        eyebrow="Markets desk · live context"
-        title="Market pulse"
-        body="Price action, regime and cross-market context in one focused workspace."
+        eyebrow="Discover"
+        title="Discover stocks"
+        body="Check market context, choose a company, then open its evidence before making a decision."
         action={
           <SourceTag label={instrument.source ? instrument.source.toUpperCase() : "UNAVAILABLE"} />
         }
@@ -168,131 +168,146 @@ export function MarketsPage() {
           }))}
         />
       </PageIntro>
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
-        <Card glow delay={180}>
-          <CardHead
-            title={instrument.name}
-            meta={`${instrument.symbol} · ${instrument.updated_at ? `updated ${relativeTime(instrument.updated_at)}` : "awaiting provider data"}`}
-            action={
-              <Segmented
-                items={marketRanges}
-                value={range}
-                onChange={setRange}
-                label="Chart range"
-              />
-            }
-          />
-          <div className="border-b border-border px-5 py-5">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="font-mono text-[clamp(1.8rem,4vw,3rem)] num-tabular">
-                  {instrument.value != null
-                    ? `${instrument.kind === "commodity" ? "₹" : ""}${formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}`
-                    : "—"}
-                </p>
-                <p className={cn("mt-2 font-mono text-sm", up ? "text-positive" : "text-negative")}>
-                  {instrument.change_abs != null && instrument.change_pct != null
-                    ? `${up ? "+" : ""}${formatNum(instrument.change_abs)} · ${up ? "+" : ""}${formatNum(instrument.change_pct)}%`
-                    : "No provider change data"}
-                </p>
-              </div>
-              <Pill tone={sentiment?.label === "BULLISH" ? "positive" : "primary"}>
-                {sentiment?.label ?? "Awaiting regime"}
-              </Pill>
-            </div>
-          </div>
-          <div className="relative overflow-hidden px-3 pt-4">
-            <span
-              aria-hidden
-              className="scan-line pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-primary/35"
-            />
-            <ProviderIndexChart symbol={instrument.symbol} range={range} positive={up} />
-          </div>
-          <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
-            {[
-              { l: "Momentum", v: null },
-              { l: "Volatility", v: null },
-              { l: "Sentiment score", v: sentiment?.score ?? null },
-            ].map((m, i) => (
-              <div key={m.l} className="bg-panel/80 p-4">
-                <div className="flex justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
-                  <span>{m.l}</span>
-                  <span className="text-muted-foreground">{m.v ?? "Unavailable"}</span>
-                </div>
-                <div className="mt-3">
-                  <ProgressBar
-                    value={m.v ?? 0}
-                    tone={(m.v ?? 0) > 60 ? "positive" : "primary"}
-                    delay={500 + i * 100}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <div className="flex flex-col gap-5">
-          <Card delay={260}>
-            <CardHead title="Instrument board" meta={`${data.length} tracked markets`} />
-            <div className="divide-y divide-border">
-              {data.map((item, i) => (
-                <Button
-                  key={item.symbol}
-                  variant="ghost"
-                  onClick={() => setSelected(i)}
-                  className={cn(
-                    "h-auto w-full justify-start rounded-none px-4 py-3 text-left shadow-none",
-                    selected === i && "bg-primary/10",
-                  )}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-[11px] tracking-[0.06em] uppercase">
-                      {item.name}
-                    </span>
-                    <span className="mt-1 block text-[11px] text-subtle">{item.symbol}</span>
-                  </span>
-                  <span className="text-right font-mono text-[11px] num-tabular">
-                    <span className="block">
-                      {item.value != null
-                        ? formatNum(item.value, item.kind === "commodity" ? 0 : 2)
-                        : "—"}
-                    </span>
-                    <span
-                      className={
-                        item.change_pct == null
-                          ? "text-subtle"
-                          : item.change_pct >= 0
-                            ? "text-positive"
-                            : "text-negative"
-                      }
-                    >
-                      {item.change_pct == null
-                        ? "—"
-                        : `${item.change_pct >= 0 ? "+" : ""}${formatNum(item.change_pct)}%`}
-                    </span>
-                  </span>
-                </Button>
-              ))}
-            </div>
-          </Card>
-          <Card delay={340}>
-            <CardHead title="Market drivers" meta="Latest intelligence" />
-            <ul className="divide-y divide-border">
-              {news?.slice(0, 3).map((n) => (
-                <li key={n.id} className="p-4">
-                  <p className="text-[12.5px] leading-relaxed">{n.headline}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="font-medium text-[11px] uppercase text-subtle">
-                      {n.source}
-                    </span>
-                    <Pill tone={n.impact === "HIGH" ? "warning" : "neutral"}>{n.impact}</Pill>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </div>
       <StockBoard />
+      <details
+        className="rounded-lg border border-border bg-panel/40"
+        onToggle={(event) => setContextOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
+          Index charts & market drivers
+        </summary>
+        {contextOpen && (
+          <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,.7fr)]">
+            <Card glow delay={180}>
+              <CardHead
+                title={instrument.name}
+                meta={`${instrument.symbol} · ${instrument.updated_at ? `updated ${relativeTime(instrument.updated_at)}` : "awaiting provider data"}`}
+                action={
+                  <Segmented
+                    items={marketRanges}
+                    value={range}
+                    onChange={setRange}
+                    label="Chart range"
+                  />
+                }
+              />
+              <div className="border-b border-border px-5 py-5">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <p className="font-mono text-[clamp(1.8rem,4vw,3rem)] num-tabular">
+                      {instrument.value != null
+                        ? `${instrument.kind === "commodity" ? "₹" : ""}${formatNum(instrument.value, instrument.kind === "commodity" ? 0 : 2)}`
+                        : "—"}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-2 font-mono text-sm",
+                        up ? "text-positive" : "text-negative",
+                      )}
+                    >
+                      {instrument.change_abs != null && instrument.change_pct != null
+                        ? `${up ? "+" : ""}${formatNum(instrument.change_abs)} · ${up ? "+" : ""}${formatNum(instrument.change_pct)}%`
+                        : "No provider change data"}
+                    </p>
+                  </div>
+                  <Pill tone={sentiment?.label === "BULLISH" ? "positive" : "primary"}>
+                    {sentiment?.label ?? "Awaiting regime"}
+                  </Pill>
+                </div>
+              </div>
+              <div className="relative overflow-hidden px-3 pt-4">
+                <span
+                  aria-hidden
+                  className="scan-line pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-primary/35"
+                />
+                <ProviderIndexChart symbol={instrument.symbol} range={range} positive={up} />
+              </div>
+              <div className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
+                {[
+                  { l: "Momentum", v: null },
+                  { l: "Volatility", v: null },
+                  { l: "Sentiment score", v: sentiment?.score ?? null },
+                ].map((m, i) => (
+                  <div key={m.l} className="bg-panel/80 p-4">
+                    <div className="flex justify-between font-medium text-[11px] tracking-[0.06em] uppercase text-subtle">
+                      <span>{m.l}</span>
+                      <span className="text-muted-foreground">{m.v ?? "Unavailable"}</span>
+                    </div>
+                    <div className="mt-3">
+                      <ProgressBar
+                        value={m.v ?? 0}
+                        tone={(m.v ?? 0) > 60 ? "positive" : "primary"}
+                        delay={500 + i * 100}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <div className="flex flex-col gap-5">
+              <Card delay={260}>
+                <CardHead title="Instrument board" meta={`${data.length} tracked markets`} />
+                <div className="divide-y divide-border">
+                  {data.map((item, i) => (
+                    <Button
+                      key={item.symbol}
+                      variant="ghost"
+                      onClick={() => setSelected(i)}
+                      className={cn(
+                        "h-auto w-full justify-start rounded-none px-4 py-3 text-left shadow-none",
+                        selected === i && "bg-primary/10",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium text-[11px] tracking-[0.06em] uppercase">
+                          {item.name}
+                        </span>
+                        <span className="mt-1 block text-[11px] text-subtle">{item.symbol}</span>
+                      </span>
+                      <span className="text-right font-mono text-[11px] num-tabular">
+                        <span className="block">
+                          {item.value != null
+                            ? formatNum(item.value, item.kind === "commodity" ? 0 : 2)
+                            : "—"}
+                        </span>
+                        <span
+                          className={
+                            item.change_pct == null
+                              ? "text-subtle"
+                              : item.change_pct >= 0
+                                ? "text-positive"
+                                : "text-negative"
+                          }
+                        >
+                          {item.change_pct == null
+                            ? "—"
+                            : `${item.change_pct >= 0 ? "+" : ""}${formatNum(item.change_pct)}%`}
+                        </span>
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+              <Card delay={340}>
+                <CardHead title="Market drivers" meta="Latest intelligence" />
+                <ul className="divide-y divide-border">
+                  {news?.slice(0, 3).map((n) => (
+                    <li key={n.id} className="p-4">
+                      <p className="text-[12.5px] leading-relaxed">{n.headline}</p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="font-medium text-[11px] uppercase text-subtle">
+                          {n.source}
+                        </span>
+                        <Pill tone={n.impact === "HIGH" ? "warning" : "neutral"}>{n.impact}</Pill>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          </div>
+        )}
+      </details>
     </div>
   );
 }
@@ -316,13 +331,38 @@ export function PortfolioPage() {
     );
   if (isError || !data?.length)
     return (
-      <Card>
-        <EmptyState
-          title="No portfolio positions"
-          hint="Add positions to unlock portfolio intelligence."
-          onRetry={isError ? () => void refetch() : undefined}
+      <div className="space-y-5">
+        <PageIntro
+          eyebrow="Portfolio"
+          title="Your paper portfolio"
+          body="Track holdings, review exposure, and follow each position back to its decision."
         />
-      </Card>
+        <Card>
+          <EmptyState
+            title={isError ? "Portfolio unavailable" : "No portfolio positions yet"}
+            hint={
+              isError
+                ? "Your holdings could not be loaded. Retry before making a decision."
+                : "Start by researching a company. A position appears here only after a paper order fills."
+            }
+            onRetry={isError ? () => void refetch() : undefined}
+          />
+          {!isError && (
+            <div className="flex flex-wrap gap-3 border-t border-border p-5">
+              <Button asChild>
+                <Link to="/app/$section" params={{ section: "markets" }}>
+                  Explore stocks
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/app/$section" params={{ section: "wallet" }}>
+                  View paper wallet
+                </Link>
+              </Button>
+            </div>
+          )}
+        </Card>
+      </div>
     );
   const rows = data.map((h) => {
     const invested = h.quantity * h.avg_price,
@@ -680,7 +720,7 @@ function averageMove(values: (number | null)[]) {
 }
 export function WatchlistPage() {
   const { data, isLoading, isError, refetch } = useWatchlist();
-  const addWatchlist = useAddWatchlistItem();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const feed = useStockQuotes((data ?? []).map((item) => item.symbol));
   const [filter, setFilter] = useState<(typeof watchFilters)[number]>("All");
   const [query, setQuery] = useState("");
@@ -719,21 +759,10 @@ export function WatchlistPage() {
             size="sm"
             variant="outline"
             className="font-medium text-[11px] uppercase tracking-[0.06em]"
-            onClick={() => {
-              const candidate = nifty50.find(
-                (stock) => !(data ?? []).some((item) => item.symbol === stock.symbol),
-              );
-              if (candidate) {
-                void addWatchlist.mutateAsync({
-                  symbol: candidate.symbol,
-                  company: candidate.company,
-                });
-              }
-            }}
-            disabled={addWatchlist.isPending}
+            onClick={() => setPickerOpen(true)}
           >
             <Star />
-            Add instrument
+            Add company
           </Button>
         }
       >
@@ -758,6 +787,13 @@ export function WatchlistPage() {
           ]}
         />
       </PageIntro>
+      {pickerOpen && (
+        <WatchlistPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          existing={(data ?? []).map((item) => item.symbol)}
+        />
+      )}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.8fr)]">
         <Card>
           <CardHead
@@ -785,6 +821,7 @@ export function WatchlistPage() {
               }}
               className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-subtle"
               placeholder="Search symbol or company"
+              aria-label="Filter your watchlist"
             />
           </label>
           {isLoading ? (
@@ -798,6 +835,15 @@ export function WatchlistPage() {
               hint="The source could not be reached."
               onRetry={() => void refetch()}
             />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title={data?.length ? "No matching companies" : "Your watchlist is empty"}
+              hint={
+                data?.length
+                  ? "Try another search or movement filter."
+                  : "Use Add company to choose what you want to follow. No order is placed."
+              }
+            />
           ) : (
             <div className="divide-y divide-border">
               {filtered.map((w, i) => (
@@ -806,11 +852,11 @@ export function WatchlistPage() {
                   variant="ghost"
                   onClick={() => setSelected(i)}
                   className={cn(
-                    "grid h-auto w-full grid-cols-[1fr_90px_70px_20px] rounded-none px-5 py-4 text-left shadow-none",
+                    "grid h-auto w-full grid-cols-[minmax(0,1fr)_80px_60px_16px] rounded-none px-4 py-4 text-left shadow-none sm:grid-cols-[minmax(0,1fr)_90px_70px_20px] sm:px-5",
                     focus?.id === w.id && "bg-primary/10",
                   )}
                 >
-                  <span>
+                  <span className="min-w-0">
                     <span className="block font-mono text-[11px] tracking-[0.04em]">
                       {w.symbol}
                     </span>

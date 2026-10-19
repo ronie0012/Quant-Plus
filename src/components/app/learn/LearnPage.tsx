@@ -23,21 +23,48 @@ import { factorById, FACTORS, propagate, whatIfOrigin } from "@/lib/quant/ripple
 import { cn } from "@/lib/utils";
 
 /**
- * Learn: the market driving school. The licence comes first, then the path
- * that earns it, then one live lesson from today's news.
+ * One recommended next step, followed by the optional path and practice record.
  */
 export function LearnPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Learn"
-        title="Market driving school"
-        body="Nobody learns to drive from videos alone. Learn by doing, earn your trading licence through discipline — not profit — and practise every idea with paper money."
+        title="Build your market confidence"
+        body="Understand your starting point, run a small business, then practise market concepts. Learn at your pace; a wallet and trades are optional."
         status="Paper practice"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={() => window.dispatchEvent(new Event("quant-plus:resume-onboarding"))}
+          >
+            Getting started
+          </Button>
+        }
       />
-      <LicenceCard />
       <LearningPath />
-      <RippleQuestion />
+      <details className="rounded-lg border border-border bg-panel/80">
+        <summary className="min-h-11 cursor-pointer px-5 py-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary">
+          Your practice licence & risk limits
+        </summary>
+        <div className="px-3 pb-3">
+          <p className="px-2 pb-3 text-sm text-muted-foreground">
+            An in-app learning milestone, not a professional qualification. Progress reflects
+            practice habits, not readiness to invest real money.
+          </p>
+          <LicenceCard />
+        </div>
+      </details>
+      <details className="rounded-lg border border-border bg-panel/80">
+        <summary className="min-h-11 cursor-pointer px-5 py-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary">
+          Optional daily practice · Ripple question
+        </summary>
+        <div className="px-3 pb-3">
+          <RippleQuestion />
+        </div>
+      </details>
     </div>
   );
 }
@@ -45,7 +72,7 @@ export function LearnPage() {
 function LicenceCard() {
   const licence = useLicence();
   const dna = useInvestorDna();
-  if (licence.loading) return <Skeleton className="h-64" />;
+  if (licence.loading || dna.loading) return <Skeleton className="h-64" />;
   const stage = licence.stages[licence.level]!;
   const next = licence.next;
   const limits = licence.suggested;
@@ -112,7 +139,7 @@ function LicenceCard() {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-8 gap-1.5"
+                    className="min-h-11 gap-1.5"
                     disabled={licence.applying}
                     onClick={() => void licence.apply(limits)}
                   >
@@ -141,7 +168,7 @@ function LicenceCard() {
               <p className="mt-0.5 text-[13px] text-muted-foreground">{next.summary}</p>
               <ul className="mt-4 flex flex-col divide-y divide-border rounded-md border border-border">
                 {next.requirements.map((r) => (
-                  <li key={r.id} className="flex items-center gap-3 px-3.5 py-3">
+                  <li key={r.id} className="flex flex-wrap items-center gap-3 px-3.5 py-3">
                     <span
                       className={cn(
                         "grid h-5 w-5 shrink-0 place-items-center rounded-full border",
@@ -168,7 +195,8 @@ function LicenceCard() {
                       <Link
                         to="/app/$section"
                         params={{ section: r.section }}
-                        className="shrink-0 text-[12px] font-medium text-primary-soft hover:text-foreground"
+                        aria-label={`${r.progress > 0 ? "Continue" : "Start"}: ${r.label}`}
+                        className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary-soft hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
                       >
                         {r.progress > 0 ? r.progress_label : "Start"}
                       </Link>
@@ -203,7 +231,7 @@ type PathStep = {
 
 function LearningPath() {
   const dna = useInvestorDna();
-  const { learning, mastery } = useLearning();
+  const { learning, mastery, loading } = useLearning();
   const licence = useLicence();
   const mastered = CONCEPTS.filter((c) => masteryOf(mastery, c.id) >= MASTERED).length;
   const replayDone = licence.stages[1]?.requirements.find((r) => r.id === "replay")?.done ?? false;
@@ -212,7 +240,7 @@ function LearningPath() {
       section: "investor-dna",
       icon: Dna,
       title: "Investor DNA",
-      body: "Eight questions about your money and nerves.",
+      body: "Separate financial capacity from comfort with risk.",
       status: dna.complete && dna.practice ? RISK_LABELS[dna.practice] : "4 minutes",
       done: dna.complete,
     },
@@ -221,34 +249,71 @@ function LearningPath() {
       icon: Coffee,
       title: "Be the Company",
       body: "Run a chai brand to its IPO and learn what a share is.",
-      status: learning.company_result
-        ? `Finished · ${learning.company_result.multiple}× your money`
-        : "10 minutes",
+      status: learning.company_completed_at
+        ? "Completed"
+        : "About 10 minutes · resumes in this tab",
       done: Boolean(learning.company_completed_at),
     },
     {
       section: "tutor",
       icon: GraduationCap,
       title: "AI tutor",
-      body: "Quick checks and a tutor that asks before it tells.",
-      status: `${mastered} / ${CONCEPTS.length} concepts`,
+      body: "Start with a quick check. Ask the AI tutor when you need help.",
+      status: `${mastered} / ${CONCEPTS.length} concepts practised to target`,
       done: mastered === CONCEPTS.length,
     },
     {
       section: "replay",
       icon: History,
       title: "Time machine",
-      body: "Trade a hidden stretch of real history, blind.",
-      status: replayDone ? "Survived one" : "Blind replay",
+      body: "Apply what you learned to a hidden stretch of market history.",
+      status: replayDone ? "Completed a replay" : "Optional paper practice",
       done: replayDone,
     },
   ];
+  const next = steps.find((step) => !step.done);
+  const returning =
+    dna.complete || Boolean(learning.company_completed_at) || (learning.checks_answered ?? 0) > 0;
+  if (loading || dna.loading || licence.loading) return <Skeleton className="h-64" />;
   return (
     <section aria-labelledby="learning-path" className="flex flex-col gap-3">
-      <h2 id="learning-path" className="text-[14px] font-semibold">
-        Your learning path
-      </h2>
-      <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <Card glow>
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl">
+            <p className="text-xs font-medium text-primary-soft">
+              {next
+                ? returning
+                  ? "Pick up where you left off"
+                  : "Start here"
+                : "Keep your skills fresh"}
+            </p>
+            <h2 id="learning-path" className="mt-2 text-xl font-semibold">
+              {next
+                ? `${steps.indexOf(next) + 1}. ${next.title}`
+                : "Your learning path is complete"}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {next?.body ?? "Revisit a concept or review a past practice session."}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {next?.status ?? "All four steps completed"} · Suggested order; every step is
+              available.
+            </p>
+          </div>
+          <Button asChild className="min-h-11 shrink-0 self-start">
+            <Link to="/app/$section" params={{ section: next?.section ?? "tutor" }}>
+              {next
+                ? next.section === "investor-dna"
+                  ? "Start Investor DNA"
+                  : `Continue ${next.title}`
+                : "Revisit the tutor"}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      </Card>
+      <h3 className="mt-3 text-sm font-semibold">Your learning path</h3>
+      <ol className="grid gap-3 sm:grid-cols-2">
         {steps.map((step, i) => {
           const Icon = step.icon;
           return (
@@ -256,7 +321,7 @@ function LearningPath() {
               <Link
                 to="/app/$section"
                 params={{ section: step.section }}
-                className="group flex h-full flex-col gap-3 rounded-lg border border-border bg-panel/80 px-4 py-4 transition-colors hover:border-primary/50"
+                className="group flex h-full flex-col gap-3 rounded-lg border border-border bg-panel/80 px-4 py-4 transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-primary"
               >
                 <span className="flex items-center justify-between">
                   <span className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-panel-elevated text-primary-soft">
@@ -265,12 +330,15 @@ function LearningPath() {
                   {step.done ? (
                     <Pill tone="positive">Done</Pill>
                   ) : (
-                    <span className="text-[11px] text-subtle">Step {i + 1}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Step {i + 1}
+                      {next === step ? " · Up next" : ""}
+                    </span>
                   )}
                 </span>
                 <span>
                   <span className="block text-[14px] font-semibold">{step.title}</span>
-                  <span className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground">
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
                     {step.body}
                   </span>
                 </span>
@@ -349,7 +417,7 @@ function RippleQuestion() {
                 void recordCheck("ripple", choice.id === impact.direction);
               }}
               className={cn(
-                "h-9",
+                "min-h-11",
                 picked != null &&
                   choice.id === impact.direction &&
                   "border-positive/60 bg-positive/10",
@@ -368,7 +436,7 @@ function RippleQuestion() {
               </span>
               {impact.edges.at(-1)!.why}
             </p>
-            <Button asChild size="sm" variant="ghost" className="h-8 shrink-0 gap-1.5">
+            <Button asChild size="sm" variant="ghost" className="min-h-11 shrink-0 gap-1.5">
               <Link to="/app/$section" params={{ section: "ripple" }}>
                 See the full ripple
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />

@@ -20,14 +20,35 @@ const label = "font-medium text-[11px] uppercase tracking-[0.06em] text-subtle";
 /* ---------------- Options lab ---------------- */
 export function OptionsPage() {
   return (
-    <EmptyModule
-      title="Options unavailable"
-      body="Observed option chains, verified contract rules and validated Greeks are required before this lab can be enabled."
-    />
+    <div className="space-y-5">
+      <PageIntro
+        eyebrow="Portfolio tools"
+        title="Options"
+        body="Derivatives are not enabled in this paper workspace. Equity research and paper practice remain available."
+        status="Not connected"
+      />
+      <Card>
+        <EmptyModule
+          title="Options unavailable"
+          body="Observed option chains, verified contract rules and validated Greeks are required before this lab can be enabled."
+        />
+      </Card>
+      <Button asChild variant="outline">
+        <Link to="/app/$section" params={{ section: "markets" }}>
+          Return to equity research
+        </Link>
+      </Button>
+    </div>
   );
 }
 
-type BasketRow = { symbol: string; qty: number; side: "BUY" | "SELL"; intent_id: string };
+type BasketRow = {
+  row_id: string;
+  symbol: string;
+  qty: number;
+  side: "BUY" | "SELL";
+  intent_id: string;
+};
 type LegResult = { intent_id: string; symbol: string; ok: boolean; order?: Order; error?: string };
 type Preflight = {
   complete: boolean;
@@ -59,10 +80,7 @@ const legBody = (row: BasketRow) => ({
 export function BasketPage() {
   const client = useQueryClient();
   const { data: account } = useAccount();
-  const [rows, setRows] = useState<BasketRow[]>(() => [
-    { symbol: "RELIANCE", qty: 5, side: "BUY", intent_id: crypto.randomUUID() },
-    { symbol: "HDFCBANK", qty: 10, side: "BUY", intent_id: crypto.randomUUID() },
-  ]);
+  const [rows, setRows] = useState<BasketRow[]>([]);
   const [results, setResults] = useState<Record<string, LegResult>>({});
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [running, setRunning] = useState<null | "preflight" | "execute">(null);
@@ -72,6 +90,7 @@ export function BasketPage() {
     setRows(rows.map((r, j) => (j === i ? { ...r, ...patch, intent_id: crypto.randomUUID() } : r)));
   };
   const pending = rows.filter((row) => !results[row.intent_id]?.ok);
+  const valid = rows.length > 0 && rows.every((row) => row.symbol && row.qty > 0);
 
   const check = async () => {
     setRunning("preflight");
@@ -139,8 +158,8 @@ export function BasketPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Basket orders"
-        title="Many orders. One click."
-        body="Legs execute independently, in order, on the server. Check the basket first for current estimates; retrying resends unchanged legs with their original intent IDs, so settled legs never repeat."
+        title="Build a paper-order basket"
+        body="Choose each company and quantity, check the estimates, then submit the basket. Orders settle independently; unchanged orders keep their original intent when you retry."
       >
         <MetricStrip
           items={[
@@ -174,7 +193,13 @@ export function BasketPage() {
                 setPreflight(null);
                 setRows([
                   ...rows,
-                  { symbol: "TCS", qty: 1, side: "BUY", intent_id: crypto.randomUUID() },
+                  {
+                    row_id: crypto.randomUUID(),
+                    symbol: "",
+                    qty: 1,
+                    side: "BUY",
+                    intent_id: crypto.randomUUID(),
+                  },
                 ]);
               }}
             >
@@ -185,7 +210,7 @@ export function BasketPage() {
         <div className="mt-4 space-y-2">
           {rows.map((r, i) => (
             <div
-              key={r.intent_id}
+              key={r.row_id}
               className="grid grid-cols-[1fr_auto] items-center gap-2 border border-border p-2 sm:grid-cols-[1.4fr_120px_90px_1.4fr_auto]"
             >
               <select
@@ -195,6 +220,9 @@ export function BasketPage() {
                 className={field}
                 aria-label={`Leg ${i + 1} stock`}
               >
+                <option value="" disabled>
+                  Choose a company
+                </option>
                 {nifty50.map((n) => (
                   <option key={n.symbol}>{n.symbol}</option>
                 ))}
@@ -269,14 +297,14 @@ export function BasketPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              disabled={running != null || rows.length === 0}
+              disabled={running != null || !valid}
               onClick={() => void check()}
               className="font-mono text-xs tracking-[0.04em]"
             >
               {running === "preflight" ? "Checking…" : "Check basket"}
             </Button>
             <Button
-              disabled={running != null || rows.length === 0 || pending.length === 0}
+              disabled={running != null || !valid || !preflight?.complete || pending.length === 0}
               onClick={() => void execute()}
               className="font-mono text-xs tracking-[0.04em]"
             >

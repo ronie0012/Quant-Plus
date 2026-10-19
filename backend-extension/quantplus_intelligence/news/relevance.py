@@ -34,12 +34,16 @@ def relevance(article, company, now=None):
         alias = any(mentions(title, a) for a in company.aliases)
         body = mentions(snippet, company.company) or mentions(snippet, company.symbol)
         sector = company.sector != "unknown" and mentions(title, company.sector)
-        score = 85 if exact else 75 if symbol else 65 if alias else 45 if body else 25 if sector else 0
+        # Official symbol-scoped filings often use generic subjects (e.g.
+        # "Financial Results"). Retain their issuer evidence without rewriting
+        # the headline or trusting a discovery query as company relevance.
+        official_issuer = article.get("provider") == "nse_announcements" and article.get("issuer_symbol") == company.symbol
+        score = 85 if exact or official_issuer else 75 if symbol else 65 if alias else 45 if body else 25 if sector else 0
         # Broad roundup/listicles receive less company specificity.
         if re.search(r"stocks to (?:watch|buy)|top \d+|these stocks|among.*stocks", title, re.I):
             score -= 15
         # A different listed namesake without the full company name is not company evidence.
-        if not exact and any(mentions(title, name) for name in company.namesakes):
+        if not exact and not official_issuer and any(mentions(title, name) for name in company.namesakes):
             score = min(score, 25)
     age = max(0, (now - datetime.fromisoformat(article["published_at"])).total_seconds() / 3600)
     return round(clamp(score - min(20, age / 3)), 2)

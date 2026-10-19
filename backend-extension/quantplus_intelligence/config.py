@@ -30,7 +30,8 @@ class IntelligenceSettings(BaseSettings):
     news_archive_path: str = ""
     maturation_enabled: bool = True
     scheduler_enabled: bool = True
-    snapshot_history_calls: int = 20
+    snapshot_history_calls: int = 6
+    stream_warm_wait_seconds: float = 2
     daily_history_ttl_seconds: int = 21600
     intraday_baseline_ttl_seconds: int = 21600
     market_holidays: list[str] = []
@@ -54,6 +55,8 @@ class IntelligenceSettings(BaseSettings):
             raise ValueError("Timeouts, TTLs and half-life must be positive")
         if not 0 <= self.relevance_threshold <= 100 or not 0 < self.duplicate_threshold <= 1:
             raise ValueError("Invalid analysis thresholds")
+        if not 0 <= self.stream_warm_wait_seconds <= 5 or not 0 <= self.snapshot_history_calls <= 20:
+            raise ValueError("Stream warm wait and snapshot history budget must be bounded")
 
 
 config = IntelligenceSettings()

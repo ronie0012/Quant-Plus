@@ -603,7 +603,7 @@ export type RippleImpact = {
   edges: RippleEdge[];
 };
 
-/** Strength lost per extra hop, so distant links never outrank close ones. */
+/** Multiplier per extra hop; reduces a path's curated weight at each step. */
 export const HOP_DECAY = 0.6;
 /** Ripples weaker than this are not reported. */
 export const MIN_STRENGTH = 0.06;
@@ -683,10 +683,13 @@ const UP_WORDS =
   /\b(rise[sn]?|rising|rose|surge[sd]?|jump(s|ed)?|soar(s|ed)?|climb(s|ed)?|gain(s|ed)?|rall(y|ies|ied)|hike[sd]?|spike[sd]?|up|higher|record high|boost(s|ed)?|strong|beat(s)?|upgrade[sd]?|wins?|approv(al|es|ed))\b/;
 const DOWN_WORDS =
   /\b(fall(s|en)?|fell|drop(s|ped)?|slump(s|ed)?|plunge[sd]?|tumble[sd]?|decline[sd]?|slide[sd]?|cut(s)?|lower|down|weak(er|ens?|ened)?|miss(es|ed)?|downgrade[sd]?|curbs?|ban(s|ned)?|probe|penalty|warning letter|slow(s|ed|down)?)\b/;
+const UNCONFIRMED_MOVE =
+  /\b(may|might|could|would|will|should|expects?|expected|forecasts?|predicts?|likely|unlikely|not|no|never|denies?|denied|if|whether|set to|poised to)\b|\bto (rise|fall|surge|drop|gain|climb|jump|weaken|strengthen)\b/;
 
 /** Direction words in a headline; null when absent or contradictory. */
 export function headlineDirection(text: string): "UP" | "DOWN" | null {
   const t = text.toLowerCase();
+  if (UNCONFIRMED_MOVE.test(t)) return null;
   const up = UP_WORDS.test(t);
   const down = DOWN_WORDS.test(t);
   if (up === down) return null;
@@ -694,30 +697,57 @@ export function headlineDirection(text: string): "UP" | "DOWN" | null {
 }
 
 /**
- * Direction of a factor move from a headline. Rupee and rate headlines are
- * phrased in their own vocabulary, so they get dedicated readings.
+ * Read only clauses naming the factor. A cause (such as an output cut) is not
+ * an observed price move, and another asset's move must not set the direction.
  */
 export function factorDirection(factor: FactorId, text: string): "UP" | "DOWN" | null {
-  const t = text.toLowerCase();
-  if (factor === "USDINR") {
-    if (/\brupee\b.*\b(weak|fall|slump|drop|declin|low|depreciat|slide)/.test(t)) return "UP";
-    if (/\brupee\b.*\b(strong|gain|rise|rall|appreciat|recover)/.test(t)) return "DOWN";
+  const definition = factorById(factor)!;
+  const clauses = text
+    .toLowerCase()
+    .split(
+      /\s+(?:as|after|amid|amidst|despite|while|whereas|but|because|although|with)\s+|[;!?]|\.(?:\s|$)|\s+[—–]\s+/,
+    );
+  const directions = new Set<"UP" | "DOWN">();
+  for (const t of clauses) {
+    if (!definition.pattern.test(t)) continue;
+    if (UNCONFIRMED_MOVE.test(t)) return null;
+    // Multiple subjects in the same clause are ambiguous without a full parser.
+    if (FACTORS.some((f) => f.id !== factor && f.pattern.test(t))) return null;
+    let direction = headlineDirection(t);
+    if (factor === "USDINR" && /\b(rupee|inr)\b/.test(t) && !/\busd\s*\/?\s*inr\b/.test(t)) {
+      const weaker = DOWN_WORDS.test(t) || /\bdepreciat\w*\b/.test(t);
+      const stronger = UP_WORDS.test(t) || /\b(strengthen|appreciat|recover)\w*\b/.test(t);
+      direction = weaker === stronger ? null : weaker ? "UP" : "DOWN";
+    }
+    if (factor === "RATES") {
+      if (/\b(holds?|unchanged|status quo|pause)\b/.test(t)) return null;
+      const cut = /\b(rate cuts?|cuts? (the )?repo|yields? (fall|drop|ease|soften))\b/.test(t);
+      const hike = /\b(rate hikes?|hikes? (the )?repo|yields? (rise|jump|climb|harden))\b/.test(t);
+      if (cut || hike) direction = cut === hike ? null : cut ? "DOWN" : "UP";
+    }
+    if (
+      factor === "CRUDE" &&
+      /\b(output|production|supply|stockpiles?|inventor\w*|demand)\b/.test(t) &&
+      !/\b(prices?|brent|futures)\b/.test(t)
+    )
+      continue;
+    if (factor === "CRUDE" && !/\b(crude|brent|oil prices?)\b/.test(t)) continue;
+    if (factor === "CREDIT_GROWTH" && !/\b(credit|loan|deposit) growth\b/.test(t)) continue;
+    if (factor === "US_TECH" && !/\b(it spending|tech spending|nasdaq)\b/.test(t)) continue;
+    if (
+      factor === "FNO_ACTIVITY" &&
+      /\b(curbs?|tighten|restrict|fewer|ban|higher margin)/.test(t)
+    ) {
+      if (/\b(eases?|lifts?|relax\w*|withdraw\w*)\b/.test(t)) return null;
+      direction = "DOWN";
+    }
+    if (factor === "US_PHARMA" && /\b(warning letter|form 483|import alert|recall)\b/.test(t)) {
+      if (/\b(lifts?|withdraw\w*|resolv\w*|clos\w*)\b/.test(t)) return null;
+      direction = "DOWN";
+    }
+    if (direction) directions.add(direction);
   }
-  if (factor === "RATES") {
-    if (/\b(rate cut|cuts? (the )?repo|yields? (fall|drop|ease|soften))\b/.test(t)) return "DOWN";
-    if (/\b(rate hike|hikes? (the )?repo|yields? (rise|jump|climb|harden))\b/.test(t)) return "UP";
-    if (/\b(holds?|unchanged|status quo|pause)\b/.test(t)) return null;
-  }
-  if (
-    factor === "CRUDE" &&
-    /\b(output|production|supply) cuts?\b|\bcuts? (output|production|supply)\b/.test(t)
-  )
-    return "UP";
-  if (factor === "FNO_ACTIVITY" && /\b(curbs?|tighten|restrict|fewer|ban|higher margin)/.test(t))
-    return "DOWN";
-  if (factor === "US_PHARMA" && /\b(warning letter|form 483|import alert|recall)\b/.test(t))
-    return "DOWN";
-  return headlineDirection(t);
+  return directions.size === 1 ? [...directions][0]! : null;
 }
 
 export type RippleArticle = {
@@ -728,53 +758,102 @@ export type RippleArticle = {
   source: string;
   published_at: string;
   url: string;
-  sentiment: "positive" | "neutral" | "negative";
-  impact: "low" | "medium" | "high";
+  sentiment: "positive" | "neutral" | "negative" | "unavailable" | null;
+  impact: "low" | "medium" | "high" | null;
 };
 
+export const RIPPLE_NEWS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Two news polling intervals; client fetch time never replaces provider time. */
+export const RIPPLE_FEED_MAX_AGE_MS = 20 * 60 * 1000;
+export type RippleNewsAvailability = "available" | "partial" | "stale" | "unavailable";
+
+export function rippleNewsSnapshot(
+  feed:
+    | { articles: RippleArticle[]; updated_at: string; provider_status: { status: string } }
+    | undefined,
+  universe: ReadonlySet<string>,
+  now = Date.now(),
+  failed = false,
+) {
+  const updated = feed ? Date.parse(feed.updated_at) : Number.NaN;
+  const provider = feed?.provider_status?.status;
+  const availability: RippleNewsAvailability =
+    failed || !feed || !["available", "partial"].includes(provider ?? "")
+      ? "unavailable"
+      : !Number.isFinite(updated) || updated > now || now - updated > RIPPLE_FEED_MAX_AGE_MS
+        ? "stale"
+        : provider === "partial"
+          ? "partial"
+          : "available";
+  return {
+    availability,
+    updated_at: Number.isFinite(updated) ? feed!.updated_at : null,
+    origins:
+      availability === "available" || availability === "partial"
+        ? detectOrigins(feed!.articles, universe, now)
+        : [],
+    articles: feed?.articles.length ?? 0,
+  };
+}
+
 /**
- * Turn news into ripple origins. A macro headline with a readable direction
- * becomes a factor ripple; a company headline with non-neutral sentiment and
+ * Turn news from the last 24 hours into ripple origins. A macro title with a
+ * readable direction becomes a factor ripple; a company headline with non-neutral sentiment and
  * at least medium impact becomes a stock ripple. Duplicates of the same
  * origin and direction keep the most recent headline.
  */
 export function detectOrigins(
   articles: RippleArticle[],
   universe: ReadonlySet<string>,
+  now = Date.now(),
 ): RippleOrigin[] {
   const out = new Map<string, RippleOrigin>();
-  const sorted = [...articles].sort(
-    (a, b) => Date.parse(b.published_at) - Date.parse(a.published_at),
-  );
+  const sorted = articles
+    .filter((article) => {
+      const published = Date.parse(article.published_at);
+      return (
+        Number.isFinite(published) && published <= now && now - published <= RIPPLE_NEWS_MAX_AGE_MS
+      );
+    })
+    .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
   for (const article of sorted) {
-    const text = `${article.title} ${article.snippet ?? ""}`.toLowerCase();
-    let origin: string | null = null;
-    let direction: "UP" | "DOWN" | null = null;
-    const factor = FACTORS.find((f) => f.pattern.test(article.title.toLowerCase()));
-    if (factor) {
-      origin = factor.id;
-      direction = factorDirection(factor.id, text);
-    } else if (
+    const title = article.title.toLowerCase();
+    const factors = FACTORS.filter((f) => f.pattern.test(title));
+    const candidates: { origin: string; direction: "UP" | "DOWN" | null }[] = factors.map((f) => ({
+      origin: f.id,
+      direction: factorDirection(f.id, title),
+    }));
+    if (
+      !factors.length &&
       universe.has(article.symbol) &&
-      article.impact !== "low" &&
-      article.sentiment !== "neutral"
+      (article.impact === "medium" || article.impact === "high") &&
+      (article.sentiment === "positive" || article.sentiment === "negative") &&
+      !UNCONFIRMED_MOVE.test(title)
     ) {
-      origin = article.symbol;
-      direction = article.sentiment === "positive" ? "UP" : "DOWN";
+      candidates.push({
+        origin: article.symbol,
+        direction: article.sentiment === "positive" ? "UP" : "DOWN",
+      });
     }
-    if (!origin || !direction) continue;
-    const key = `${origin}:${direction}`;
-    if (out.has(key)) continue;
-    out.set(key, {
-      id: `news:${article.id}`,
-      origin,
-      direction,
-      title: article.title,
-      source: article.source,
-      published_at: article.published_at,
-      url: article.url,
-      kind: "NEWS",
-    });
+    for (const { origin, direction } of candidates) {
+      if (!direction) continue;
+      const key = `${origin}:${direction}`;
+      if (out.has(key)) continue;
+      out.set(key, {
+        // Preserve existing ledger identities; qualify only additional factors.
+        id:
+          origin === candidates[0]?.origin
+            ? `news:${article.id}`
+            : `news:${article.id}:${origin}:${direction}`,
+        origin,
+        direction,
+        title: article.title,
+        source: article.source,
+        published_at: article.published_at,
+        url: article.url,
+        kind: "NEWS",
+      });
+    }
   }
   return [...out.values()];
 }
@@ -799,27 +878,33 @@ export function whatIfOrigin(
 export type EchoBar = { time: number; close: number };
 
 export type Echo = {
-  /** Large-move days of the source observed in the window. */
+  status: "MEASURED" | "INSUFFICIENT_HISTORY" | "INSUFFICIENT_EVENTS" | "INVALID_INPUT";
+  /** Qualifying, aligned, non-overlapping source shock windows. */
   n: number;
-  /** Share of those days on which the target moved in the expected direction over the window. */
+  /** Share of those windows on which the target moved in the expected direction. */
   agreement: number | null;
-  /** Median target move in the expected direction, as a fraction. */
+  /** Signed median target return; positive means agreement with the edge. */
   median_move: number | null;
+  /** Response window in observed sessions, including the shock session. */
   window_days: number;
 };
 
-const returnsByDay = (bars: EchoBar[]) => {
-  const out = new Map<number, number>();
-  for (let i = 1; i < bars.length; i++)
-    out.set(bars[i]!.time, bars[i]!.close / bars[i - 1]!.close - 1);
-  return out;
-};
+const validEchoSeries = (bars: EchoBar[]) =>
+  bars.every(
+    (bar, i) =>
+      Number.isFinite(bar.time) &&
+      Number.isFinite(bar.close) &&
+      bar.close > 0 &&
+      (i === 0 || bar.time > bars[i - 1]!.time),
+  );
 
 /**
  * Historical echo for a stock-to-stock edge: on days the source moved more
  * than `threshold` standard deviations, how did the target move from the prior
  * close to `window` sessions later, signed by the edge? Uses only the bars
- * supplied (observed history); fewer than 3 qualifying days reports n only.
+ * supplied (observed history). Baseline and every response session must align
+ * across both series. Overlapping response windows count once; fewer than 3
+ * qualifying, non-overlapping windows reports n only.
  */
 export function historicalEcho(
   source: EchoBar[],
@@ -828,22 +913,51 @@ export function historicalEcho(
   window = 3,
   threshold = 2,
 ): Echo {
-  const empty: Echo = { n: 0, agreement: null, median_move: null, window_days: window };
+  const empty: Echo = {
+    status: "INSUFFICIENT_HISTORY",
+    n: 0,
+    agreement: null,
+    median_move: null,
+    window_days: window,
+  };
+  if (
+    !validEchoSeries(source) ||
+    !validEchoSeries(target) ||
+    (sign !== 1 && sign !== -1) ||
+    !Number.isInteger(window) ||
+    window < 1 ||
+    !Number.isFinite(threshold) ||
+    threshold <= 0
+  )
+    return { ...empty, status: "INVALID_INPUT" };
   if (source.length < 30 || target.length < 30) return empty;
-  const sourceReturns = returnsByDay(source);
-  const sd = stdev([...sourceReturns.values()]);
-  if (!sd) return empty;
+  const sourceReturns = source.slice(1).map((bar, i) => bar.close / source[i]!.close - 1);
+  if (!sourceReturns.every(Number.isFinite)) return { ...empty, status: "INVALID_INPUT" };
+  const sd = stdev(sourceReturns);
+  if (!sd) return { ...empty, status: "INSUFFICIENT_EVENTS" };
   const index = new Map(target.map((bar, i) => [bar.time, i]));
   const moves: number[] = [];
-  for (const [time, r] of sourceReturns) {
+  let lastEnd = -1;
+  for (let s = 1; s + window - 1 < source.length; s++) {
+    const r = sourceReturns[s - 1]!;
+    if (s <= lastEnd) continue;
     if (Math.abs(r) < threshold * sd) continue;
-    const i = index.get(time);
+    const i = index.get(source[s]!.time);
     if (i == null || i < 1 || i + window - 1 >= target.length) continue;
+    if (
+      !source
+        .slice(s - 1, s + window)
+        .every((bar, offset) => target[i - 1 + offset]!.time === bar.time)
+    )
+      continue;
     const move = target[i + window - 1]!.close / target[i - 1]!.close - 1;
+    if (!Number.isFinite(move)) continue;
     moves.push(Math.sign(r) * sign * move);
+    lastEnd = s + window - 1;
   }
-  if (moves.length < 3) return { ...empty, n: moves.length };
+  if (moves.length < 3) return { ...empty, status: "INSUFFICIENT_EVENTS", n: moves.length };
   return {
+    status: "MEASURED",
     n: moves.length,
     agreement: round(moves.filter((m) => m > 0).length / moves.length, 3),
     median_move: median(moves),

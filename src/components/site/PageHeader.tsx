@@ -1,43 +1,33 @@
-import { Eyebrow } from "@/components/site/primitives";
-import { MarketField } from "@/components/visuals/MarketField";
+import { Eyebrow, GhostAction, PrimaryAction } from "./primitives";
 
 export function PageHeader({
   eyebrow,
   heading,
   body,
-  meta,
+  action,
+  secondary,
 }: {
   eyebrow: string;
   heading: string;
   body: string;
-  meta?: string[];
+  action: { label: string; to: string };
+  secondary?: { label: string; to: string };
 }) {
   return (
-    <header className="relative overflow-hidden border-b border-border pt-36 pb-20 md:pt-44 md:pb-28">
-      <MarketField className="absolute inset-0 opacity-45" density="reduced" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent, color-mix(in oklab, var(--background) 92%, transparent))",
-        }}
-      />
-      <div className="relative mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-12">
+    <header className="border-b border-border bg-surface pt-32 pb-14 md:pt-36 md:pb-20">
+      <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-12">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h1 className="display-hero mt-7 max-w-3xl">{heading}</h1>
-        <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          {body}
+        <h1 className="mt-6 max-w-4xl text-[clamp(2.25rem,4.5vw,4.25rem)] leading-[1.08] tracking-[-0.035em]">
+          {heading}
+        </h1>
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">{body}</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <PrimaryAction to={action.to}>{action.label}</PrimaryAction>
+          {secondary && <GhostAction to={secondary.to}>{secondary.label}</GhostAction>}
+        </div>
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Paper workspace · Virtual funds only · Provider-dependent market data
         </p>
-        {meta && (
-          <div className="mt-12 flex flex-wrap gap-x-10 gap-y-3 border-t border-border pt-6">
-            {meta.map((m) => (
-              <span key={m} className="label-tech">
-                {m}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </header>
   );

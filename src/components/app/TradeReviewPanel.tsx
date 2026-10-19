@@ -60,7 +60,8 @@ export function TradeReviewPanel() {
         <div>
           {entries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Write a journal entry above, then ask Quant AI to review it.
+              Create an entry in Decision plans, then return here for an optional AI review of the
+              process.
             </p>
           ) : (
             <>

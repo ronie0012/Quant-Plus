@@ -1,179 +1,83 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowDown } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, BookOpen, ScanLine, ShieldCheck } from "lucide-react";
 import { MarketField } from "@/components/visuals/MarketField";
-import { GhostAction, PrimaryAction } from "@/components/site/primitives";
-import { Magnetic } from "@/components/site/Magnetic";
-import { usePrefersReducedMotion, useScrollProgress } from "@/hooks/use-reveal";
-import { cn } from "@/lib/utils";
-
-const FIRST_LINE = ["Make", "market", "decisions"];
+import { Eyebrow, GhostAction, PrimaryAction } from "./primitives";
 
 export function Hero() {
-  const [step, setStep] = useState(0);
-  const { ref, progress } = useScrollProgress<HTMLDivElement>();
-  const reduced = usePrefersReducedMotion();
-  const spotlight = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const timers = [120, 320, 520, 1150, 1350, 1550].map((delay, i) =>
-      window.setTimeout(() => setStep(i + 1), delay),
-    );
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, []);
-
-  const expansion = Math.max(0, Math.min(1, (progress - 0.5) * 2.2));
-  // Content drifts up and fades as the hero scrolls away.
-  const exit = reduced ? 0 : Math.max(0, Math.min(1, (progress - 0.5) * 2.4));
-
-  const next = () => {
-    const target = ref.current?.nextElementSibling;
-    target?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  };
-
   return (
     <section
-      ref={ref}
       aria-labelledby="hero-title"
-      className="relative min-h-[100svh] w-full overflow-hidden"
-      onPointerMove={(event) => {
-        if (reduced || event.pointerType !== "mouse" || !spotlight.current) return;
-        const r = event.currentTarget.getBoundingClientRect();
-        spotlight.current.style.setProperty("--sx", `${event.clientX - r.left}px`);
-        spotlight.current.style.setProperty("--sy", `${event.clientY - r.top}px`);
-        spotlight.current.style.opacity = "1";
-      }}
-      onPointerLeave={() => {
-        if (spotlight.current) spotlight.current.style.opacity = "0";
-      }}
+      className="relative overflow-hidden border-b border-border pt-32 pb-16 md:pt-40 md:pb-24"
     >
-      <div className="absolute inset-0" aria-hidden="true">
-        <div
-          className={cn(
-            "absolute inset-0 transition-opacity duration-[1600ms]",
-            step >= 1 ? "opacity-100" : "opacity-0",
-          )}
-        >
-          <MarketField expansion={expansion} />
-        </div>
-        <div
-          ref={spotlight}
-          className="absolute inset-0 opacity-0 transition-opacity duration-700"
-          style={{
-            background:
-              "radial-gradient(420px circle at var(--sx, 50%) var(--sy, 50%), color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 65%)",
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-background" />
-        <div className="grid-lines absolute inset-0 opacity-[0.35] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_85%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-30">
+        <MarketField density="reduced" />
       </div>
-
-      <div
-        className="relative mx-auto flex min-h-[100svh] w-full max-w-[1400px] flex-col justify-end px-5 pb-16 sm:px-8 lg:px-12 lg:pb-24"
-        style={
-          exit
-            ? {
-                transform: `translate3d(0, ${(-exit * 70).toFixed(1)}px, 0)`,
-                opacity: 1 - exit * 0.9,
-              }
-            : undefined
-        }
-      >
-        <div className="max-w-3xl">
-          <p
-            className={cn(
-              "label-tech flex items-center gap-3 transition-all duration-1000",
-              step >= 3 ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-            )}
-          >
-            <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="pulse-ring absolute inset-0 rounded-full bg-primary" />
-              <span className="h-2 w-2 rounded-full bg-primary" />
-            </span>
-            Source-aware market intelligence
-          </p>
-
+      <div className="relative mx-auto grid w-full max-w-[1400px] items-center gap-12 px-5 sm:px-8 lg:grid-cols-[1.3fr_0.7fr] lg:gap-16 lg:px-12">
+        <div>
+          <Eyebrow>Indian equities · Personal research</Eyebrow>
           <h1
             id="hero-title"
-            className="display-hero mt-7"
-            aria-label="Make market decisions defensible."
+            className="mt-6 max-w-3xl text-[clamp(2.5rem,5.5vw,5rem)] leading-[1.06] tracking-[-0.04em]"
           >
-            <span aria-hidden="true" className="block overflow-hidden pb-2">
-              {FIRST_LINE.map((word, i) => (
-                <span
-                  key={word}
-                  className="word-rise mr-[0.22em]"
-                  style={{ ["--d" as string]: `${560 + i * 90}ms` }}
-                >
-                  {word}
-                </span>
-              ))}
-            </span>
-            <span aria-hidden="true" className="block overflow-hidden pb-2">
-              <span className="word-rise" style={{ ["--d" as string]: "860ms" }}>
-                <span className="text-signal">defensible</span>
-                <span className="text-primary">.</span>
-              </span>
-            </span>
+            Understand the market.{" "}
+            <span className="block text-primary-soft">Practise your decisions.</span>
           </h1>
-
-          <p
-            className={cn(
-              "mt-8 max-w-xl text-base leading-relaxed text-muted-foreground transition-all duration-1000 sm:text-lg",
-              step >= 4 ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-            )}
-          >
-            Quant Plus brings provider-aware market data, quantitative signals and AI research into
-            one decision workspace — with evidence, risk and uncertainty kept visible.
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Research Indian stocks, learn what moves them, and build discipline with paper trading —
+            in one personal workspace.
           </p>
-
-          <div
-            className={cn(
-              "mt-11 flex flex-wrap items-center gap-3 transition-all duration-1000",
-              step >= 5 ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-            )}
-          >
-            <Magnetic>
-              <PrimaryAction to="/auth" className="shadow-[0_18px_50px_-18px_var(--color-primary)]">
-                Enter the workspace
-              </PrimaryAction>
-            </Magnetic>
-            <GhostAction to="/platform">See the platform</GhostAction>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <PrimaryAction to="/app/dashboard">Open paper terminal</PrimaryAction>
+            <GhostAction to="/app/learn">Start learning</GhostAction>
           </div>
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+            Virtual funds only. Market data requires a connected provider.
+          </p>
         </div>
 
-        <div
-          className={cn(
-            "mt-16 flex flex-wrap items-end justify-between gap-6 border-t border-border pt-6 transition-opacity duration-1000",
-            step >= 6 ? "opacity-100" : "opacity-0",
-          )}
+        <aside
+          aria-label="Your first session"
+          className="border border-border-strong bg-panel p-6 sm:p-8"
         >
-          <div className="flex flex-wrap gap-x-10 gap-y-3">
+          <p className="label-tech text-primary-soft">Your first session</p>
+          <h2 className="mt-4 text-2xl leading-tight tracking-tight">
+            One idea. A clearer process.
+          </h2>
+          <ol className="mt-6 divide-y divide-border">
             {[
-              ["Data", "Provider-aware"],
-              ["Signals", "Quant context"],
-              ["Intelligence", "Traceable research"],
-            ].map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1.5">
-                <span className="label-tech">{k}</span>
-                <span className="font-mono text-xs text-subtle">{v}</span>
-              </div>
+              {
+                icon: BookOpen,
+                title: "Learn the basics",
+                body: "Build a foundation before taking a position.",
+              },
+              {
+                icon: ScanLine,
+                title: "Examine the evidence",
+                body: "Check the source, the thesis and the counter-case.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Practise with a plan",
+                body: "Set risk limits and review your paper decisions.",
+              },
+            ].map(({ icon: Icon, title, body }) => (
+              <li key={title} className="flex gap-4 py-5 first:pt-0 last:pb-0">
+                <Icon aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-primary-soft" />
+                <div>
+                  <h3 className="text-sm font-medium">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
+                </div>
+              </li>
             ))}
-          </div>
-          <button
-            type="button"
-            onClick={next}
-            className="group flex items-center gap-3 label-tech transition-colors hover:text-foreground"
+          </ol>
+          <Link
+            to="/platform"
+            className="mt-6 inline-flex min-h-11 items-center gap-3 text-sm text-primary-soft hover:text-foreground"
           >
-            Scroll to see the system
-            <span
-              aria-hidden="true"
-              className="relative flex h-9 w-5 justify-center overflow-hidden rounded-full border border-border-strong transition-colors group-hover:border-primary"
-            >
-              <span className="scroll-cue mt-1 h-2 w-px bg-primary" />
-            </span>
-            <ArrowDown aria-hidden="true" className="h-3.5 w-3.5 sm:hidden" />
-          </button>
-        </div>
+            See how the workspace fits together{" "}
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" />
+          </Link>
+        </aside>
       </div>
     </section>
   );

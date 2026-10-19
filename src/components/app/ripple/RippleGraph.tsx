@@ -76,11 +76,15 @@ export function RippleGraph({
 
   return (
     <svg
-      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      viewBox={`-16 -16 ${SIZE + 32} ${SIZE + 32}`}
       className="mx-auto block h-auto w-full max-w-[520px]"
-      role="img"
+      role="group"
       aria-label={`Ripple from ${originLabel}: ${impacts.length} connected companies`}
     >
+      <desc>
+        Inner to outer rings show first, second and third order effects. Company buttons select an
+        explanation. The affected-company list provides the same selection without using the graph.
+      </desc>
       {RINGS.slice(1, maxHop + 1).map((r) => (
         <circle
           key={r}
@@ -141,6 +145,7 @@ export function RippleGraph({
             key={node.id}
             role={waypoint ? undefined : "button"}
             tabIndex={waypoint ? undefined : 0}
+            aria-pressed={waypoint ? undefined : active}
             aria-label={
               waypoint
                 ? undefined
@@ -157,8 +162,17 @@ export function RippleGraph({
                     }
                   }
             }
-            className={cn(!waypoint && "cursor-pointer focus:outline-none")}
+            className={cn(!waypoint && "group cursor-pointer focus:outline-none")}
           >
+            {!waypoint && (
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={22}
+                className="fill-transparent stroke-transparent group-focus-visible:stroke-foreground"
+                strokeWidth={2}
+              />
+            )}
             <circle
               cx={node.x}
               cy={node.y}

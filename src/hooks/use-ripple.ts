@@ -2,15 +2,15 @@
  * Ripple Engine data: news-driven origins, the locked-call ledger and its
  * matured track record. Propagation itself is pure (src/lib/quant/ripple.ts).
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { nifty50, stockBySymbol } from "@/data/nifty50";
 import { useMarketNews } from "@/hooks/use-intelligence";
 import { useHistories } from "@/hooks/use-quant-data";
 import { useResearchItems, useSaveResearchItem } from "@/hooks/use-workspace-prefs";
 import {
-  detectOrigins,
   factorById,
   rippleCalls,
+  rippleNewsSnapshot,
   type RippleCall,
   type RippleImpact,
   type RippleOrigin,
@@ -30,15 +30,20 @@ export function rippleName(id: string) {
 /** Ripple origins detected in the latest market news. */
 export function useRippleOrigins() {
   const news = useMarketNews();
-  const origins = useMemo(
-    () => detectOrigins(news.data?.articles ?? [], UNIVERSE),
-    [news.data?.articles],
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    // Expire cached events even when a failed refresh leaves the data unchanged.
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const snapshot = useMemo(
+    () => rippleNewsSnapshot(news.data, UNIVERSE, Math.max(now, news.dataUpdatedAt), news.isError),
+    [news.data, news.dataUpdatedAt, news.isError, now],
   );
   return {
-    origins,
+    ...snapshot,
     loading: news.isLoading,
     error: news.error,
-    articles: news.data?.articles.length ?? 0,
     refetch: news.refetch,
   };
 }

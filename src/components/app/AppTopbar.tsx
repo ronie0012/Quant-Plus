@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Command, Crosshair, Menu, Search, ShieldCheck } from "lucide-react";
+import { Bell, Command, Menu, Search, SlidersHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTradingDesk } from "@/components/app/trading-desk-context";
@@ -16,43 +23,62 @@ function TopbarModeToggles() {
     {
       key: "focus_mode" as const,
       label: "Focus",
-      icon: Crosshair,
       on: workspace.focus_mode,
       title: "Focus mode hides non-essential panels (F)",
     },
     {
       key: "review_mode" as const,
       label: "Plan gate",
-      icon: ShieldCheck,
       on: workspace.review_mode,
       title: "Plan gate blocks new entries until a decision plan is complete (V)",
     },
   ];
 
   return (
-    <span className="hidden items-center gap-1 md:flex">
-      {toggles.map(({ key, label, icon: Icon, on, title }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
-          key={key}
           type="button"
-          title={title}
-          aria-pressed={on}
-          onClick={() => save.mutate({ [key]: !on })}
+          aria-label="Workspace options"
+          title="Workspace options"
           className={cn(
-            "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors",
-            on
-              ? "border-primary/60 bg-primary/10 text-primary-soft"
-              : "border-border text-muted-foreground hover:text-foreground",
+            "flex h-10 w-10 items-center justify-center rounded-md border border-border text-subtle hover:text-foreground",
+            workspace.focus_mode && "border-primary/50 text-primary-soft",
           )}
         >
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" /> {label}
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
         </button>
-      ))}
-    </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel>Workspace options</DropdownMenuLabel>
+        {toggles.map(({ key, label, on, title }) => (
+          <DropdownMenuCheckboxItem
+            key={key}
+            checked={on}
+            disabled={save.isPending}
+            onCheckedChange={(value) => save.mutate({ [key]: value })}
+            className="min-h-11 items-start"
+          >
+            <span>
+              <span className="block">
+                {label === "Plan gate" ? "Require a decision plan" : "Focus mode"}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-subtle">{title}</span>
+            </span>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
+export function AppTopbar({
+  onOpenMobile,
+  mobileOpen,
+}: {
+  onOpenMobile: () => void;
+  mobileOpen: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [now, setNow] = useState<Date | null>(null);
   const { openCommand, openTicket } = useTradingDesk();
@@ -73,14 +99,18 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
     <header className="vt-app-topbar sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-md sm:px-6 lg:px-8">
       <button
         type="button"
+        id="workspace-menu-trigger"
         onClick={onOpenMobile}
         aria-label="Open menu"
-        className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground lg:hidden"
+        aria-expanded={mobileOpen}
+        aria-controls="workspace-mobile-navigation"
+        aria-haspopup="dialog"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground lg:hidden"
       >
         <Menu className="h-4 w-4" />
       </button>
 
-      <div className="hidden min-w-0 items-center gap-2 text-[13px] sm:flex">
+      <div className="hidden min-w-0 shrink-0 items-center gap-2 text-[13px] md:flex">
         <span className="truncate font-medium text-foreground">{location.area}</span>
         {location.label !== location.area && (
           <>
@@ -95,7 +125,8 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
       <button
         type="button"
         onClick={openCommand}
-        className="ml-auto flex h-8 w-full max-w-[380px] items-center gap-2.5 rounded-md border border-border bg-panel/70 px-3 text-left transition-colors duration-200 hover:border-border-strong"
+        aria-label="Search symbols, pages and orders"
+        className="ml-auto flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border bg-panel/70 px-3 text-left transition-colors duration-200 hover:border-border-strong xl:max-w-[380px]"
       >
         <Search className="h-3.5 w-3.5 shrink-0 text-subtle" />
         <span className="w-full truncate text-[13px] text-subtle">
@@ -106,7 +137,7 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
         </kbd>
       </button>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <span
           title="Regular NSE hours in Asia/Kolkata. Holidays and special sessions may differ; stock pages show provider status."
           className={cn(
@@ -126,20 +157,23 @@ export function AppTopbar({ onOpenMobile }: { onOpenMobile: () => void }) {
           aria-label={`Notifications — ${triggered} triggered alerts`}
           title={`${triggered} triggered alerts`}
           onClick={() => void navigate({ to: "/app/$section", params: { section: "alerts" } })}
-          className="relative flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+          className="relative flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
         >
           <Bell className="h-3.5 w-3.5" />
           {triggered > 0 && (
             <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-negative" />
           )}
         </button>
-        <Button
-          size="sm"
-          onClick={() => openTicket()}
-          className="hidden h-8 rounded-md px-4 text-[13px] font-semibold sm:inline-flex"
-        >
-          Paper trade
-        </Button>
+        {(location.area === "Portfolio" || pathname.startsWith("/app/stocks/")) && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openTicket()}
+            className="hidden h-10 rounded-md px-4 text-[13px] font-medium sm:inline-flex"
+          >
+            Paper trade
+          </Button>
+        )}
       </div>
     </header>
   );

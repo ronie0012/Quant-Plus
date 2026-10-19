@@ -1,59 +1,50 @@
-import { Eyebrow, SectionShell } from "@/components/site/primitives";
-import { Reveal } from "@/components/site/Reveal";
-import { coverage } from "@/data/market";
-import { cn } from "@/lib/utils";
-
-/** Only a working capability is shown in the positive colour. */
-const STATUS_TONE: Record<string, string> = {
-  Local: "border-positive/40 text-positive",
-  "Connection required": "border-primary/40 text-primary-soft",
-  "Under evaluation": "border-warning/40 text-warning",
-  Unavailable: "border-border-strong text-subtle",
-};
+import { Disclosure } from "./Disclosure";
+import { Eyebrow, SectionShell } from "./primitives";
 
 export function Coverage() {
   return (
-    <SectionShell className="border-t border-border bg-surface">
-      <Reveal className="max-w-2xl">
-        <Eyebrow>System capabilities</Eyebrow>
-        <h2 className="display-section mt-7">
-          What the system
-          <span className="block text-muted-foreground">actually does.</span>
-        </h2>
-        <p className="mt-7 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          No performance claims, no invented statistics. Anything not yet live is marked clearly.
-        </p>
-      </Reveal>
-
-      <ul className="mt-16 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-        {coverage.map((item, i) => {
-          const soon = item.status === "Unavailable";
-          return (
-            <Reveal
-              as="li"
-              key={item.label}
-              delay={i * 60}
-              className="sheen group h-full bg-background p-5 transition-colors duration-500 hover:bg-panel sm:p-7"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <span className="label-tech">{item.label}</span>
-                <span
-                  className={cn(
-                    "border px-2 py-1 font-mono text-[9px] tracking-[0.16em] uppercase",
-                    STATUS_TONE[item.status] ?? "border-border-strong text-muted-foreground",
-                  )}
-                >
-                  {item.status}
-                </span>
-              </div>
-              <p className={cn("mt-8 font-mono text-lg tracking-tight", soon && "text-subtle")}>
-                {item.value}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.note}</p>
-            </Reveal>
-          );
-        })}
-      </ul>
+    <SectionShell
+      id="availability"
+      labelledBy="availability-title"
+      className="border-t border-border bg-surface"
+    >
+      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div>
+          <Eyebrow>Availability</Eyebrow>
+          <h2 id="availability-title" className="mt-5 text-3xl leading-tight tracking-tight">
+            Know what you are working with.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Paper trading uses virtual funds. Market observations require a connected provider;
+            missing quotes are not replaced with sample prices.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <Disclosure title="Market coverage and freshness">
+            <p>
+              Indian cash equities and NSE index context are the focus. Actual instrument coverage,
+              timestamps and delays depend on the provider and are shown in the terminal. A
+              closed-session snapshot is not a live quote.
+            </p>
+          </Disclosure>
+          <Disclosure title="Paper execution and risk controls">
+            <p>
+              The paper book records virtual deposits and simulated fills. An eligible quote and
+              server-side checks are required for execution. Paper outcomes do not reproduce
+              real-world liquidity or guarantee a real trading result. No real broker orders are
+              placed.
+            </p>
+          </Disclosure>
+          <Disclosure title="AI, options and replay limitations">
+            <p>
+              AI research is generated on request when its service is available. Its opinions are
+              not validated forecast probabilities. Observed contracts are required for options and
+              recorded sessions for replay; these tools remain unavailable when those inputs are
+              missing.
+            </p>
+          </Disclosure>
+        </div>
+      </div>
     </SectionShell>
   );
 }

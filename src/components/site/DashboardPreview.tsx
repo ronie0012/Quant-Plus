@@ -32,11 +32,11 @@ const panels = {
     kicker: "AI research",
     title: "Inspect the reasoning",
     description:
-      "Request research in the terminal and inspect its progress, evidence and uncertainty. Forecast quality remains under evaluation.",
+      "Request research when its service is available. Inspect the supplied evidence and uncertainty; research quality remains under evaluation.",
     rows: [
       ["Progress", "Visible while running", "positive"],
-      ["Evidence", "Traceable to sources", "default"],
-      ["Forecast quality", "Under evaluation", "warning"],
+      ["Evidence", "Review supplied sources", "default"],
+      ["Research quality", "Under evaluation", "warning"],
     ],
   },
 } as const;
@@ -76,11 +76,10 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">
         <div className="flex items-center gap-3">
           <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-            <span className="pulse-ring absolute inset-0 rounded-full bg-primary" />
             <span className="h-2.5 w-2.5 rounded-full bg-primary" />
           </span>
           <p className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-            Quant Plus workspace
+            Workspace preview
           </p>
         </div>
         <span className="inline-flex items-center gap-2 border border-border-strong px-3 py-1.5 font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
@@ -92,9 +91,9 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
       <div className="grid lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
         <div className="border-b border-border p-5 sm:p-7 lg:border-r lg:border-b-0">
           <p className="label-tech">Decision workspace</p>
-          <h3 className="mt-4 max-w-sm text-[clamp(1.45rem,3vw,2.45rem)] leading-[1.05] tracking-tight">
+          <p className="mt-4 max-w-sm text-[clamp(1.45rem,3vw,2.45rem)] leading-[1.1] tracking-tight">
             See what is known before you act.
-          </h3>
+          </p>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
             A clear surface for market context, paper execution and research that keeps evidence,
             data state and uncertainty visible.
@@ -144,7 +143,7 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
                   role="tab"
                   disabled={!hydrated}
                   aria-selected={selected}
-                  aria-controls={`${idPrefix}-panel-${name.toLowerCase()}`}
+                  aria-controls={`${idPrefix}-panel`}
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setTab(name)}
                   onKeyDown={(event) => {
@@ -167,7 +166,7 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
                     }
                   }}
                   className={cn(
-                    "min-h-11 shrink-0 border-b-2 px-3 font-mono text-[11px] tracking-[0.16em] uppercase transition-colors duration-200 focus-visible:outline-none",
+                    "min-h-11 shrink-0 border-b-2 px-3 font-mono text-[11px] tracking-[0.1em] uppercase transition-colors duration-200 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary-soft",
                     selected
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground",
@@ -180,7 +179,7 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
           </div>
 
           <div
-            id={`${idPrefix}-panel-${tab.toLowerCase()}`}
+            id={`${idPrefix}-panel`}
             role="tabpanel"
             aria-labelledby={`${idPrefix}-tab-${tab.toLowerCase()}`}
             tabIndex={0}
@@ -189,7 +188,7 @@ export function DashboardPreview({ stage = 7, className }: { stage?: number; cla
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="label-tech text-primary-soft">{activePanel.kicker}</p>
-                <h4 className="mt-3 text-xl tracking-tight sm:text-2xl">{activePanel.title}</h4>
+                <h3 className="mt-3 text-xl tracking-tight sm:text-2xl">{activePanel.title}</h3>
               </div>
               <ActiveIcon aria-hidden="true" className="h-5 w-5 shrink-0 text-primary-soft" />
             </div>

@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BookOpen,
   Compass,
   LayoutDashboard,
+  GraduationCap,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -47,35 +49,52 @@ export function AppSidebar({
   const hosted = session?.mode === "hosted";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const mobileRef = useRef<HTMLDivElement>(null);
-  // The mobile drawer takes focus when it opens.
+  const [signOutError, setSignOutError] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   useEffect(() => {
-    if (mobileOpen) mobileRef.current?.querySelector<HTMLElement>("nav a")?.focus();
-  }, [mobileOpen]);
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const resize = () => {
+      if (desktop.matches) onCloseMobile();
+    };
+    desktop.addEventListener("change", resize);
+    return () => desktop.removeEventListener("change", resize);
+  }, [onCloseMobile]);
 
   async function signOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    // Hosted sessions are revoked; the local profile has no credentials to revoke.
-    await signOutWorkspace();
-    void navigate({ to: "/", replace: true });
+    setSigningOut(true);
+    setSignOutError(false);
+    try {
+      await signOutWorkspace();
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      void navigate({ to: "/", replace: true });
+    } catch {
+      setSignOutError(true);
+    } finally {
+      setSigningOut(false);
+    }
   }
 
-  const nav = (
+  const nav = (compact: boolean, mobile = false) => (
     <nav
       aria-label="Primary areas"
       className={cn(
         "flex h-full flex-col border-r border-border bg-surface transition-[width] duration-300",
-        collapsed ? "w-[68px]" : "w-[232px]",
+        mobile ? "w-full" : compact ? "w-[76px]" : "w-[224px]",
       )}
     >
       <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
-        <Link to="/app/dashboard" className="group flex min-w-0 items-center gap-2.5">
+        <Link
+          to="/app/dashboard"
+          aria-label="Quant Plus home"
+          onClick={onCloseMobile}
+          className={cn("group min-h-11 min-w-0 items-center gap-2.5", compact ? "hidden" : "flex")}
+        >
           <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
             <span className="absolute inset-0 border border-primary/70" aria-hidden="true" />
             <span className="h-1 w-1 bg-primary transition-transform duration-500 group-hover:scale-150" />
           </span>
-          {!collapsed && (
+          {!compact && (
             <span className="truncate text-[15px] font-semibold tracking-tight">
               Quant<span className="text-primary-soft">+</span>
             </span>
@@ -84,10 +103,13 @@ export function AppSidebar({
         <button
           type="button"
           onClick={onToggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="ml-auto hidden h-7 w-7 items-center justify-center text-subtle transition-colors hover:text-foreground lg:flex"
+          aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "ml-auto h-9 w-9 shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-foreground",
+            mobile ? "hidden" : "hidden lg:flex",
+          )}
         >
-          {collapsed ? (
+          {compact ? (
             <PanelLeftOpen className="h-3.5 w-3.5" />
           ) : (
             <PanelLeftClose className="h-3.5 w-3.5" />
@@ -97,7 +119,10 @@ export function AppSidebar({
           type="button"
           onClick={onCloseMobile}
           aria-label="Close menu"
-          className="ml-auto flex h-7 w-7 items-center justify-center text-subtle lg:hidden"
+          className={cn(
+            "ml-auto h-11 w-11 items-center justify-center rounded-md text-subtle hover:bg-panel hover:text-foreground",
+            mobile ? "flex" : "hidden",
+          )}
         >
           <X className="h-4 w-4" />
         </button>
@@ -118,13 +143,19 @@ export function AppSidebar({
               <li key={route.section}>
                 <Link
                   {...linkProps}
-                  aria-current={active ? "page" : undefined}
-                  aria-label={collapsed ? route.label : undefined}
+                  aria-current={
+                    active
+                      ? location.route?.section === route.section
+                        ? "page"
+                        : "location"
+                      : undefined
+                  }
+                  aria-label={compact ? route.label : undefined}
                   onClick={onCloseMobile}
-                  title={collapsed ? route.label : undefined}
+                  title={compact ? route.label : undefined}
                   className={cn(
-                    "group relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors duration-150",
-                    collapsed && "justify-center px-0",
+                    "group relative flex min-h-11 items-center gap-2.5 rounded-md px-3 text-[13px] transition-colors duration-150",
+                    compact && "justify-center px-0",
                     active
                       ? "bg-primary/12 font-medium text-foreground"
                       : "text-muted-foreground hover:bg-panel hover:text-foreground",
@@ -143,20 +174,45 @@ export function AppSidebar({
                       active ? "text-primary-soft" : "text-subtle group-hover:text-foreground",
                     )}
                   />
-                  {!collapsed && <span className="truncate">{route.label}</span>}
+                  {!compact && <span className="truncate">{route.label}</span>}
                 </Link>
               </li>
             );
           })}
         </ul>
+        <div className="mt-6 border-t border-border pt-4">
+          <Link
+            to="/app/$section"
+            params={{ section: "learn" }}
+            onClick={onCloseMobile}
+            aria-label={compact ? "Learn & practise" : undefined}
+            aria-current={location.area === "Learn" ? "location" : undefined}
+            title={compact ? "Learn & practise" : undefined}
+            className={cn(
+              "flex min-h-11 items-center gap-2.5 rounded-md px-3 text-sm transition-colors",
+              compact && "justify-center px-0",
+              location.area === "Learn"
+                ? "bg-primary/10 text-primary-soft"
+                : "text-muted-foreground hover:bg-panel hover:text-foreground",
+            )}
+          >
+            <GraduationCap aria-hidden="true" className="h-4 w-4 shrink-0" />
+            {!compact && <span>Learn & practise</span>}
+          </Link>
+          {!compact && (
+            <p className="px-3 pt-2 text-xs leading-relaxed text-subtle">
+              Build confidence before making a paper decision.
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="border-t border-border p-3">
-        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+        <div className={cn("flex items-center gap-3", compact && "justify-center")}>
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[12px] font-semibold text-primary-soft">
             {displayNameFrom(session).slice(0, 1).toUpperCase()}
           </span>
-          {!collapsed && (
+          {!compact && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-medium">{displayNameFrom(session)}</p>
               <p className="truncate text-[12px] text-subtle">
@@ -164,26 +220,33 @@ export function AppSidebar({
               </p>
             </div>
           )}
-          {!collapsed && (
+          {!compact && (
             <button
               type="button"
               onClick={signOut}
+              disabled={signingOut}
               aria-label={hosted ? "Sign out" : "Leave local terminal"}
-              className="text-subtle transition-colors hover:text-negative"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-negative disabled:opacity-50"
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
-        {collapsed && (
+        {compact && (
           <button
             type="button"
             onClick={signOut}
+            disabled={signingOut}
             aria-label={hosted ? "Sign out" : "Leave local terminal"}
-            className="mt-3 flex w-full justify-center text-subtle transition-colors hover:text-negative"
+            className="mt-3 flex min-h-11 w-full items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-negative disabled:opacity-50"
           >
             <LogOut className="h-3.5 w-3.5" />
           </button>
+        )}
+        {signOutError && (
+          <p role="alert" className="mt-2 text-xs text-negative">
+            Sign out failed. Please retry.
+          </p>
         )}
       </div>
     </nav>
@@ -191,35 +254,33 @@ export function AppSidebar({
 
   return (
     <>
-      <div className="vt-app-sidebar sticky top-0 hidden h-screen shrink-0 lg:block">{nav}</div>
-
-      <div
-        ref={mobileRef}
-        inert={!mobileOpen}
-        aria-hidden={!mobileOpen}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onCloseMobile();
-        }}
-        className={cn(
-          "fixed inset-0 z-50 transition-opacity duration-300 lg:hidden",
-          mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={onCloseMobile}
-          className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        />
-        <div
-          className={cn(
-            "absolute inset-y-0 left-0 transition-transform duration-500",
-            mobileOpen ? "translate-x-0" : "-translate-x-full",
-          )}
-        >
-          {nav}
-        </div>
+      <div className="vt-app-sidebar sticky top-0 hidden h-dvh shrink-0 lg:block">
+        {nav(collapsed)}
       </div>
+      <DialogPrimitive.Root
+        open={mobileOpen}
+        onOpenChange={(open) => {
+          if (!open) onCloseMobile();
+        }}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" />
+          <DialogPrimitive.Content
+            id="workspace-mobile-navigation"
+            className="fixed inset-y-0 left-0 z-50 w-[min(300px,calc(100vw-3rem))] outline-none"
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              document.getElementById("workspace-menu-trigger")?.focus();
+            }}
+          >
+            <DialogPrimitive.Title className="sr-only">Workspace navigation</DialogPrimitive.Title>
+            <DialogPrimitive.Description className="sr-only">
+              Choose an area or continue learning.
+            </DialogPrimitive.Description>
+            {nav(false, true)}
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </>
   );
 }

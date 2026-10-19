@@ -1,0 +1,248 @@
+"""Frozen upstream stream methods (2026-10-19), isolated from app/auth imports.
+
+Only the relevant LiveMarket surface is retained. Tests apply the SAME portable
+installer patch to this source, then execute it with fake FYERS/SDK transports.
+The fallback tripwire makes accidental per-symbol fanout immediately visible.
+"""
+from __future__ import annotations
+
+import asyncio
+import math
+import threading
+import time
+from datetime import datetime, timedelta, timezone
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def number(value):
+    try:
+        result = float(value)
+        return result if math.isfinite(result) else None
+    except (TypeError, ValueError):
+        return None
+
+
+def quote_payload(symbol, price, previous, timestamp, source, **fields):
+    price, previous = number(price), number(previous)
+    timestamp = number(timestamp)
+    if not price or price <= 0 or not timestamp:
+        raise ValueError("Provider returned no valid timestamped quote")
+    now = datetime.now(timezone.utc)
+    local = now.astimezone(IST)
+    in_session = local.weekday() < 5 and (9, 15) <= (local.hour, local.minute) < (15, 30)
+    return {"symbol": symbol, "price": price,
+            "previous_close": previous,
+            "change": price - previous if previous else None,
+            "change_pct": (price / previous - 1) * 100 if previous else None,
+            "source": source, "delayed": source == "yahoo",
+            "as_of": datetime.fromtimestamp(timestamp, timezone.utc).isoformat(),
+            "received_at": now.isoformat(),
+            "stale": now.timestamp() - timestamp > 60,
+            "market_session": "open" if in_session else "closed",
+            **{k: number(v) for k, v in fields.items()}}
+
+
+class LiveMarket:
+    def __init__(self):
+        self.listeners = {}
+        self.tasks = {}
+        self.quotes = {}
+        self.fyers_quotes = {}
+        self.last_fyers = {}
+        self.history_cache = {}
+        self.history_locks = {}
+        self.socket = None
+        self.connected = False
+        self.loop = None
+        self.client = None
+        self._socket_attempt = 0.0
+        self.socket_lock = asyncio.Lock()
+        self.socket_close_lock = asyncio.Lock()
+        self._socket_token = ""
+        self.bootstrap_tokens = {}
+        self.snapshot_attempts = {}
+        self.depth_raw = {}
+        self.deep_symbols = set()
+        self.depth_received = {}
+        self.yahoo_slots = asyncio.Semaphore(4)
+
+    def _publish(self, symbol, payload):
+        self.quotes[symbol] = payload
+        for queue in self.listeners.get(symbol, set()):
+            if queue.full():
+                queue.get_nowait()
+            queue.put_nowait(payload)
+
+    def _tick(self, message):
+        if not isinstance(message, dict) or not message.get("symbol", "").startswith("NSE:"):
+            return
+        symbol = message["symbol"][4:].removesuffix("-EQ")
+        if symbol not in self.listeners:
+            return
+        if message.get("type") == "dp" or "bid_price1" in message:
+            self.depth_raw.setdefault(symbol, {}).update(message)
+            self.depth_received[symbol] = datetime.now(timezone.utc).isoformat()
+            previous = self.fyers_quotes.get(symbol)
+            if previous:
+                payload = {**previous, **self._depth_fields(symbol),
+                           "depth_as_of": datetime.now(timezone.utc).isoformat()}
+                self.fyers_quotes[symbol] = payload
+                self._publish(symbol, payload)
+            return
+        # SymbolUpdate may contain partial fields; merge with the previous tick.
+        previous = self.fyers_quotes.get(symbol, {})
+        try:
+            payload = quote_payload(symbol, message.get("ltp", previous.get("price")),
+                message.get("prev_close_price", previous.get("previous_close")),
+                message.get("last_traded_time") or (
+                    datetime.fromisoformat(previous["as_of"]).timestamp() if previous.get("as_of") else None),
+                "fyers", open=message.get("open_price", previous.get("open")),
+                high=message.get("high_price", previous.get("high")),
+                low=message.get("low_price", previous.get("low")),
+                volume=message.get("vol_traded_today", previous.get("volume")),
+                average_price=message.get("avg_trade_price", previous.get("average_price")),
+                bid=message.get("bid_price", previous.get("bid")),
+                ask=message.get("ask_price", previous.get("ask")),
+                bid_quantity=message.get("bid_size", previous.get("bid_quantity")),
+                ask_quantity=message.get("ask_size", previous.get("ask_quantity")),
+                last_quantity=message.get("last_traded_qty", previous.get("last_quantity")),
+                total_buy_quantity=message.get("tot_buy_qty", previous.get("total_buy_quantity")),
+                total_sell_quantity=message.get("tot_sell_qty", previous.get("total_sell_quantity")),
+                lower_circuit=message.get("lower_ckt", previous.get("lower_circuit")),
+                upper_circuit=message.get("upper_ckt", previous.get("upper_circuit")),
+                open_interest=message.get("oi", previous.get("open_interest")))
+        except (ValueError, OverflowError, OSError):
+            return
+        self.connected = True
+        self.last_fyers[symbol] = time.monotonic()
+        for key in ("lower_circuit", "upper_circuit"):
+            if not payload.get(key) and previous.get(key):
+                payload[key] = previous[key]
+        payload.update({key: previous[key] for key in ("depth_as_of",) if key in previous})
+        if symbol in self.depth_received:
+            payload["depth_as_of"] = self.depth_received[symbol]
+        payload.update(self._depth_fields(symbol))
+        if previous.get("market_session"):
+            payload["market_session"] = previous["market_session"]
+        self.fyers_quotes[symbol] = payload
+        self._publish(symbol, payload)
+
+    def _start_socket(self):
+        token = fyers.token()
+        if not token or self.socket or time.monotonic() - self._socket_attempt < 60:
+            return
+        self._socket_attempt = time.monotonic()
+        try:
+            from fyers_apiv3.FyersWebsocket import data_ws
+
+            def opened():
+                self.loop.call_soon_threadsafe(self._on_open)
+
+            def closed(*_):
+                self.loop.call_soon_threadsafe(setattr, self, "connected", False)
+
+            def received(message):
+                self.loop.call_soon_threadsafe(self._tick, message)
+
+            self.socket = data_ws.FyersDataSocket(
+                access_token=token, log_path="", litemode=False,
+                write_to_file=False, reconnect=True, on_connect=opened,
+                on_message=received, on_error=closed, on_close=closed)
+            threading.Thread(target=self.socket.connect, daemon=True, name="fyers-display-feed").start()
+            self._socket_token = token
+        except Exception:
+            self.socket = None
+
+    def _on_open(self):
+        self.connected = True
+        if self.listeners:
+            asyncio.create_task(self._subscription(list(self.listeners), True))
+
+    async def _subscription(self, symbols, subscribe):
+        async with self.socket_lock:
+            if self.socket and self.connected:
+                method = self.socket.subscribe if subscribe else self.socket.unsubscribe
+                await asyncio.to_thread(method, symbols=[f"NSE:{s}-EQ" for s in symbols], data_type="SymbolUpdate")
+                depth_symbols = [s for s in symbols if s in self.deep_symbols]
+                if depth_symbols:
+                    await asyncio.to_thread(method, symbols=[f"NSE:{s}-EQ" for s in depth_symbols], data_type="DepthUpdate")
+
+    def _depth_fields(self, symbol):
+        raw = self.depth_raw.get(symbol, {})
+        levels = []
+        for i in range(1, 6):
+            level = {"bid": number(raw.get(f"bid_price{i}")), "ask": number(raw.get(f"ask_price{i}")),
+                     "bid_quantity": number(raw.get(f"bid_size{i}")), "ask_quantity": number(raw.get(f"ask_size{i}")),
+                     "bid_orders": number(raw.get(f"bid_order{i}")), "ask_orders": number(raw.get(f"ask_order{i}"))}
+            if (level["bid"] or 0) > 0 or (level["ask"] or 0) > 0:
+                levels.append(level)
+        return {"depth": levels, "depth_source": "fyers" if levels else None,
+                "depth_status": "available" if levels else "unavailable"}
+
+    async def refresh_fyers_connection(self):
+        async with self.socket_close_lock:
+            if self.socket:
+                await asyncio.to_thread(self.socket.close_connection)
+            self.socket = None
+            self.connected = False
+            self._socket_token = ""
+            self._socket_attempt = 0
+            self.bootstrap_tokens.clear()
+            self.snapshot_attempts.clear()
+            self.fyers_quotes.clear()
+            self.last_fyers.clear()
+            self.depth_raw.clear()
+            self.depth_received.clear()
+            self.history_cache.clear()
+            if self.listeners:
+                self._start_socket()
+
+    async def _fallback(self, symbol):
+        token = fyers.token()
+        if self.socket and token != self._socket_token:
+            await self.refresh_fyers_connection()
+        raise AssertionError("Sentiment must never start a Yahoo fallback task")
+
+    async def subscribe(self, symbol, queue=None):
+        self.loop = asyncio.get_running_loop()
+        queue = queue if queue is not None else asyncio.Queue(maxsize=1)
+        first = symbol not in self.listeners
+        deep = symbol in self.deep_symbols
+        self.deep_symbols.add(symbol)
+        self.listeners.setdefault(symbol, set()).add(queue)
+        self._start_socket()
+        if first:
+            if self.connected:
+                await self._subscription([symbol], True)
+            self.tasks[symbol] = asyncio.create_task(self._fallback(symbol))
+        elif not deep:
+            # A stock page joined an existing board quote subscription.
+            self.bootstrap_tokens.pop(symbol, None)
+            self.snapshot_attempts.pop(symbol, None)
+            if self.connected:
+                await self._subscription([symbol], True)
+            task = self.tasks.pop(symbol, None)
+            if task:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            self.tasks[symbol] = asyncio.create_task(self._fallback(symbol))
+        if symbol in self.quotes:
+            self._publish(symbol, self.quotes[symbol])
+        return queue
+
+    async def unsubscribe(self, symbol, queue):
+        listeners = self.listeners.get(symbol, set())
+        listeners.discard(queue)
+        if not listeners:
+            self.listeners.pop(symbol, None)
+            task = self.tasks.pop(symbol, None)
+            if task:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            if self.connected:
+                await self._subscription([symbol], False)
+            self.deep_symbols.discard(symbol)
+
+    async def subscribe_many(self, *args, **kwargs):
+        raise AssertionError("Sentiment must never call subscribe_many")

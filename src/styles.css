@@ -29,6 +29,7 @@
   --color-popover: var(--panel-elevated);
   --color-popover-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-action: var(--primary-action);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--panel);
@@ -64,7 +65,7 @@
 }
 
 :root {
-  --radius: 0.25rem;
+  --radius: 0.5rem;
 
   /* #05070C */
   --background: oklch(0.129 0.014 265);
@@ -83,6 +84,8 @@
   --muted: oklch(0.213 0.024 265);
   /* #2E7DFF */
   --primary: oklch(0.611 0.204 262);
+  /* Filled actions need a darker blue for readable white labels. */
+  --primary-action: oklch(0.54 0.19 262);
   --primary-foreground: oklch(0.985 0.002 265);
   /* #6EA8FF */
   --primary-soft: oklch(0.735 0.135 263);
@@ -146,6 +149,23 @@
 .compact-mode [data-density-row] {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+}
+
+/* Readable terminal captions and consistent touch controls without changing the brand. */
+.app-ui :is(.text-\[10px\], .text-\[10\.5px\], .text-\[11px\]) {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.app-ui :where(p, li, dd, h1, h2, h3) {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 639px) {
+  .app-ui :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
+    font-size: 1rem;
+  }
+  .app-ui :is(button:not([role="switch"]), summary) {
+    min-height: 2.75rem;
+  }
 }
 
 .dark {

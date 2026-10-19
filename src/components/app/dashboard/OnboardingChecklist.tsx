@@ -3,31 +3,37 @@ import { Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { Card } from "@/components/app/cards";
 import { useAccount } from "@/hooks/use-dashboard-data";
-import { useJournal, usePriceAlerts } from "@/hooks/use-trading-product";
+import { useJournal } from "@/hooks/use-trading-product";
+import { useInvestorDna, useLearning } from "@/hooks/use-learning";
 import { cn } from "@/lib/utils";
 
 const KEY = "qp-onboarding-dismissed";
 
-/** First-session guide: fund wallet → make a paper decision → first alert → review. */
+/** Optional first-session path: understand risk → learn → plan → reflect. */
 export function OnboardingChecklist() {
   const { data: account } = useAccount();
-  const { data: alerts } = usePriceAlerts();
+  const dna = useInvestorDna();
+  const { learning } = useLearning();
   const { data: journal } = useJournal();
   const [dismissed, setDismissed] = useState(true);
   useEffect(() => setDismissed(localStorage.getItem(KEY) === "1"), []);
 
   const steps = [
     {
-      label: "Fund your wallet",
-      done: Number(account?.wallet_balance ?? 0) > 0 || Boolean(account?.onboarded),
-      to: "/app/wallet",
+      label: "Understand your risk profile",
+      done: dna.complete,
+      to: "/app/investor-dna",
+    },
+    {
+      label: "Try a learning activity",
+      done: Boolean(learning.company_completed_at) || (learning.checks_answered ?? 0) > 0,
+      to: "/app/learn",
     },
     {
       label: "Make a paper decision (or watch only)",
       done: (journal ?? []).some((entry) => Boolean(entry.plan)),
       to: "/app/journal",
     },
-    { label: "Set a price alert", done: (alerts ?? []).length > 0, to: "/app/alerts" },
     {
       label: "Review the decision",
       done: (journal ?? []).some((entry) => Boolean(entry.reflection)),
@@ -44,7 +50,11 @@ export function OnboardingChecklist() {
           <p className="font-medium text-[11px] uppercase tracking-[0.06em] text-primary-soft">
             Getting started · {count}/{steps.length}
           </p>
-          <h2 className="mt-1 text-lg">Your first session in four steps</h2>
+          <h2 className="mt-1 text-lg">A starting point, at your pace</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Learn and plan without funding a wallet. Add virtual funds only when you choose to
+            practise a paper order.
+          </p>
         </div>
         <button
           type="button"
@@ -53,7 +63,7 @@ export function OnboardingChecklist() {
             localStorage.setItem(KEY, "1");
             setDismissed(true);
           }}
-          className="text-subtle hover:text-foreground"
+          className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-md text-subtle hover:bg-panel hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </button>

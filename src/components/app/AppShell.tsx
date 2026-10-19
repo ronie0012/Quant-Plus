@@ -9,6 +9,9 @@ import { TradingDeskProvider } from "@/components/app/TradingDesk";
 import { OnboardingFlow } from "@/components/app/learn/OnboardingFlow";
 import { TradingMonitor } from "@/components/app/TradingMonitor";
 import { ConnectionStatus } from "@/components/app/ConnectionStatus";
+import { WorkspaceNavigation } from "@/components/app/WorkspaceNavigation";
+import { workspaceLocationForPathname } from "@/components/app/workspace-routes";
+import { safeWorkspaceReturn } from "@/lib/workspace-return";
 import { cn } from "@/lib/utils";
 import { useTradingPreferences } from "@/hooks/use-trading-product";
 import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
@@ -52,7 +55,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           if (!active || session) return;
           void client.cancelQueries();
           client.clear();
-          void navigate({ to: "/auth", replace: true });
+          void navigate({
+            to: "/auth",
+            search: {
+              redirect: safeWorkspaceReturn(window.location.pathname + window.location.search),
+            },
+            replace: true,
+          });
         })
         .catch(() => {
           /* transient auth failures do not erase the workspace */
@@ -91,21 +100,25 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <AppTopbar onOpenMobile={() => setMobileOpen(true)} />
+            <AppTopbar onOpenMobile={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
             <main
               id="main-content"
               tabIndex={-1}
-              className="min-w-0 flex-1 px-4 pt-5 pb-24 outline-none sm:px-6 lg:px-8"
+              className="min-w-0 flex-1 px-4 pt-4 pb-28 outline-none sm:px-6 sm:pt-5 lg:px-8"
             >
               <div className="mx-auto w-full max-w-[1560px]">
-                <ConnectionStatus />
+                {!["Learn", "More"].includes(workspaceLocationForPathname(pathname).area) && (
+                  <ConnectionStatus />
+                )}
+                <WorkspaceNavigation />
                 {children}
               </div>
             </main>
           </div>
         </div>
 
-        {pathname !== "/app/quant-ai" && !workspace.focus_mode && <QuantAIDock />}
+        {!["Learn", "More"].includes(workspaceLocationForPathname(pathname).area) &&
+          !workspace.focus_mode && <QuantAIDock />}
         <ServiceWorkerRegistrar />
         <BandwidthPolicy />
         <OfflineSnapshot />

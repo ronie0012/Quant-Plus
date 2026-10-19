@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("public product overview switches tabs without fabricated prices", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/platform");
   await page.waitForLoadState("networkidle").catch(() => undefined);
   const overview = page.getByRole("tablist", { name: "Workspace overview" }).first();
   await expect(page.locator('[data-dashboard-hydrated="true"]').first()).toBeVisible();
@@ -17,7 +17,7 @@ test("public product overview switches tabs without fabricated prices", async ({
     "true",
   );
   await expect(
-    page.getByText("Market observations require a connected provider.", { exact: false }).first(),
+    page.getByRole("tabpanel").getByText("Provider required", { exact: false }).first(),
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -28,28 +28,27 @@ test("landing page stays usable on a narrow viewport", async ({ page }) => {
   await page.waitForLoadState("networkidle").catch(() => undefined);
 
   await expect(
-    page.getByRole("heading", { name: "Make market decisions defensible." }),
+    page.getByRole("heading", { name: "Understand the market. Practise your decisions." }),
   ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
 
-  const principlesToggle = page.getByRole("button", { name: "Pause moving principles" });
-  await principlesToggle.click();
-  await expect(page.getByRole("button", { name: "Resume moving principles" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(
+    page
+      .getByRole("navigation", { name: "Footer workspace" })
+      .getByRole("link", { name: "Start learning", exact: true }),
+  ).toHaveAttribute("href", "/app/learn");
 
   const menuToggle = page.getByRole("button", { name: "Open menu" });
   await menuToggle.focus();
   await menuToggle.press("Enter");
-  const menu = page.getByRole("dialog", { name: "Mobile navigation" });
+  const menu = page.getByRole("dialog", { name: "Explore Quant Plus" });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("link", { name: /Markets/ })).toBeFocused();
+  await expect(menu.getByRole("button", { name: "Close menu" })).toBeFocused();
 
   await page.keyboard.press("Shift+Tab");
-  await expect(menu.getByRole("link", { name: "Log in" })).toBeFocused();
+  await expect(menu.getByRole("link", { name: "Open paper terminal", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(menuToggle).toBeFocused();
 });

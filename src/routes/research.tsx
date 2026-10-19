@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ResearchSection } from "@/components/site/ResearchSection";
-import { SignalEngine } from "@/components/site/SignalEngine";
-import { Philosophy } from "@/components/site/Philosophy";
 import { CallToAction } from "@/components/site/CallToAction";
 import { PageHeader } from "@/components/site/PageHeader";
 
 const title = "Research — Quant Plus";
 const description =
-  "Structured market research desks covering daily briefs, sector rotation, volatility regimes, macro conditions and earnings intelligence.";
+  "Build a reviewable Indian-equity thesis: check observations, compare the counter-case and record a paper decision. Research and model limitations stay visible.";
 
 export const Route = createFileRoute("/research")({
   head: () => ({
@@ -29,14 +27,17 @@ function ResearchPage() {
     <>
       <PageHeader
         eyebrow="Research"
-        heading="Research that states its limits."
-        body="Six desks, each answering a single question with the data behind it — and an explicit note on what the data does not support."
-        meta={["6 desks", "Daily · Weekly · On demand", "No performance claims"]}
+        heading="Build a view you can revisit."
+        body="Keep observations, interpretations and decisions distinct. Research an Indian company, challenge your assumptions, and record what would change your mind."
+        action={{ label: "Open paper terminal", to: "/app/dashboard" }}
+        secondary={{ label: "Start learning", to: "/app/learn" }}
       />
       <ResearchSection />
-      <SignalEngine />
-      <Philosophy />
-      <CallToAction />
+      <CallToAction
+        heading="Use AI to question the thesis, too."
+        body="Ask for explanations and alternative views, then verify the supplied evidence before making your own paper decision."
+        secondary={{ label: "Meet the AI analyst", to: "/ai" }}
+      />
     </>
   );
 }

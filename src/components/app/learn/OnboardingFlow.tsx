@@ -1,58 +1,152 @@
-import { useEffect, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, Coffee, GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
-import { WalletGate } from "@/components/app/WalletGate";
+import { Button } from "@/components/ui/button";
 import { Questionnaire } from "@/components/app/learn/InvestorDnaPage";
 import { useAccount } from "@/hooks/use-dashboard-data";
 import { useInvestorDna, useLearning } from "@/hooks/use-learning";
 import { PRACTICE_NOTES, RISK_LABELS } from "@/lib/learn/investor-dna";
 import { cn } from "@/lib/utils";
 
-const STEPS = 3;
+const STEPS = 2;
+const DISMISSED_KEY = "quant-plus:welcome-dismissed";
 
 /**
  * First-run flow for a new account, in order:
  *   1. Investor DNA ("Tell us about you")
- *   2. Fund the practice wallet
- *   3. Your learning path
- * Existing accounts (already funded) are never interrupted; they reach the
- * same pages from Home and More.
+ *   2. Choose a learning activity. Wallet funding remains optional.
+ * Learn's "Getting started" action recovers this flow, including a tab-local draft.
  */
 export function OnboardingFlow() {
   const account = useAccount();
   const dna = useInvestorDna();
   const { learning, loading, setOnboarding } = useLearning();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [dismissed, setDismissed] = useState(true);
+  const [resumed, setResumed] = useState(false);
+  const [path, setPath] = useState(false);
+  useEffect(() => {
+    try {
+      setDismissed(sessionStorage.getItem(DISMISSED_KEY) === "true");
+    } catch {
+      setDismissed(false);
+    }
+    const resume = () => {
+      setDismissed(false);
+      setResumed(true);
+      setPath(false);
+    };
+    window.addEventListener("quant-plus:resume-onboarding", resume);
+    return () => window.removeEventListener("quant-plus:resume-onboarding", resume);
+  }, []);
+  const dismiss = () => {
+    setDismissed(true);
+    setResumed(false);
+    try {
+      sessionStorage.setItem(DISMISSED_KEY, "true");
+    } catch {
+      /* Optional tab preference. */
+    }
+  };
   if (account.isLoading || !account.data || dna.loading || loading) return null;
+  // A direct lesson link is already an intentional starting point.
+  if (!resumed && /^\/app\/(investor-dna|be-the-company|tutor)\/?$/.test(pathname)) return null;
 
   const newAccount = !account.data.onboarded;
-  if (newAccount && !dna.complete && learning.onboarding == null)
-    return <AboutYouStep dna={dna} onDone={() => void setOnboarding("WELCOME")} />;
-  if (newAccount) return <WalletGate step={{ current: 2, total: STEPS }} />;
-  if (learning.onboarding === "WELCOME")
-    return <LearningPathStep dna={dna} onDone={() => void setOnboarding("DONE")} />;
+  if (dismissed || (!resumed && learning.onboarding === "DONE")) return null;
+  const eligible =
+    resumed || (newAccount && learning.onboarding == null) || learning.onboarding === "WELCOME";
+  if (!eligible) return null;
+  if (!dna.complete && !path && learning.onboarding !== "WELCOME")
+    return (
+      <AboutYouStep
+        dna={dna}
+        onDismiss={dismiss}
+        onDone={async () => {
+          await setOnboarding("WELCOME");
+          setPath(true);
+        }}
+      />
+    );
+  if (eligible)
+    return (
+      <LearningPathStep
+        dna={dna}
+        onDismiss={dismiss}
+        onDone={() => {
+          dismiss();
+          void setOnboarding("DONE").catch(() => {
+            /* Tab dismissal still permits recovery. */
+          });
+        }}
+      />
+    );
   return null;
 }
 
-function Overlay({ labelledBy, children }: { labelledBy: string; children: ReactNode }) {
+function Overlay({
+  labelledBy,
+  onDismiss,
+  children,
+}: {
+  labelledBy: string;
+  onDismiss: () => void;
+  children: ReactNode;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const previous = document.body.style.overflow;
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const element = dialog.current;
+    element?.showModal();
     document.body.style.overflow = "hidden";
     return () => {
+      element?.close();
       document.body.style.overflow = previous;
+      previousFocus?.focus();
     };
   }, []);
   return (
-    <div className="fixed inset-0 z-[90] overflow-y-auto px-4 py-8">
-      <div aria-hidden="true" className="fixed inset-0 bg-background/85 backdrop-blur-md" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={labelledBy}
-        className="dash-rise relative mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center"
-      >
-        {children}
+    <dialog
+      ref={dialog}
+      aria-modal="true"
+      aria-labelledby={labelledBy}
+      aria-describedby="welcome-recovery"
+      onCancel={(event) => {
+        event.preventDefault();
+        onDismiss();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        const controls = Array.from(
+          event.currentTarget.querySelectorAll<HTMLElement>(
+            'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((element) => !element.matches(":disabled") && element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-xl border border-border bg-panel p-4 text-foreground shadow-2xl backdrop:bg-background/85 backdrop:backdrop-blur-md sm:p-6"
+    >
+      <div className="mb-3 flex justify-end">
+        <Button type="button" variant="ghost" className="min-h-11" onClick={onDismiss}>
+          Close welcome
+        </Button>
       </div>
-    </div>
+      {children}
+      <p id="welcome-recovery" className="mt-4 text-xs leading-relaxed text-muted-foreground">
+        Come back through Learning → Getting started. Your unfinished answers stay in this browser
+        tab. No wallet funding or trades are required.
+      </p>
+    </dialog>
   );
 }
 
@@ -91,31 +185,42 @@ function StepHeader({
 function AboutYouStep({
   dna,
   onDone,
+  onDismiss,
 }: {
   dna: ReturnType<typeof useInvestorDna>;
-  onDone: () => void;
+  onDone: () => Promise<void>;
+  onDismiss: () => void;
 }) {
   return (
-    <Overlay labelledBy="onboarding-about-title">
+    <Overlay labelledBy="onboarding-about-title" onDismiss={onDismiss}>
       <StepHeader
         step={1}
         id="onboarding-about-title"
-        title="Welcome to Quant Plus. Tell us about you."
-        body="Eight quick questions about your money and your nerves. Your answers size your practice limits and shape what you learn first. They stay on this device."
+        title="Start with your Investor DNA"
+        body="Eight optional questions: capacity is your financial ability to absorb a loss; tolerance is your comfort with risk. The more cautious answer shapes paper practice. Completed answers are saved with your workspace, not just this device."
       />
       <Questionnaire
         initial={dna.answers}
         saving={dna.saving}
         failed={Boolean(dna.saveError)}
         className="max-w-none"
-        cancelLabel="Skip for now"
+        draftKey="quant-plus:investor-dna-draft"
         submitLabel="Continue"
-        onCancel={onDone}
+        onCancel={undefined}
         onSubmit={async (answers) => {
           await dna.save(answers);
-          onDone();
+          await onDone();
         }}
       />
+      <Button
+        type="button"
+        variant="ghost"
+        className="mt-3 min-h-11"
+        disabled={dna.saving}
+        onClick={() => void onDone().catch(onDismiss)}
+      >
+        Skip questions · Choose a lesson
+      </Button>
     </Overlay>
   );
 }
@@ -123,9 +228,11 @@ function AboutYouStep({
 function LearningPathStep({
   dna,
   onDone,
+  onDismiss,
 }: {
   dna: ReturnType<typeof useInvestorDna>;
   onDone: () => void;
+  onDismiss: () => void;
 }) {
   const navigate = useNavigate();
   const beginner = !dna.complete || ["NONE", "UNDER_1Y"].includes(dna.answers.experience ?? "NONE");
@@ -147,7 +254,7 @@ function LearningPathStep({
       section: "learn",
       icon: GraduationCap,
       title: "See my learning path",
-      body: "Your trading licence, the AI tutor and today's ripple question.",
+      body: "Follow the suggested order and continue where you left off.",
       recommended: !beginner,
     },
     {
@@ -160,12 +267,12 @@ function LearningPathStep({
   ].sort((a, b) => Number(b.recommended) - Number(a.recommended));
 
   return (
-    <Overlay labelledBy="onboarding-path-title">
+    <Overlay labelledBy="onboarding-path-title" onDismiss={onDismiss}>
       <StepHeader
-        step={3}
+        step={2}
         id="onboarding-path-title"
         title="Your learning path is ready"
-        body="Everyone starts with a Learner licence. You earn the next one through discipline — stop-losses, small planned risk and calm exits — never through profit."
+        body="Choose one activity to begin. Your practice licence is an in-app milestone earned through learning and discipline, not profit or a qualification to invest. You can set up virtual funds later from Wallet."
       />
       <div className="overflow-hidden rounded-xl border border-border bg-panel/95 shadow-2xl">
         {dna.complete && dna.practice && (
@@ -187,7 +294,7 @@ function LearningPathStep({
                 <button
                   type="button"
                   onClick={() => go(option.section)}
-                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-panel-elevated"
+                  className="group flex min-h-11 w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-panel-elevated focus-visible:outline-2 focus-visible:outline-primary"
                 >
                   <span
                     className={cn(
@@ -200,7 +307,7 @@ function LearningPathStep({
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-[14px] font-semibold">
+                    <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                       {option.title}
                       {option.recommended && (
                         <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary-soft">

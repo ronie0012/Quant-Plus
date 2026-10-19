@@ -110,7 +110,7 @@ const inputClass =
  * evidence through thesis, risk plan and order (or decision not to trade) to
  * execution and outcome analysis that separates thesis, execution and process.
  */
-export function DecisionLifecyclePage() {
+export function DecisionLifecyclePage({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useJournal();
   const save = useSaveJournalEntry();
   const remove = useDeleteJournalEntry();
@@ -339,9 +339,10 @@ export function DecisionLifecyclePage() {
   return (
     <div className="flex flex-col gap-5">
       <PageIntro
+        headingLevel={embedded ? 2 : 1}
         eyebrow="Decision lifecycle"
-        title="What is this trade supposed to prove?"
-        body="A Decision Plan connects the market snapshot, the evidence you had, your thesis and its counter-thesis, the risk plan, the order (or the decision not to trade) and the later analysis. The snapshot, the compiled risk preview and every evidence time are frozen once recorded; stop and target changes are logged by the server."
+        title="Decision journal"
+        body="Start with evidence, define the risk, then choose a paper trade or a watch-only outcome. Return here to compare the result with your original plan."
         action={
           <Button size="sm" onClick={() => reset()}>
             <Plus /> New plan
@@ -360,6 +361,14 @@ export function DecisionLifecyclePage() {
             { label: "Reviewed", value: (data ?? []).filter((e) => e.reflection).length },
           ]}
         />
+        <details className="mt-4 text-xs text-muted-foreground">
+          <summary className="cursor-pointer py-2">How decision records are stored</summary>
+          <p className="max-w-2xl pb-2 leading-relaxed">
+            The market snapshot, compiled risk preview and evidence times are frozen once recorded.
+            Stop and target changes are logged by the server so you can review the decision using
+            information available at the time.
+          </p>
+        </details>
       </PageIntro>
       <div className="grid items-start gap-5 xl:grid-cols-[.75fr_1.25fr]">
         <Card>

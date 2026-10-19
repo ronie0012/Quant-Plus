@@ -98,9 +98,9 @@ export function DashboardHero({ session }: { session: WorkspaceSession | null })
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[12px] text-subtle">{dateLabel()}</p>
-            <h1 className="mt-1 text-[24px] leading-tight font-semibold tracking-tight">
+            <h2 className="mt-1 text-[24px] leading-tight font-semibold tracking-tight">
               {greetingFor()}, {name}
-            </h1>
+            </h2>
             <p className="mt-1 max-w-md text-[13px] text-muted-foreground">
               Markets, portfolio and committee intelligence in a single view.
             </p>

@@ -4,22 +4,53 @@ import { Button } from "@/components/ui/button";
 import type { useStockPrediction } from "@/hooks/use-agent-stock";
 import { formatNum } from "@/hooks/use-dashboard-data";
 import { WhyButton } from "@/components/app/evidence/WhyButton";
+import type { Prediction } from "@/lib/agent-api";
+import { completedPrediction, predictionRunning } from "@/hooks/prediction-query";
 
-export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useStockPrediction> }) {
-  const result = analysis.data;
-  const running = result?.status === "queued" || result?.status === "running";
-  const failed = result?.status.startsWith("failed");
-  const display = result?.status === "done" ? result : result?.previous_result;
-  const decision = display?.decision;
-  const research = display ?? result;
-  const latest = result?.events.at(-1);
-  const reports = running ? result?.reports : research?.reports;
-  // Claim-validation events record numbers an analyst stated that its input data did not contain.
+function PredictionReports({ research }: { research: Prediction }) {
+  // Validation belongs to this session's reports, never the previous decision.
   const claimChecks = new Map(
-    (research?.events ?? [])
+    research.events
       .filter((event) => event.stage === "claim_validation")
       .map((event) => [event.agent, event]),
   );
+  return Object.entries(research.reports).map(([name, report]) => (
+    <details key={name} className="border-t border-border pt-3">
+      <summary className="cursor-pointer text-xs capitalize text-primary-soft">
+        <Bot className="mr-2 inline h-3 w-3" />
+        {name.replaceAll("_", " ")} · self-rated {Math.round(report.confidence * 100)}/100
+        {claimChecks.get(name) && (
+          <span
+            className={
+              claimChecks.get(name)!.status === "verified"
+                ? "ml-2 text-positive"
+                : "ml-2 text-warning"
+            }
+          >
+            ·{" "}
+            {claimChecks.get(name)!.status === "verified"
+              ? "numbers match its input data"
+              : "states numbers not in its input data"}
+          </span>
+        )}
+      </summary>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{report.summary}</p>
+    </details>
+  ));
+}
+
+export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useStockPrediction> }) {
+  const result = analysis.data;
+  const running = predictionRunning(result);
+  const failed = result?.status.startsWith("failed");
+  const display = completedPrediction(result);
+  const decision = display?.decision;
+  const research = display;
+  const latest = result?.events.at(-1);
+  const partial = result?.status !== "done" ? result : undefined;
+  const fresh =
+    display?.serving?.freshness === "fresh" &&
+    Date.parse(display.as_of) + Math.max(60, display.refresh_seconds) * 1_000 > Date.now();
   return (
     <Card className="[animation:none] opacity-100">
       <CardHead
@@ -35,28 +66,30 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
             size="icon"
             aria-label="Refresh analysis status"
             onClick={() => void analysis.refetch()}
-            disabled={analysis.isFetching}
+            disabled={analysis.isFetching || analysis.isRetrying}
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
         }
       />
       <div className="space-y-4 p-5" aria-live="polite">
-        {result?.previous_result && result.status !== "done" && (
+        {display && result?.status !== "done" && (
           <p className="text-xs text-warning">
             Showing the last completed prediction from{" "}
-            {new Date(result.previous_result.as_of).toLocaleString("en-IN")}.{" "}
-            {running ? "A new analysis is running." : "The new analysis has not completed."}
+            {new Date(display.as_of).toLocaleString("en-IN")}.{" "}
+            {running
+              ? analysis.error
+                ? "New analysis status is unavailable."
+                : "A new analysis is running."
+              : "The new analysis has not completed."}
           </p>
         )}
         {display?.serving && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Pill tone={display.serving.freshness === "fresh" ? "positive" : "warning"}>
-              {display.serving.freshness === "fresh"
-                ? "Recent completed research"
-                : "Older completed research"}
+            <Pill tone={fresh ? "positive" : "warning"}>
+              {fresh ? "Recent completed research" : "Older completed research"}
             </Pill>
-            {display.serving.refresh_status !== "idle" && (
+            {display.serving.refresh_status !== "idle" && result?.status === "done" && (
               <span className="text-subtle">
                 {display.serving.refresh_status === "capacity"
                   ? "Refresh waiting for analysis capacity"
@@ -69,7 +102,7 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
             )}
           </div>
         )}
-        {(analysis.isPending || running) && (
+        {(analysis.isPending || (running && !analysis.error)) && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             {latest
@@ -77,9 +110,24 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
               : "Starting your agent analysis…"}
           </p>
         )}
+        {analysis.isFetching && !analysis.isPending && !running && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Checking latest research status…
+          </p>
+        )}
+        {latest && (
+          <p className="text-xs text-subtle">
+            Last saved stage: {latest.stage.replaceAll("_", " ")} · {latest.status}
+            {" · "}
+            <time dateTime={latest.ts}>{new Date(latest.ts).toLocaleString("en-IN")}</time>
+          </p>
+        )}
         {analysis.error && (
           <p role="alert" className="text-sm text-negative">
-            {analysis.error.message}
+            {analysis.error.message}. Automatic status updates are paused. Refresh analysis status
+            to reconnect.
+            {display ? " The last completed research is retained." : ""}
           </p>
         )}
         {running && (
@@ -198,32 +246,47 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
             Devil’s advocate: {research.challenge.status}. {research.challenge.reasons.join(" ")}
           </p>
         )}
-        {running && Object.keys(result?.reports ?? {}).length > 0 && (
-          <p className="text-xs text-subtle">New analysis · analyst findings so far</p>
+        {display && Object.keys(display.reports).length > 0 && (
+          <div className="space-y-3" aria-label="Completed analyst reports">
+            {partial && (
+              <p className="text-xs text-subtle">Last completed analysis · analyst reports</p>
+            )}
+            <PredictionReports research={display} />
+          </div>
         )}
-        {Object.entries(reports ?? {}).map(([name, report]) => (
-          <details key={name} className="border-t border-border pt-3">
-            <summary className="cursor-pointer text-xs capitalize text-primary-soft">
-              <Bot className="mr-2 inline h-3 w-3" />
-              {name} · self-rated {Math.round(report.confidence * 100)}/100
-              {claimChecks.get(name) && (
-                <span
-                  className={
-                    claimChecks.get(name)!.status === "verified"
-                      ? "ml-2 text-positive"
-                      : "ml-2 text-warning"
-                  }
-                >
-                  ·{" "}
-                  {claimChecks.get(name)!.status === "verified"
-                    ? "numbers match its input data"
-                    : "states numbers not in its input data"}
-                </span>
+        {partial &&
+          (Object.keys(partial.reports).length > 0 || partial.thesis || partial.challenge) && (
+            <div className="space-y-3" aria-label="New analysis findings">
+              <p className="text-xs text-subtle">
+                New analysis · provisional findings · not a final decision
+              </p>
+              <p className="font-mono text-[10px] text-subtle">
+                Data cutoff {new Date(partial.as_of).toLocaleString("en-IN")}
+              </p>
+              <PredictionReports research={partial} />
+              {partial.thesis && (
+                <details className="border-t border-border pt-3">
+                  <summary className="cursor-pointer text-xs text-primary-soft">
+                    Provisional synthesis
+                  </summary>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+                    {partial.thesis.key_evidence.map((item, index) => (
+                      <li key={`e-${index}`}>{item}</li>
+                    ))}
+                    {partial.thesis.key_risks.map((item, index) => (
+                      <li key={`r-${index}`}>Risk: {item}</li>
+                    ))}
+                  </ul>
+                </details>
               )}
-            </summary>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{report.summary}</p>
-          </details>
-        ))}
+              {partial.challenge && (
+                <p className="text-xs text-muted-foreground">
+                  Provisional counter-case: {partial.challenge.status}.{" "}
+                  {partial.challenge.reasons.join(" ")}
+                </p>
+              )}
+            </div>
+          )}
       </div>
       <dl className="grid gap-2 border-t border-border px-5 py-4 text-[11px] text-subtle sm:grid-cols-2">
         <div>

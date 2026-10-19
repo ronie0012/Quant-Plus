@@ -66,6 +66,8 @@ class SentimentSnapshotScheduler:
     async def run_once(self):
         session = await self.engine.data.session()
         if session != "open":
+            if hasattr(self.engine.data, "release_stream"):
+                await self.engine.data.release_stream()
             return None
         return await self.engine.sentiment()
 
@@ -89,3 +91,5 @@ class SentimentSnapshotScheduler:
                     continue
         finally:
             self.running = False
+            if hasattr(self.engine.data, "release_stream"):
+                await self.engine.data.release_stream()

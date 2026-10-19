@@ -9,7 +9,8 @@ export function PageIntro({
   eyebrow,
   title,
   body,
-  status = "Simulated workspace",
+  status = "Paper workspace",
+  headingLevel = 1,
   action,
   children,
 }: {
@@ -17,17 +18,19 @@ export function PageIntro({
   title: string;
   body: string;
   status?: string;
+  headingLevel?: 1 | 2;
   action?: ReactNode;
   children?: ReactNode;
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   return (
     <header className="dash-rise flex flex-col gap-5 border-b border-border pb-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 max-w-3xl">
           <p className="text-[12px] font-medium text-primary-soft">{eyebrow}</p>
-          <h1 className="mt-1 text-[26px] leading-tight font-semibold tracking-tight text-foreground">
+          <Heading className="mt-1 text-[26px] leading-tight font-semibold tracking-tight text-foreground">
             {title}
-          </h1>
+          </Heading>
           <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
             {body}
           </p>
@@ -205,7 +208,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === item}
           onClick={() => onChange(item)}
           className={cn(
-            "h-7 shrink-0 rounded-[5px] px-2.5 text-[12px] font-medium text-muted-foreground shadow-none hover:bg-panel-elevated hover:text-foreground",
+            "h-9 shrink-0 rounded-[5px] px-3 text-[12px] font-medium text-muted-foreground shadow-none hover:bg-panel-elevated hover:text-foreground",
             value === item && "bg-panel-elevated text-foreground hover:bg-panel-elevated",
           )}
         >
@@ -241,7 +244,10 @@ export function ProgressBar({
           tone === "negative" && "bg-negative",
           tone === "warning" && "bg-warning",
         )}
-        style={{ width: `${Math.max(2, Math.min(100, value))}%`, ["--d" as string]: `${delay}ms` }}
+        style={{
+          width: `${Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0}%`,
+          ["--d" as string]: `${delay}ms`,
+        }}
       />
     </span>
   );

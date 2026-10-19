@@ -3,6 +3,7 @@ import { deleteRows, insertRow, selectOne, selectRows } from "@/lib/workspace-ap
 import { useMarketNews, useMarketSentiment } from "@/hooks/use-intelligence";
 import { agentFetch } from "@/lib/agent-api";
 import { useStockQuotes } from "@/hooks/use-agent-stock";
+import { relevantNews } from "@/lib/intelligence-view";
 
 export type Account = {
   currency: string;
@@ -280,19 +281,21 @@ export function useNews() {
   const query = useMarketNews();
   return {
     ...query,
-    data: query.data?.articles
-      .filter((a) => a.influences_sentiment)
-      .slice(0, 6)
-      .map((a) => ({
-        id: a.id,
-        headline: a.title,
-        source: a.source,
-        category: a.category,
-        sentiment: a.sentiment.toUpperCase(),
-        impact: a.impact.toUpperCase(),
-        published_at: a.published_at,
-        url: a.url,
-      })),
+    provider: query.data,
+    data:
+      query.data &&
+      relevantNews(query.data)
+        .slice(0, 6)
+        .map((a) => ({
+          id: a.id,
+          headline: a.title,
+          source: a.source,
+          category: a.category,
+          sentiment: a.sentiment.toUpperCase(),
+          impact: a.impact.toUpperCase(),
+          published_at: a.published_at,
+          url: a.url,
+        })),
   };
 }
 
@@ -313,22 +316,21 @@ export function useSentiment() {
   const result = query.data;
   return {
     ...query,
-    data:
-      result && result.score !== null
-        ? {
-            ...result,
-            score: result.score,
-            id: result.updated_at,
-            breakdown: Object.entries(result.components).map(([name, c]) => ({
-              label: name.replaceAll("_", " "),
-              value:
-                c.available && c.score !== null
-                  ? `${Math.round(c.score)}/100 ? ${Math.round(c.effective_weight * 100)}% weight`
-                  : "Unavailable",
-              score: c.available ? c.score : null,
-            })),
-          }
-        : null,
+    data: result
+      ? {
+          ...result,
+          score: result.score,
+          id: result.updated_at,
+          breakdown: Object.entries(result.components).map(([name, c]) => ({
+            label: name.replaceAll("_", " "),
+            value:
+              c.available && c.score !== null
+                ? `${Math.round(c.score)}/100 · ${Math.round(c.effective_weight * 100)}% weight`
+                : (c.reason ?? "Unavailable"),
+            score: c.available ? c.score : null,
+          })),
+        }
+      : null,
   };
 }
 

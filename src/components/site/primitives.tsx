@@ -26,7 +26,7 @@ export function SectionShell({
     <section
       id={id}
       aria-labelledby={labelledBy}
-      className={cn("relative w-full py-24 md:py-36", className)}
+      className={cn("relative w-full scroll-mt-24 py-16 md:py-24", className)}
     >
       <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-12">{children}</div>
     </section>
@@ -62,7 +62,7 @@ export function Stat({
 }
 
 const baseAction =
-  "group relative inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.18em] transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "group relative inline-flex min-h-11 items-center justify-center gap-2.5 font-mono text-xs uppercase tracking-[0.1em] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-soft";
 
 export function PrimaryAction({
   children,
@@ -78,20 +78,17 @@ export function PrimaryAction({
   const content = (
     <>
       {children}
-      <span
-        aria-hidden="true"
-        className="h-px w-5 bg-primary-foreground/60 transition-all duration-500 group-hover:w-8"
-      />
+      <span aria-hidden="true" className="h-px w-5 bg-current" />
     </>
   );
   const classes = cn(
     baseAction,
-    "border border-primary/60 bg-primary px-6 py-3.5 text-primary-foreground hover:bg-primary-soft hover:border-primary-soft",
+    "border border-primary-soft bg-primary-soft px-5 py-3 text-background hover:bg-foreground hover:border-foreground",
     className,
   );
   if (to) {
     return (
-      <Link to={to} className={classes}>
+      <Link to={to} preload={false} className={classes}>
         {content}
       </Link>
     );
@@ -125,12 +122,12 @@ export function GhostAction({
   );
   const classes = cn(
     baseAction,
-    "border border-border-strong px-6 py-3.5 text-muted-foreground hover:text-foreground hover:border-foreground/30",
+    "border border-border-strong px-5 py-3 text-muted-foreground hover:text-foreground hover:border-foreground/30",
     className,
   );
   if (to) {
     return (
-      <Link to={to} className={classes}>
+      <Link to={to} preload={false} className={classes}>
         {content}
       </Link>
     );

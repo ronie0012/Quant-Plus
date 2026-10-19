@@ -27,7 +27,7 @@ export type SimNews = {
   source: string;
   /** Unix seconds when the article became available. */
   available_at: number;
-  sentiment: "positive" | "neutral" | "negative";
+  sentiment: "positive" | "neutral" | "negative" | "unavailable";
   url?: string | null;
 };
 

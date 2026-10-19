@@ -13,13 +13,14 @@ export type NewsArticle = {
   snippet: string;
   provider: string;
   relevance_score: number;
-  sentiment: "positive" | "neutral" | "negative";
-  sentiment_score: number;
+  sentiment: "positive" | "neutral" | "negative" | "unavailable";
+  sentiment_score: number | null;
   impact: "low" | "medium" | "high";
   impact_score: number;
   category: string;
   confidence: number;
   influences_sentiment: boolean;
+  language_handling?: string;
   market_category?: string;
   expected_duration?: "INTRADAY" | "SHORT_TERM" | "MULTIDAY" | "LONG_TERM";
   affected_sectors?: string[];
@@ -35,6 +36,8 @@ export type StockNews = Quality & {
   company: string;
   articles: NewsArticle[];
   provider_status: ProviderStatus;
+  relevance_threshold?: number;
+  counts?: { fetched: number; deduplicated: number; relevant: number };
 };
 export type StockNewsSentiment = Quality & {
   symbol: string;
@@ -49,6 +52,10 @@ export type StockNewsSentiment = Quality & {
   price_confirmation_status: string;
   news_price_divergence: boolean;
   top_drivers: NewsArticle[];
+  provider_status?: ProviderStatus;
+  news_updated_at?: string;
+  market_session?: "open" | "closed" | null;
+  price_as_of?: string | null;
 };
 export type SectorScore = Quality & {
   score: number | null;

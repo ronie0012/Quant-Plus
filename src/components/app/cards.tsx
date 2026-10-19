@@ -52,19 +52,23 @@ export function CardHead({
   return (
     <header
       className={cn(
-        "flex min-h-14 items-center justify-between gap-4 border-b border-border px-5 py-3",
+        "flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-5 py-4",
         className,
       )}
     >
-      <div className="min-w-0">
-        <h2 className="truncate text-[14px] font-semibold tracking-tight text-foreground">
+      <div className="min-w-0 flex-1 basis-auto sm:basis-40">
+        <h2 className="text-[14px] font-semibold leading-snug tracking-tight text-foreground">
           {title}
         </h2>
         {meta && (
-          <p className="mt-0.5 truncate text-[12px] text-subtle first-letter:uppercase">{meta}</p>
+          <p className="mt-1 break-words text-[12px] leading-relaxed text-subtle first-letter:uppercase">
+            {meta}
+          </p>
         )}
       </div>
-      {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+      {action && (
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{action}</div>
+      )}
     </header>
   );
 }
@@ -96,7 +100,7 @@ export function EmptyState({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 rounded-md border border-border-strong px-3 py-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          className="mt-2 min-h-10 rounded-md border border-border-strong px-3 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
         >
           Retry
         </button>

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   intelligenceFetch,
   type StockNews,
@@ -9,10 +10,33 @@ import {
   type SentimentHistory,
 } from "@/lib/intelligence-api";
 import { regularNseSession } from "@/lib/market-session";
+import { FAILURE_REFRESH_MS, NEWS_REFRESH_MS, sentimentRefreshMs } from "@/lib/intelligence-view";
 
-const NEWS_TTL = 600_000;
-const marketInterval = () => (regularNseSession() ? 45_000 : 300_000);
-const marketOptions = { staleTime: 45_000, refetchInterval: marketInterval, retry: false };
+// Re-key price-dependent queries at the session boundary instead of retaining
+// a closed-session result until its five/ten-minute timer next fires.
+function useSessionScope() {
+  const [open, setOpen] = useState(() => regularNseSession());
+  useEffect(() => {
+    const timer = setInterval(() => setOpen(regularNseSession()), 15_000);
+    return () => clearInterval(timer);
+  }, []);
+  return open ? "open" : "closed";
+}
+const newsInterval = (query: { state: { data: StockNews | undefined; status: string } }) =>
+  query.state.status === "error" || query.state.data?.provider_status.status === "unavailable"
+    ? FAILURE_REFRESH_MS
+    : NEWS_REFRESH_MS;
+const marketOptions = {
+  staleTime: 45_000,
+  refetchInterval: (query: {
+    state: { data: { data_quality: string } | undefined; status: string };
+  }) =>
+    sentimentRefreshMs(
+      regularNseSession(),
+      query.state.status === "error" || query.state.data?.data_quality === "DEGRADED",
+    ),
+  retry: false,
+};
 const stockSymbol = (symbol: string) =>
   symbol
     .trim()
@@ -25,8 +49,8 @@ export function useStockNews(symbol: string) {
   return useQuery({
     queryKey: ["stock-news", normalized],
     enabled: /^[A-Z0-9][A-Z0-9&-]{0,29}$/.test(normalized),
-    staleTime: NEWS_TTL,
-    refetchInterval: NEWS_TTL,
+    staleTime: NEWS_REFRESH_MS,
+    refetchInterval: newsInterval,
     retry: false,
     queryFn: ({ signal }) =>
       intelligenceFetch<StockNews>(`stocks/${encodeURIComponent(normalized)}/news`, signal),
@@ -35,12 +59,11 @@ export function useStockNews(symbol: string) {
 
 export function useStockNewsSentiment(symbol: string) {
   const normalized = stockSymbol(symbol);
+  const session = useSessionScope();
   return useQuery({
-    queryKey: ["stock-news-sentiment", normalized],
+    ...marketOptions,
+    queryKey: ["stock-news-sentiment", normalized, session],
     enabled: /^[A-Z0-9][A-Z0-9&-]{0,29}$/.test(normalized),
-    staleTime: NEWS_TTL,
-    refetchInterval: NEWS_TTL,
-    retry: false,
     queryFn: ({ signal }) =>
       intelligenceFetch<StockNewsSentiment>(
         `stocks/${encodeURIComponent(normalized)}/news-sentiment`,
@@ -50,17 +73,19 @@ export function useStockNewsSentiment(symbol: string) {
 }
 
 export function useMarketSentiment() {
+  const session = useSessionScope();
   return useQuery({
     ...marketOptions,
-    queryKey: ["market-sentiment"],
+    queryKey: ["market-sentiment", session],
     queryFn: ({ signal }) => intelligenceFetch<MarketSentiment>("market/sentiment", signal),
   });
 }
 
 export function useSectorSentiment() {
+  const session = useSessionScope();
   return useQuery({
     ...marketOptions,
-    queryKey: ["sector-sentiment"],
+    queryKey: ["sector-sentiment", session],
     queryFn: ({ signal }) => intelligenceFetch<SectorSentiment>("market/sectors", signal),
   });
 }
@@ -68,28 +93,30 @@ export function useSectorSentiment() {
 export function useMarketNews() {
   return useQuery({
     queryKey: ["market-news"],
-    staleTime: NEWS_TTL,
-    refetchInterval: NEWS_TTL,
+    staleTime: NEWS_REFRESH_MS,
+    refetchInterval: newsInterval,
     retry: false,
     queryFn: ({ signal }) => intelligenceFetch<StockNews>("market/news", signal),
   });
 }
 
 export function useMarketIntelligence() {
+  const session = useSessionScope();
   return useQuery({
     ...marketOptions,
-    staleTime: NEWS_TTL,
-    refetchInterval: NEWS_TTL,
-    queryKey: ["market-intelligence"],
+    staleTime: NEWS_REFRESH_MS,
+    refetchInterval: NEWS_REFRESH_MS,
+    queryKey: ["market-intelligence", session],
     queryFn: ({ signal }) => intelligenceFetch<MarketIntelligence>("market/intelligence", signal),
   });
 }
 
 export function useMarketSentimentHistory(range: "1h" | "1d" | "5d" = "1h") {
+  const session = useSessionScope();
   return useQuery({
-    queryKey: ["market-sentiment-history", range],
+    queryKey: ["market-sentiment-history", range, session],
     staleTime: 45_000,
-    refetchInterval: marketInterval,
+    refetchInterval: () => sentimentRefreshMs(regularNseSession()),
     retry: false,
     queryFn: ({ signal }) =>
       intelligenceFetch<SentimentHistory>(

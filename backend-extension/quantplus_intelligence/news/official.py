@@ -51,6 +51,10 @@ def normalize_rows(symbol: str, rows: list, limit: int, now: datetime | None = N
         raw_time = str(row.get("an_dt") or row.get("date") or row.get("broadcastDate") or "").strip()
         if not title:
             continue
+        issuer = str(row.get("symbol") or "").strip().upper()
+        if issuer and issuer != symbol:
+            quarantined.append({"title": title[:200], "raw_time": raw_time, "reason": "ISSUER_MISMATCH"})
+            continue
         parsed = parse_nse_time(raw_time)
         if parsed is None:
             quarantined.append({"title": title[:200], "raw_time": raw_time, "reason": "AMBIGUOUS_TIMESTAMP"})
@@ -79,6 +83,7 @@ def normalize_rows(symbol: str, rows: list, limit: int, now: datetime | None = N
             "attachment_url": attachment if attachment.startswith("https://") else None,
             "snippet": str(row.get("attchmntText") or row.get("desc") or "")[:1500],
             "provider": "nse_announcements",
+            "issuer_symbol": issuer or None,
             "language": "en",
         })
     return articles, quarantined

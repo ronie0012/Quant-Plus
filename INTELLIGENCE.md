@@ -4,6 +4,121 @@ The engines are installed in the existing FastAPI backend at `D:\QP\agent-servic
 
 The frontend commonly runs on port **8080**; use the URL printed by Vite. Its API routes validate the loopback local identity or verified InsForge session and forward requests using the server-only website API key. The browser never calls Google, NSE or FYERS directly. See [ROADMAP_IMPLEMENTATION_20261015.md](ROADMAP_IMPLEMENTATION_20261015.md) for the current verified scope and remaining gates.
 
+## Full live-feed coverage follow-up — 2026-10-19
+
+This follow-up resolves the coverage gaps recorded in the earlier repair below.
+Sentiment previously depended on whichever stocks happened to be subscribed by a
+stock page. It now owns one bounded interest queue on the **existing shared FYERS
+socket**: the official 50 NIFTY equities and all 10 configured index inputs.
+It starts no second socket, per-stock Yahoo pollers, or depth snapshot fan-out.
+
+- `live_feed.py` manages idempotent interests, owner-safe release on closed/unknown
+  sessions, and the shared token/reconnect lifecycle. The guarded, idempotent
+  installer patch enables correct index wire symbols and authentic index exchange
+  timestamps. Timestamp-free price frames cannot inherit an old tick's timestamp;
+  the legacy backend test now asserts that rejection.
+- `market_data.py` prefers fresh shared stream observations over cached REST or
+  candle fallback. A bounded initial wait allows the first tick batch to arrive.
+- `baselines.py` warms official constituents before their first ticks, at a maximum
+  of six history calls per refresh window. It validates 15 completed daily volume
+  sessions or five complete five-minute sessions, tracks warmup/cooldown progress,
+  expires payloads, and invalidates prior-date intraday curves. Volume still
+  requires at least ten usable quote/baseline pairs. The existing labelled,
+  lower-confidence daily-average fallback remains available.
+- Volume is recalculated from each shared snapshot, rather than hidden behind a
+  second five-minute calculation cache. Baseline warmup can therefore become
+  usable on the next market refresh. Missing-data warnings name actual coverage
+  counts, and incomplete required components cannot receive a `GOOD` grade.
+
+### Verified result
+
+Live frontend HTTP check at **2026-10-19 08:25:31 UTC / 13:55:31 IST**, during `OPEN`:
+
+| Input                | Observed coverage                                     |
+| -------------------- | ----------------------------------------------------- |
+| NIFTY market breadth | **50/50** equities                                    |
+| Sector breadth       | **8/8** sectors                                       |
+| India VIX            | Fresh FYERS input available                           |
+| Volume momentum      | **12** usable samples; minimum **10**                 |
+| Composite components | **7/7 available**, configured weight coverage **1.0** |
+| Data quality         | **GOOD / 99**                                         |
+
+The preceding live checks showed volume warming from 6 to 9 to 12 usable names;
+quality remained `PARTIAL` until the minimum was met. All 60 shared interests were
+connected. There was no candle-fallback or missing-component warning in the final
+check. A price/volume divergence warning remained as a calculated market condition.
+Some histories were still cooling down or warming; this is not a claim of all-50
+volume-baseline coverage, calibrated predictive accuracy, or sustained uptime.
+
+Checks: **329 hermetic Python tests passed** (316 extension tests plus 13 existing
+backend FYERS integration/budget tests); **3 targeted browser tests passed**;
+intelligence proxy/UI regression script, TypeScript and lint passed. The updated
+extension and shared-stream patch are installed in the existing local backend,
+and its single worker was restarted. No credentials, model choices, accounts,
+cloud deployments, or paper-book data were changed.
+
+After a restart, allow several refresh cycles for volume-baseline warmup. A broker
+outage or stale ticks must still lower quality; do not hide the warnings or relax
+freshness/coverage thresholds to force a healthy label.
+
+## Earlier sentiment, news and ripple repair — 2026-10-19
+
+The open-session failure was reproduced through the local frontend: market
+sentiment returned HTTP 200 but a null score. FYERS REST equity/index rows carried
+midnight `tt` timestamps, so they did not establish intraday freshness. Broker
+authentication alone does not establish fresh quote coverage.
+
+- Index recovery now uses only recent **completed FYERS one-minute candles** for
+  NIFTY, Bank Nifty and VIX when REST observations are unusable. This adds at most
+  three bounded history calls per shared snapshot, reusing existing transport,
+  rate limits and single-flight caches. Observation time is the provider candle's
+  end, never request time. A same-trading-date REST previous close is required.
+  Components expose candle provenance, reduced confidence (maximum 0.55), and a
+  visible warning; no daily or current in-progress bar is relabelled as live.
+- Quote, market and volume caches separate open/closed sessions. The frontend
+  switches price-dependent query scope at session boundaries, refreshes stock
+  price confirmation every 45 seconds during regular hours, and polls unavailable
+  intelligence again after 30 seconds. RSS keeps its ten-minute success cache.
+- Sentiment baselines now use the dedicated FYERS history adapter, rather than
+  display history truncated to the latest day. Excluded/unsupported-language
+  articles do not affect scores or drivers. Unsupported sentiment is explicitly
+  unavailable, not invented neutral. News/price comparisons use parsed instants
+  and require a verified open session and fresh quote.
+- News & Drivers displays relevant unscored headlines with a **Not scored** badge,
+  shows top scored drivers and provider state, and refreshes both stock panels.
+  Missing composite scores retain warnings and available news-tone diagnostics.
+  NSE filing relevance preserves explicit issuer metadata and quarantines mismatches.
+- Ripple detection isolates factor-specific clauses, rejects ambiguous or
+  prospective moves, and does not assume an output cut is an observed oil-price
+  rise. Origins require dated recent news and a usable provider snapshot. History
+  echoes require aligned sessions and non-overlapping observation windows; link
+  weights are labelled curated, not probabilities.
+
+### Verification for this repair
+
+- `npm test`: passed (71 Node unit cases plus all chained regression scripts).
+- Backend-extension suite: **210 passed**, with external HTTP and private
+  configuration disabled for hermetic execution.
+- `npx playwright test tests/browser/intelligence.spec.ts`: **3 passed**, covering
+  stock headlines/drivers and refresh, null-score diagnostics, and ripple recovery.
+- `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check`: passed.
+  The build retains the existing Vite tsconfig-paths deprecation/plugin-timing notices.
+- Updated the existing local backend using `scripts/install-intelligence-backend.py`
+  and restarted its single local worker. No cloud deployment or data migration.
+- Live HTTP verification during `OPEN` at **07:48 UTC / 13:18 IST**: market
+  sentiment returned **35 / BEARISH**, confidence **0.198**, quality **DEGRADED**,
+  using completed one-minute NIFTY/BANK/VIX observations. Market news returned 95
+  articles (72 relevant); RELIANCE returned 20 articles (10 relevant), with stock
+  news sentiment **58 / NEUTRAL**. These are point-in-time checks, not forecasts
+  or evidence of sustained provider uptime.
+
+**Remaining provider gap:** breadth, sector breadth and RVOL were unavailable in
+the live probe, so the restored composite is explicitly degraded. RELIANCE price
+confirmation was also unavailable without a fresh broker timestamp; its news
+score remains usable independently. A complete live feed still requires genuine
+timestamped observations for those missing components. Earlier closed-session
+verification below is historical and does not supersede this repair's results.
+
 ## Endpoints
 
 All frontend intelligence endpoints require a bearer session. Frontend hooks attach it automatically. Directly navigating to an API in a new tab without a bearer header returns 401. Backend equivalents are under `/api/v1` and `/api` and require `X-Quantplus-Key`. Global middleware also protects legacy HTTP/WebSocket routes; only exact health GETs and state-validated Fyers callback GETs are public.
@@ -188,3 +303,13 @@ INTELLIGENCE_AI_TTL_SECONDS=600
 ```
 
 Weights may be overridden using `INTELLIGENCE_MARKET_WEIGHTS` as a JSON object containing all seven keys totaling 1.0. Other-machine tests can set `QUANTPLUS_BACKEND_PATH`; installer and live probe accept `--backend`.
+
+## Agentic prediction responsiveness — 2026-10-19
+
+The stock prediction lifecycle now follows the research cutoff instead of browser fetch time, pauses after transport errors, requires explicit failed-session retry and shares in-flight starts across navigation. Real partial findings appear alongside retained completed research; failed, paused and offline states are distinguished.
+
+The separate backend received three guarded source repairs: terminal HTTP errors no longer incur futile transport backoff; independent macro index reads run together; expired automatic refreshes get a new cutoff while explicit retries retain checkpoints. Models, full graph, grounding and risk checks remain unchanged. The patched local service was restarted and its health verified.
+
+Controlled client tests removed an 800-second excess refresh delay in the reproduced cutoff scenario. Final checks passed: full `npm test`, typecheck, lint, production build, 71 focused offline backend tests, the five-sample mocked benchmark and all 15 focused prediction/Ripple/intelligence browser cases. Cached status reads are fast, but **a cold end-to-end live generation speedup has not been established**; dependent model/data stages can still take minutes.
+
+See [the performance checkpoint](audit/implementation/prediction-performance-20261019.md) for exact samples, scope/limits, commands and the guarded `scripts/patch-prediction-latency.py` installer. No deployment or data migration was performed.

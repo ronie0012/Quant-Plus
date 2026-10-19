@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { agentFetch, type MarketHistory, type MarketQuote, type Prediction } from "@/lib/agent-api";
 import { QuoteSubscriptions, normalizeMarketSymbols } from "@/lib/market-subscriptions";
 import { quoteIsStale } from "@/lib/market-session";
+import {
+  completedPrediction,
+  predictionKey,
+  predictionPollInterval,
+  predictionStaleTime,
+  predictionSymbol,
+  preserveCompleted,
+  readPrediction,
+  startPrediction,
+} from "@/hooks/prediction-query";
 
 /** Read completed research ahead of navigation; never launch a model job on hover. */
 export function usePredictionPreload(symbols: string[]) {
   const client = useQueryClient();
-  const names = [...new Set(symbols)].slice(0, 50).join(",");
+  const names = [...new Set(symbols.map(predictionSymbol).filter(Boolean))]
+    .sort()
+    .slice(0, 50)
+    .join(",");
   const snapshots = useQuery<{ predictions: Record<string, Prediction> }, Error>({
     queryKey: ["prediction-snapshots", names],
     queryFn: async ({ signal }) =>
@@ -20,14 +33,21 @@ export function usePredictionPreload(symbols: string[]) {
   });
   useEffect(() => {
     for (const [symbol, prediction] of Object.entries(snapshots.data?.predictions ?? {})) {
-      const key = ["agent-prediction", symbol];
+      const key = predictionKey(predictionSymbol(symbol));
       const current = client.getQueryData<Prediction>(key);
+      if (prediction.status !== "done" || !Number.isFinite(Date.parse(prediction.as_of))) continue;
       if (
         !current ||
         (current.status === "done" && Date.parse(prediction.as_of) > Date.parse(current.as_of))
       ) {
         // The research cutoff, not preload time, determines whether it needs a refresh.
         client.setQueryData(key, prediction, { updatedAt: Date.parse(prediction.as_of) });
+      } else if (current.status !== "done" && completedPrediction(current)?.id !== prediction.id) {
+        const merged = preserveCompleted(prediction, current);
+        if (merged !== current)
+          client.setQueryData(key, merged, {
+            updatedAt: client.getQueryState(key)?.dataUpdatedAt ?? Date.parse(prediction.as_of),
+          });
       }
     }
   }, [snapshots.data, client]);
@@ -35,44 +55,43 @@ export function usePredictionPreload(symbols: string[]) {
 
 export function useStockPrediction(symbol: string) {
   const client = useQueryClient();
+  const name = predictionSymbol(symbol);
+  const key = predictionKey(name);
+  const mutationKey = ["retry-prediction", name];
+  const retrying = useIsMutating({ mutationKey, exact: true }) > 0;
   const resume = useMutation<Prediction, Error>({
-    mutationFn: async () =>
-      (
-        await agentFetch(`stocks/${encodeURIComponent(symbol)}/prediction?retry=true`, {
-          method: "POST",
-        })
-      ).json(),
-    onSuccess: (data) => client.setQueryData(["agent-prediction", symbol], data),
-    onMutate: () => client.cancelQueries({ queryKey: ["agent-prediction", symbol] }),
+    mutationKey,
+    retry: false,
+    mutationFn: () => startPrediction(client, name, true),
+    onSuccess: (data) =>
+      client.setQueryData<Prediction>(key, (current) => preserveCompleted(current, data)),
+    onMutate: () => client.cancelQueries({ queryKey: key, exact: true }),
   });
   const query = useQuery<Prediction, Error>({
-    queryKey: ["agent-prediction", symbol],
-    queryFn: async ({ signal }) => {
-      const current = client.getQueryData<Prediction>(["agent-prediction", symbol]);
-      const running = current?.status === "queued" || current?.status === "running";
-      const response = await agentFetch(
-        running
-          ? `stocks/sessions/${current.id}`
-          : `stocks/${encodeURIComponent(symbol)}/prediction`,
-        { method: running ? "GET" : "POST", signal },
-      );
-      return response.json();
-    },
-    staleTime: 15_000,
+    queryKey: key,
+    enabled: /^[A-Z0-9][A-Z0-9&-]{0,29}$/.test(name),
+    // Only read the signal for GET. QueryObserver then retains an accepted
+    // start request across the last subscriber unmounting (including StrictMode).
+    queryFn: (context) => readPrediction(client, name, () => context.signal),
+    staleTime: (query) => predictionStaleTime(query.state),
     retry: false,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      return status === "queued" || status === "running"
-        ? 1_000
-        : status === "done"
-          ? Math.max(60, query.state.data?.refresh_seconds ?? 900) * 1_000
-          : 15_000;
-    },
+    retryOnMount: false,
+    refetchOnMount: (query) => query.state.status !== "error",
+    refetchOnWindowFocus: (query) => query.state.status !== "error",
+    refetchOnReconnect: (query) => query.state.status !== "error",
+    refetchInterval: (query) => predictionPollInterval(query.state),
   });
   return {
     ...query,
-    retryAnalysis: resume.mutate,
-    isRetrying: resume.isPending,
+    refetch: () => query.refetch({ cancelRefetch: false }),
+    retryAnalysis: () => {
+      if (
+        client.getQueryData<Prediction>(key)?.status.startsWith("failed") &&
+        !client.getMutationCache().find({ mutationKey, exact: true, status: "pending" })
+      )
+        resume.mutate();
+    },
+    isRetrying: retrying,
     retryError: resume.error,
   };
 }

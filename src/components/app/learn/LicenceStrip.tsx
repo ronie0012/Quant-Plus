@@ -18,10 +18,8 @@ export function LicenceStrip() {
           {stage.badge}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-semibold">
-            {stage.name} licence · next: {licence.next.name}
-          </p>
-          <p className="truncate text-[12px] text-subtle">
+          <h2 className="text-sm font-semibold">Learning · {stage.name} practice licence</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {pending ? `Next step: ${pending.label}` : "Ready to level up"}
           </p>
           <div className="mt-2 max-w-sm">
@@ -30,8 +28,9 @@ export function LicenceStrip() {
         </div>
         <Link
           to="/app/$section"
-          params={{ section: "learn" }}
-          className="inline-flex items-center gap-1.5 self-start text-[12px] font-medium text-primary-soft hover:text-foreground sm:self-center"
+          params={{ section: pending?.section ?? "learn" }}
+          aria-label={pending ? `Continue learning: ${pending.label}` : "See learning progress"}
+          className="inline-flex min-h-11 items-center gap-1.5 self-start rounded-sm text-sm font-medium text-primary-soft hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary sm:self-center"
         >
           Continue learning
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />

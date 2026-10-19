@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MarketIntelligence } from "@/components/site/MarketIntelligence";
-import { MarketExplorer } from "@/components/site/MarketExplorer";
 import { Coverage } from "@/components/site/Coverage";
 import { CallToAction } from "@/components/site/CallToAction";
 import { PageHeader } from "@/components/site/PageHeader";
 
 const title = "Markets — Quant Plus Market Intelligence";
 const description =
-  "Follow NSE cash equities with quantitative context: provider quotes, momentum, volatility, breadth and market regime.";
+  "Explore Indian equities with source-labelled quotes, available price history and research context. Market data depends on connected providers; trading is paper only.";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -29,14 +28,18 @@ function MarketsPage() {
     <>
       <PageHeader
         eyebrow="Markets"
-        heading="NSE equities, measured honestly."
-        body="NIFTY 50 stocks and NSE indices with source-labelled quotes, technical factors and market breadth. Live data appears inside the terminal; this page describes what it measures."
-        meta={["NSE cash equities", "Momentum · Volatility · Breadth", "Live data in the terminal"]}
+        heading="Find the context behind a stock."
+        body="Explore Indian equities with source-labelled observations, available history and relevant news. Start with what is known before deciding what it means."
+        action={{ label: "Open paper terminal", to: "/app/dashboard" }}
+        secondary={{ label: "Browse stocks", to: "/app/markets" }}
       />
       <MarketIntelligence />
-      <MarketExplorer />
       <Coverage />
-      <CallToAction />
+      <CallToAction
+        heading="Turn an observation into a research question."
+        body="Check the evidence, write down your thesis, and practise only when you have a plan."
+        secondary={{ label: "See the research process", to: "/research" }}
+      />
     </>
   );
 }

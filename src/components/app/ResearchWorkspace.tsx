@@ -6,6 +6,7 @@ import { AgentPrediction } from "@/components/app/stocks/AgentPrediction";
 import { Card, CardHead, Pill } from "@/components/app/cards";
 import { Button } from "@/components/ui/button";
 import { MetricStrip, PageIntro } from "@/components/app/pages/workspace";
+import { completedPrediction, predictionRunning } from "@/hooks/prediction-query";
 
 /** Committee and operations share the actual persisted research session. */
 export function ResearchWorkspace({ activity = false }: { activity?: boolean }) {
@@ -13,8 +14,8 @@ export function ResearchWorkspace({ activity = false }: { activity?: boolean }) 
   const [symbol, setSymbol] = useState("RELIANCE");
   const analysis = useStockPrediction(symbol);
   const result = analysis.data;
-  const running = result?.status === "queued" || result?.status === "running";
-  const completed = result?.status === "done" ? result : result?.previous_result;
+  const running = predictionRunning(result);
+  const completed = completedPrediction(result);
   const events = result?.events ?? [];
   const reports = Object.entries(result?.reports ?? {});
   const nextSymbol = input.trim().toUpperCase().replace(/\.NS$/, "");
@@ -44,7 +45,9 @@ export function ResearchWorkspace({ activity = false }: { activity?: boolean }) 
             { label: "Instrument", value: symbol, tone: "primary" },
             {
               label: "Session",
-              value: result?.status ?? (analysis.isPending ? "Connecting" : "Unavailable"),
+              value: analysis.error
+                ? "Status unavailable"
+                : (result?.status ?? (analysis.isPending ? "Connecting" : "Unavailable")),
               tone: running ? "primary" : result?.status === "done" ? "positive" : "warning",
             },
             { label: "Analyst reports", value: reports.length },
@@ -87,7 +90,15 @@ export function ResearchWorkspace({ activity = false }: { activity?: boolean }) 
             meta={activity ? `${events.length} saved events` : `${reports.length} reports received`}
             action={
               <Pill tone={running ? "primary" : "neutral"}>
-                {running ? "Processing" : result?.status === "done" ? "Complete" : "Waiting"}
+                {analysis.error
+                  ? "Updates paused"
+                  : running
+                    ? "Processing"
+                    : result?.status === "done"
+                      ? "Complete"
+                      : result?.status.startsWith("failed")
+                        ? "Failed"
+                        : "Waiting"}
               </Pill>
             }
           />
@@ -129,7 +140,7 @@ export function ResearchWorkspace({ activity = false }: { activity?: boolean }) 
                     <Bot className="h-4 w-4 text-primary-soft" aria-hidden="true" />
                     <h2 className="text-sm capitalize">{name.replaceAll("_", " ")}</h2>
                     <span className="ml-auto font-mono text-xs text-subtle">
-                      {Math.round(report.confidence * 100)}% confidence
+                      Self-rated {Math.round(report.confidence * 100)}/100
                     </span>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
