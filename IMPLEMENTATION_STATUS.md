@@ -91,6 +91,11 @@ Delivered:
 `audit/implementation/insforge/live-isolation-20261014.md` and `scripts/live-insforge-isolation.mjs`. It
 found and fixed a real bug: the live session endpoint returns no `role`, so every real user had been rejected.
 
+**Fresh live two-user isolation rerun (2026-10-19): 29/29 checks passed** — the throwaway users were
+deleted and email verification was restored. This confirms hosted settlement/replay, owner-scoped
+reads, browser-write rejection, compare-and-swap conflict handling and reconciliation refusal against
+the current linked project. A worker-closed-browser run and final hosted readback are still required.
+
 **InsForge (hosted) book — applied to the linked project, not enabled in the app by default:**
 
 - Migrations `migrations/20261014130103_create-paper-book.sql` and
@@ -120,11 +125,10 @@ found and fixed a real bug: the live session endpoint returns no `role`, so ever
   same CAS/append-only/reconciliation rules: verified identity, rejection of forged and non-user roles,
   two-user isolation, replay, a concurrent-commit retry that settles once, and the hosted route.
 
-Remaining for the gate: a fresh live two-user/worker run against the real project (the historical
-29/29 isolation evidence remains dated 2026-10-14), the final cutover decision, silent token
-refresh, the chat route's hosted portfolio reads (Phase 8), and disk-full/permission fault tests
-for the local store. The selected verified InsForge user now owns the imported local book; the
-frontend flags remain unset until final readback approval. Backout SQL:
+Remaining for the gate: a worker-closed-browser run against the real project, the final cutover
+decision, silent token refresh, the chat route's hosted portfolio reads (Phase 8), and disk-full/
+permission fault tests for the local store. The selected verified InsForge user now owns the imported
+local book; the frontend flags remain unset until final readback approval. Backout SQL:
 `audit/implementation/insforge/rollback-20261014130103.sql`.
 
 ## Phase 4 — paper execution (core engine delivered)

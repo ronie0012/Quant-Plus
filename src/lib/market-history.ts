@@ -107,3 +107,113 @@ export function rsi(values: number[], period = 14): (number | null)[] {
   }
   return result;
 }
+
+/**
+ * Session VWAP for intraday bars: resets at each IST trading day. Daily bars
+ * have no intraday session, so VWAP is undefined for them (all null).
+ */
+export function vwap(candles: Candle[], intraday: boolean): (number | null)[] {
+  if (!intraday) return candles.map(() => null);
+  let day = "";
+  let priceVolume = 0;
+  let volume = 0;
+  return candles.map((bar) => {
+    const session = new Date((bar.time + 19_800) * 1000).toISOString().slice(0, 10);
+    if (session !== day) {
+      day = session;
+      priceVolume = 0;
+      volume = 0;
+    }
+    priceVolume += ((bar.high + bar.low + bar.close) / 3) * bar.volume;
+    volume += bar.volume;
+    return volume > 0 ? priceVolume / volume : null;
+  });
+}
+
+/** Bollinger Bands: SMA(period) ± multiplier × population standard deviation. */
+export function bollinger(values: number[], period = 20, multiplier = 2) {
+  const middle = sma(values, period);
+  const upper: (number | null)[] = [];
+  const lower: (number | null)[] = [];
+  values.forEach((_, index) => {
+    const mean = middle[index];
+    if (mean == null) {
+      upper.push(null);
+      lower.push(null);
+      return;
+    }
+    const window = values.slice(index - period + 1, index + 1);
+    const deviation = Math.sqrt(
+      window.reduce((total, value) => total + (value - mean) ** 2, 0) / period,
+    );
+    upper.push(mean + multiplier * deviation);
+    lower.push(mean - multiplier * deviation);
+  });
+  return { middle, upper, lower };
+}
+
+/** MACD(fast, slow, signal): line = EMA(fast) − EMA(slow); histogram = line − signal. */
+export function macd(values: number[], fast = 12, slow = 26, signalPeriod = 9) {
+  const fastEma = ema(values, fast);
+  const slowEma = ema(values, slow);
+  const line = values.map((_, i) =>
+    fastEma[i] == null || slowEma[i] == null ? null : fastEma[i]! - slowEma[i]!,
+  );
+  const start = line.findIndex((value) => value != null);
+  const signal: (number | null)[] = values.map(() => null);
+  if (start >= 0) {
+    const tail = ema(line.slice(start) as number[], signalPeriod);
+    tail.forEach((value, i) => (signal[start + i] = value));
+  }
+  const histogram = line.map((value, i) =>
+    value == null || signal[i] == null ? null : value - signal[i]!,
+  );
+  return { line, signal, histogram };
+}
+
+/**
+ * Supertrend(period, multiplier) on Wilder ATR. Returns the trailing band and
+ * its direction (1 = uptrend, −1 = downtrend); null until ATR has warmed up.
+ */
+export function supertrend(candles: Candle[], period = 10, multiplier = 3) {
+  const value: (number | null)[] = candles.map(() => null);
+  const direction: (1 | -1 | null)[] = candles.map(() => null);
+  let atr: number | null = null;
+  let trSum = 0;
+  let upper = 0;
+  let lower = 0;
+  let trend: 1 | -1 = 1;
+  candles.forEach((bar, i) => {
+    const previous = candles[i - 1];
+    const tr = previous
+      ? Math.max(
+          bar.high - bar.low,
+          Math.abs(bar.high - previous.close),
+          Math.abs(bar.low - previous.close),
+        )
+      : bar.high - bar.low;
+    if (i < period) {
+      trSum += tr;
+      if (i < period - 1) return;
+      atr = trSum / period;
+    } else {
+      atr = (atr! * (period - 1) + tr) / period;
+    }
+    const mid = (bar.high + bar.low) / 2;
+    const basicUpper = mid + multiplier * atr;
+    const basicLower = mid - multiplier * atr;
+    if (i === period - 1) {
+      upper = basicUpper;
+      lower = basicLower;
+      trend = bar.close >= mid ? 1 : -1;
+    } else {
+      upper = basicUpper < upper || previous!.close > upper ? basicUpper : upper;
+      lower = basicLower > lower || previous!.close < lower ? basicLower : lower;
+      if (trend === 1 && bar.close < lower) trend = -1;
+      else if (trend === -1 && bar.close > upper) trend = 1;
+    }
+    value[i] = trend === 1 ? lower : upper;
+    direction[i] = trend;
+  });
+  return { value, direction };
+}

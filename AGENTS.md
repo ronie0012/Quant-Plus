@@ -18,9 +18,11 @@ The user selected InsForge to replace Supabase on 2026-10-14 and linked project
 `ae254327-702a-47d6-a142-b1163ae5aa32` (Quant-Plus). Use InsForge for the planned
 database, authentication, storage and realtime integration; do not introduce
 new Supabase dependencies. Linking does not deploy the app or migrate its data.
-The current app still uses a single local profile and `.local-data/workspace.json`
-until the InsForge schema, authentication and paper settlement are implemented
-and validated. Preserve local data during that migration. See INSFORGE_MIGRATION.md.
+On 2026-10-20 the local runtime was cut over to InsForge sign-in and the hosted
+paper book (flags in `.env.local`); `.local-data/workspace.json` is frozen as the
+pre-cutover copy and must be preserved. Browser tests still run the local profile.
+Cloud deployment is prepared in DEPLOYMENT.md but not performed. See
+INSFORGE_MIGRATION.md.
 
 <!-- INSFORGE:START -->
 

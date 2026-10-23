@@ -123,7 +123,8 @@ export function DecisionCanvas({
                   inputs: [],
                 },
                 model_version: "market observation v1",
-                page: "stock-workspace",
+                page: "research",
+                instrument: symbol,
               }}
             />
           )}

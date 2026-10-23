@@ -144,10 +144,14 @@ export function useCopilot(
   }, [commit]);
   const load = useCallback(
     async (id: string) => {
-      const saved = await workspaceRpc<SavedConversation>("conversation_get", { p_id: id });
-      commit(saved.messages);
-      setConversationId(saved.id);
-      setError(null);
+      try {
+        const saved = await workspaceRpc<SavedConversation>("conversation_get", { p_id: id });
+        commit(saved.messages);
+        setConversationId(saved.id);
+        setError(null);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Conversation could not be loaded.");
+      }
     },
     [commit],
   );

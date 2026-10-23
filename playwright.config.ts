@@ -23,6 +23,11 @@ export default defineConfig({
     timeout: 60_000,
     env: {
       LOCAL_DATA_FILE: resolve(`.local-data/browser-tests/${randomUUID()}.json`),
+      MARKET_CACHE_DIR: resolve(`.local-data/browser-tests/market-cache-${randomUUID()}`),
+      // Browser tests always run the local single-profile workspace, even after
+      // .env.local switches the developer runtime to hosted InsForge mode.
+      QUANT_PLUS_BOOK_PROVIDER: "local",
+      VITE_QUANT_PLUS_AUTH: "local",
       AGENT_SERVICE_URL: "http://127.0.0.1:9",
       AGENT_SERVICE_API_KEY: "isolated-browser-test-key",
       OPENROUTER_API_KEY: "",

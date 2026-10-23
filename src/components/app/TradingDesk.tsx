@@ -22,6 +22,8 @@ import { useUniversalSearch } from "@/hooks/use-universal-search";
 import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
 import { WORKSPACE_ROUTES } from "@/components/app/workspace-routes";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 type OrderType = "MARKET" | "LIMIT" | "STOP";
 
@@ -37,15 +39,9 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   const first = watchlist?.[0];
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
-  const returnFocus = useRef<HTMLElement | null>(null);
+  const commandRef = useRef<HTMLElement>(null);
+  const helpRef = useRef<HTMLElement>(null);
   const ticketOpen = ticket != null;
-  // Dialogs take focus when they open and give it back when they close.
-  useEffect(() => {
-    if (ticketOpen) {
-      returnFocus.current = document.activeElement as HTMLElement | null;
-      drawerRef.current?.querySelector<HTMLElement>("button")?.focus();
-    } else returnFocus.current?.focus?.();
-  }, [ticketOpen]);
   const [orderType, setOrderType] = useState<OrderType>("MARKET");
   const [quantity, setQuantity] = useState(10);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -102,6 +98,9 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
   };
 
   const [helpOpen, setHelpOpen] = useState(false);
+  useFocusTrap(ticketOpen, drawerRef);
+  useFocusTrap(commandOpen, commandRef);
+  useFocusTrap(helpOpen, helpRef);
   const openRef = useRef(openTicket);
   openRef.current = openTicket;
 
@@ -185,8 +184,11 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
     setQuery("");
     if (result.target.kind === "stock")
       void navigate({ to: "/app/stocks/$symbol", params: { symbol: result.target.symbol } });
-    else if (result.target.kind === "url") window.open(result.target.url, "_blank", "noopener");
-    else if (result.target.section === "dashboard") void navigate({ to: "/app/dashboard" });
+    else if (result.target.kind === "url") {
+      const url = safeExternalUrl(result.target.url);
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      else void navigate({ to: "/app/$section", params: { section: "research" } });
+    } else if (result.target.section === "dashboard") void navigate({ to: "/app/dashboard" });
     else void navigate({ to: "/app/$section", params: { section: result.target.section } });
   };
 
@@ -204,8 +206,11 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
           onMouseDown={() => setHelpOpen(false)}
         >
           <section
+            ref={helpRef}
             role="dialog"
             aria-label="Keyboard shortcuts"
+            aria-modal="true"
+            tabIndex={-1}
             className="dash-rise w-full max-w-md rounded-lg border border-border-strong bg-panel p-5 shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
           >
@@ -244,6 +249,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
           onMouseDown={() => setCommandOpen(false)}
         >
           <section
+            ref={commandRef}
             role="dialog"
             aria-modal="true"
             className="animate-in fade-in zoom-in-95 slide-in-from-top-2 w-full max-w-2xl overflow-hidden rounded-lg border border-border-strong bg-panel shadow-[0_40px_120px_-40px_rgba(0,0,0,0.95)] duration-300"

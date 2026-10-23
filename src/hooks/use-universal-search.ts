@@ -7,6 +7,7 @@ import { useResearchItems } from "@/hooks/use-workspace-prefs";
 import { useAnalyses } from "@/hooks/use-dashboard-data";
 import { useMarketNews } from "@/hooks/use-intelligence";
 import { useEvidenceClaims } from "@/hooks/use-evidence";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 export type SearchTarget =
   | { kind: "section"; section: string }
@@ -83,7 +84,9 @@ export function useUniversalSearch(query: string, enabled: boolean) {
             type: "Claim",
             label: `${claim.label}: ${claim.value}`,
             meta: claim.statement,
-            target: { kind: "section", section: claim.page ?? "dashboard" },
+            target: claim.instrument
+              ? { kind: "stock", symbol: claim.instrument.replace(/\.NS$/, "") }
+              : { kind: "section", section: claim.page ?? "dashboard" },
           },
           `${claim.label} ${claim.value} ${claim.statement}`,
         );
@@ -116,8 +119,8 @@ export function useUniversalSearch(query: string, enabled: boolean) {
             type: "News",
             label: article.title,
             meta: `${article.source} · ${new Date(article.published_at).toLocaleString("en-IN")}`,
-            target: article.url
-              ? { kind: "url", url: article.url }
+            target: safeExternalUrl(article.url)
+              ? { kind: "url", url: safeExternalUrl(article.url)! }
               : { kind: "section", section: "research" },
           },
           `${article.title} ${article.source} ${article.symbol} ${article.category} news`,

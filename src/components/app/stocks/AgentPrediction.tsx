@@ -39,6 +39,21 @@ function PredictionReports({ research }: { research: Prediction }) {
   ));
 }
 
+function analysisFailureMessage(status: string | undefined, detail?: string) {
+  const value = `${status ?? ""} ${detail ?? ""}`.toLowerCase();
+  if (value.includes("outoffunds") || value.includes("insufficient funds"))
+    return "The AI provider has no available balance. Top up or restore the provider account, then retry analysis.";
+  if (
+    value.includes("providerunavailable") ||
+    value.includes("api keys quarantined") ||
+    value.includes("provider credentials")
+  )
+    return "The AI provider rejected all configured keys. Check the backend provider credentials, then retry analysis.";
+  if (value.includes("tokencapbreach"))
+    return "The AI analysis budget was reached. Retry later or ask the operator to review the provider budget.";
+  return `Analysis could not complete (${status}). Retry to resume completed stages.`;
+}
+
 export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useStockPrediction> }) {
   const result = analysis.data;
   const running = predictionRunning(result);
@@ -124,9 +139,12 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
           </p>
         )}
         {analysis.error && (
-          <p role="alert" className="text-sm text-negative">
-            {analysis.error.message}. Automatic status updates are paused. Refresh analysis status
-            to reconnect.
+          <p
+            role="alert"
+            className="rounded-md border border-border bg-panel-elevated/40 px-3 py-2 text-[13px] text-muted-foreground"
+          >
+            {analysis.error.message.replace(/\.$/, "")}. Automatic status updates are paused.
+            Refresh analysis status to reconnect.
             {display ? " The last completed research is retained." : ""}
           </p>
         )}
@@ -143,7 +161,7 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
         {failed && (
           <div className="space-y-3">
             <p role="alert" className="text-sm text-negative">
-              Analysis could not complete ({result?.status}). Retry to resume completed stages.
+              {analysisFailureMessage(result?.status, latest?.status)}
             </p>
             <Button
               variant="outline"
@@ -221,7 +239,8 @@ export function AgentPrediction({ analysis }: { analysis: ReturnType<typeof useS
                             inputs: [],
                           },
                           model_version: "research session v1",
-                          page: "stock-workspace",
+                          page: "research",
+                          instrument: research.instrument,
                         }}
                       />
                     </li>

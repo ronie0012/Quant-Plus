@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppDashboardRouteImport } from './routes/_authenticated/app.dashboard'
 import { Route as ApiAgentSplatRouteImport } from './routes/api/agent/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiForecastSplatRouteImport } from './routes/api/forecast/$'
 import { Route as ApiMarketSplatRouteImport } from './routes/api/market/$'
 import { Route as ApiPaperSplatRouteImport } from './routes/api/paper/$'
 import { Route as ApiStocksSplatRouteImport } from './routes/api/stocks/$'
@@ -92,6 +93,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiForecastSplatRoute = ApiForecastSplatRouteImport.update({
+  id: '/api/forecast/$',
+  path: '/api/forecast/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMarketSplatRoute = ApiMarketSplatRouteImport.update({
   id: '/api/market/$',
   path: '/api/market/$',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
   '/api/agent/$': typeof ApiAgentSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/forecast/$': typeof ApiForecastSplatRoute
   '/api/market/$': typeof ApiMarketSplatRoute
   '/api/paper/$': typeof ApiPaperSplatRoute
   '/api/stocks/$': typeof ApiStocksSplatRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AuthenticatedAppDashboardRoute
   '/api/agent/$': typeof ApiAgentSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/forecast/$': typeof ApiForecastSplatRoute
   '/api/market/$': typeof ApiMarketSplatRoute
   '/api/paper/$': typeof ApiPaperSplatRoute
   '/api/stocks/$': typeof ApiStocksSplatRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/app/dashboard': typeof AuthenticatedAppDashboardRoute
   '/api/agent/$': typeof ApiAgentSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/forecast/$': typeof ApiForecastSplatRoute
   '/api/market/$': typeof ApiMarketSplatRoute
   '/api/paper/$': typeof ApiPaperSplatRoute
   '/api/stocks/$': typeof ApiStocksSplatRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/api/agent/$'
     | '/api/auth/$'
+    | '/api/forecast/$'
     | '/api/market/$'
     | '/api/paper/$'
     | '/api/stocks/$'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/api/agent/$'
     | '/api/auth/$'
+    | '/api/forecast/$'
     | '/api/market/$'
     | '/api/paper/$'
     | '/api/stocks/$'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/dashboard'
     | '/api/agent/$'
     | '/api/auth/$'
+    | '/api/forecast/$'
     | '/api/market/$'
     | '/api/paper/$'
     | '/api/stocks/$'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   ApiLocalRoute: typeof ApiLocalRoute
   ApiAgentSplatRoute: typeof ApiAgentSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiForecastSplatRoute: typeof ApiForecastSplatRoute
   ApiMarketSplatRoute: typeof ApiMarketSplatRoute
   ApiPaperSplatRoute: typeof ApiPaperSplatRoute
   ApiStocksSplatRoute: typeof ApiStocksSplatRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/forecast/$': {
+      id: '/api/forecast/$'
+      path: '/api/forecast/$'
+      fullPath: '/api/forecast/$'
+      preLoaderRoute: typeof ApiForecastSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/market/$': {
       id: '/api/market/$'
       path: '/api/market/$'
@@ -397,6 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLocalRoute: ApiLocalRoute,
   ApiAgentSplatRoute: ApiAgentSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiForecastSplatRoute: ApiForecastSplatRoute,
   ApiMarketSplatRoute: ApiMarketSplatRoute,
   ApiPaperSplatRoute: ApiPaperSplatRoute,
   ApiStocksSplatRoute: ApiStocksSplatRoute,

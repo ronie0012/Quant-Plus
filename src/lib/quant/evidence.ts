@@ -23,6 +23,8 @@ export type EvidenceClaim = {
   history?: string | null;
   /** Workspace section that shows the claim, for search navigation. */
   page?: string | null;
+  /** Optional instrument context used to keep search results on the stock workspace. */
+  instrument?: string | null;
 };
 
 export type GraphNode = { kind: string; label: string; detail: string | null; missing: boolean };

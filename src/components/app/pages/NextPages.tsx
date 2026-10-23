@@ -17,31 +17,6 @@ import { paperOrderFetch } from "@/lib/paper-trading";
 const field = "h-10 border border-border bg-background px-2 text-sm";
 const label = "font-medium text-[11px] uppercase tracking-[0.06em] text-subtle";
 
-/* ---------------- Options lab ---------------- */
-export function OptionsPage() {
-  return (
-    <div className="space-y-5">
-      <PageIntro
-        eyebrow="Portfolio tools"
-        title="Options"
-        body="Derivatives are not enabled in this paper workspace. Equity research and paper practice remain available."
-        status="Not connected"
-      />
-      <Card>
-        <EmptyModule
-          title="Options unavailable"
-          body="Observed option chains, verified contract rules and validated Greeks are required before this lab can be enabled."
-        />
-      </Card>
-      <Button asChild variant="outline">
-        <Link to="/app/$section" params={{ section: "markets" }}>
-          Return to equity research
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 type BasketRow = {
   row_id: string;
   symbol: string;
@@ -158,7 +133,7 @@ export function BasketPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Basket orders"
-        title="Build a paper-order basket"
+        title="Basket orders"
         body="Choose each company and quantity, check the estimates, then submit the basket. Orders settle independently; unchanged orders keep their original intent when you retry."
       >
         <MetricStrip
@@ -346,7 +321,7 @@ export function XrayPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Portfolio X-ray"
-        title="Why did my portfolio move today?"
+        title="Portfolio X-ray"
         body="Each holding's contribution to today's change, based on provider marks and current-session changes."
       >
         <MetricStrip

@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useSession, displayNameFrom } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 import { signOutWorkspace } from "@/lib/workspace-session";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -80,32 +81,31 @@ export function AppSidebar({
       aria-label="Primary areas"
       className={cn(
         "flex h-full flex-col border-r border-border bg-surface transition-[width] duration-300",
-        mobile ? "w-full" : compact ? "w-[76px]" : "w-[224px]",
+        mobile ? "w-full" : compact ? "w-[60px]" : "w-[200px]",
       )}
     >
-      <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
+      <div
+        className={cn(
+          "flex h-12 items-center gap-2.5 border-b border-border",
+          compact ? "justify-center px-2" : "px-4",
+        )}
+      >
         <Link
           to="/app/dashboard"
           aria-label="Quant Plus home"
           onClick={onCloseMobile}
           className={cn("group min-h-11 min-w-0 items-center gap-2.5", compact ? "hidden" : "flex")}
         >
-          <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
-            <span className="absolute inset-0 border border-primary/70" aria-hidden="true" />
-            <span className="h-1 w-1 bg-primary transition-transform duration-500 group-hover:scale-150" />
-          </span>
-          {!compact && (
-            <span className="truncate text-[15px] font-semibold tracking-tight">
-              Quant<span className="text-primary-soft">+</span>
-            </span>
-          )}
+          <BrandMark className="h-7 w-7" />
+          <BrandWordmark className="truncate" />
         </Link>
         <button
           type="button"
           onClick={onToggle}
           aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "ml-auto h-9 w-9 shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-foreground",
+            "h-8 w-8 shrink-0 items-center justify-center rounded-md text-subtle transition-colors hover:bg-panel hover:text-foreground",
+            !compact && "ml-auto",
             mobile ? "hidden" : "hidden lg:flex",
           )}
         >
@@ -128,7 +128,12 @@ export function AppSidebar({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 [scrollbar-width:thin]">
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto py-2 [scrollbar-width:thin]",
+          compact ? "px-1.5" : "px-2",
+        )}
+      >
         <ul className="space-y-0.5" aria-label="Primary areas">
           {PRIMARY_WORKSPACE_ROUTES.map((route) => {
             // Learning belongs to Home in the hierarchy: new users reach it from there.
@@ -154,7 +159,7 @@ export function AppSidebar({
                   onClick={onCloseMobile}
                   title={compact ? route.label : undefined}
                   className={cn(
-                    "group relative flex min-h-11 items-center gap-2.5 rounded-md px-3 text-[13px] transition-colors duration-150",
+                    "group relative flex min-h-10 items-center gap-2.5 rounded-md px-3 text-[13px] transition-colors duration-150",
                     compact && "justify-center px-0",
                     active
                       ? "bg-primary/12 font-medium text-foreground"
@@ -180,7 +185,7 @@ export function AppSidebar({
             );
           })}
         </ul>
-        <div className="mt-6 border-t border-border pt-4">
+        <div className="mt-3 border-t border-border pt-3">
           <Link
             to="/app/$section"
             params={{ section: "learn" }}
@@ -189,7 +194,7 @@ export function AppSidebar({
             aria-current={location.area === "Learn" ? "location" : undefined}
             title={compact ? "Learn & practise" : undefined}
             className={cn(
-              "flex min-h-11 items-center gap-2.5 rounded-md px-3 text-sm transition-colors",
+              "flex min-h-10 items-center gap-2.5 rounded-md px-3 text-[13px] transition-colors",
               compact && "justify-center px-0",
               location.area === "Learn"
                 ? "bg-primary/10 text-primary-soft"
@@ -199,11 +204,6 @@ export function AppSidebar({
             <GraduationCap aria-hidden="true" className="h-4 w-4 shrink-0" />
             {!compact && <span>Learn & practise</span>}
           </Link>
-          {!compact && (
-            <p className="px-3 pt-2 text-xs leading-relaxed text-subtle">
-              Build confidence before making a paper decision.
-            </p>
-          )}
         </div>
       </div>
 

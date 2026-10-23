@@ -23,7 +23,6 @@ export function Card({
       style={{ ["--d" as string]: `${delay}ms` }}
       className={cn(
         "dash-rise relative overflow-hidden rounded-lg border border-border bg-panel/80",
-        "transition-colors duration-200 hover:border-border-strong",
         className,
       )}
     >
@@ -52,16 +51,16 @@ export function CardHead({
   return (
     <header
       className={cn(
-        "flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-5 py-4",
+        "flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-4 py-2.5",
         className,
       )}
     >
       <div className="min-w-0 flex-1 basis-auto sm:basis-40">
-        <h2 className="text-[14px] font-semibold leading-snug tracking-tight text-foreground">
+        <h2 className="text-[13px] font-semibold leading-snug tracking-tight text-foreground">
           {title}
         </h2>
         {meta && (
-          <p className="mt-1 break-words text-[12px] leading-relaxed text-subtle first-letter:uppercase">
+          <p className="mt-0.5 break-words text-[11.5px] leading-relaxed text-subtle first-letter:uppercase">
             {meta}
           </p>
         )}
@@ -93,7 +92,7 @@ export function EmptyState({
   onRetry?: (() => void) | undefined;
 }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 px-5 py-8">
+    <div className="flex flex-col items-start gap-1.5 px-4 py-6">
       <p className="text-[13px] font-medium text-foreground">{title}</p>
       <p className="text-[13px] text-muted-foreground">{hint}</p>
       {onRetry && (

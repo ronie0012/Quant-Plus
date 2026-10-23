@@ -123,16 +123,19 @@ only through a loopback URL. The historical hosted path authenticates a Supabase
 and permits only the stock prediction and market-data endpoints. Keep the
 backend behind a private network or reverse proxy: older admin endpoints in the
 agent service predate this integration and should not be publicly exposed.
-The hosting proxy must support unbuffered SSE connections.
+The hosting proxy must support unbuffered SSE connections. InsForge is the
+selected hosted identity and paper-book provider; the historical Supabase path
+is not an active runtime dependency.
 
 Paper-order mutations run on the local frontend server, not in the browser.
 The `/api/paper/orders` boundary accepts the local profile through localhost,
 reads a fresh Fyers quote itself, ignores browser-provided execution prices,
-and atomically updates `.local-data/workspace.json`. Wallet, holdings, orders,
-watchlists, alerts, journal and preferences use this same local store. No
-Supabase credentials or migrations are required. Run one frontend server
-instance. InsForge is now selected to replace the historical Supabase integration;
-the linked project is not yet the app's active data store. Follow
+and atomically updates `.local-data/workspace.json` in local mode. Wallet,
+holdings, orders, watchlists, alerts, journal and preferences use this same
+local store. Hosted mode uses the InsForge book adapter and server-owned
+compare-and-swap settlement. No Supabase credentials or migrations are part of
+the active runtime. Run one frontend server instance. The linked InsForge
+project is not yet the app's default data store. Follow
 [INSFORGE_MIGRATION.md](INSFORGE_MIGRATION.md) for the migration.
 
 ## Scope

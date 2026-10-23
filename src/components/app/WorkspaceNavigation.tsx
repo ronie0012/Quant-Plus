@@ -1,6 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AREA_NAVIGATION,
+  areaOverflow,
   resolveWorkspaceRoute,
   workspaceLocationForPathname,
 } from "./workspace-routes";
@@ -13,9 +22,13 @@ export function WorkspaceNavigation() {
   const sections = [...AREA_NAVIGATION[location.area]];
   if (location.route && !sections.includes(location.route.section))
     sections.push(location.route.section);
+  const overflow = areaOverflow(location.area).filter((route) => !sections.includes(route.section));
   return (
-    <nav aria-label={`${location.area} tools`} className="mb-6 min-w-0 border-b border-border">
-      <ul className="flex min-w-0 gap-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
+    <nav
+      aria-label={`${location.area} tools`}
+      className="mb-4 flex min-w-0 items-end border-b border-border"
+    >
+      <ul className="-mb-px flex min-w-0 overflow-x-auto [scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]">
         {sections.map((section) => {
           const route = resolveWorkspaceRoute(section);
           if (!route) return null;
@@ -27,10 +40,10 @@ export function WorkspaceNavigation() {
                 params={{ section }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-11 items-center rounded-md px-3 text-sm transition-colors",
+                  "inline-flex min-h-10 items-center border-b-2 px-3 text-[13px] transition-colors",
                   active
-                    ? "bg-primary/10 font-medium text-primary-soft"
-                    : "text-muted-foreground hover:bg-panel hover:text-foreground",
+                    ? "border-primary font-medium text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
                 {route.section === "markets"
@@ -43,6 +56,23 @@ export function WorkspaceNavigation() {
           );
         })}
       </ul>
+      {overflow.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="mb-px inline-flex min-h-10 shrink-0 items-center gap-1 px-3 text-[13px] text-muted-foreground transition-colors hover:text-foreground">
+            More tools <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>{location.area}</DropdownMenuLabel>
+            {overflow.map((route) => (
+              <DropdownMenuItem key={route.section} asChild>
+                <Link to="/app/$section" params={{ section: route.section }}>
+                  {route.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </nav>
   );
 }

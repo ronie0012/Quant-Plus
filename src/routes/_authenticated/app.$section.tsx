@@ -1,46 +1,104 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Card } from "@/components/app/cards";
+import { Card, Skeleton } from "@/components/app/cards";
 import { EmptyModule, PageIntro, Segmented } from "@/components/app/pages/workspace";
-import {
-  MarketsPage,
-  PortfolioPage,
-  ResearchPage,
-  WatchlistPage,
-} from "@/components/app/pages/TerminalPages";
-import {
-  AgentActivityPage,
-  CommitteePage,
-  DecisionsPage,
-  HistoryPage,
-  QuantAIPage,
-} from "@/components/app/pages/IntelligencePages";
-import { DataSourcesPage, HelpPage, SettingsPage } from "@/components/app/pages/SystemPages";
-import { OrdersPage } from "@/components/app/pages/OrdersPage";
-import { WalletPage } from "@/components/app/pages/WalletPage";
-import { AlertsPage, RiskPage } from "@/components/app/pages/ProductPages";
-import { ScreenerPage } from "@/components/app/pages/ScreenerPage";
-import { BasketPage, OptionsPage, XrayPage as XrayBase } from "@/components/app/pages/NextPages";
-import { TradeReviewPanel } from "@/components/app/TradeReviewPanel";
-import { DecisionLifecyclePage } from "@/components/app/pages/DecisionLifecyclePage";
-import { BehaviorPage } from "@/components/app/pages/BehaviorPage";
-import { TrackRecordPage } from "@/components/app/pages/TrackRecordPage";
-import { RegimePage } from "@/components/app/pages/RegimePage";
-import { StrategyLabPage } from "@/components/app/pages/StrategyLabPage";
-import { EventRadarPage } from "@/components/app/pages/EventRadarPage";
-import { PortfolioIntelligence } from "@/components/app/pages/PortfolioIntelligence";
-import { FlightSimulatorPage } from "@/components/app/pages/FlightSimulatorPage";
-import { TrustControlRoom } from "@/components/app/pages/TrustControlRoom";
-import { ResearchNetworkPage } from "@/components/app/pages/ResearchNetworkPage";
-import { CapabilitiesPage } from "@/components/app/pages/CapabilitiesPage";
-import { ReviewHub } from "@/components/app/pages/ReviewHub";
-import { RipplePage } from "@/components/app/pages/RipplePage";
-import { LearnPage } from "@/components/app/learn/LearnPage";
-import { InvestorDnaPage } from "@/components/app/learn/InvestorDnaPage";
-import { CompanySimPage } from "@/components/app/learn/CompanySimPage";
-import { TutorPage } from "@/components/app/learn/TutorPage";
 import { resolveWorkspaceRoute } from "@/components/app/workspace-routes";
-import { WorkspaceToolsPage } from "@/components/app/pages/WorkspaceToolsPage";
+
+/**
+ * Each workspace page is its own chunk, so opening one tool downloads only
+ * that tool instead of the whole terminal.
+ */
+function page<K extends string>(load: () => Promise<Record<K, ComponentType<object>>>, name: K) {
+  return lazy(() => load().then((module) => ({ default: module[name] })));
+}
+
+const MarketsPage = page(() => import("@/components/app/pages/TerminalPages"), "MarketsPage");
+const PortfolioPage = page(() => import("@/components/app/pages/TerminalPages"), "PortfolioPage");
+const ResearchPage = page(() => import("@/components/app/pages/TerminalPages"), "ResearchPage");
+const WatchlistPage = page(() => import("@/components/app/pages/TerminalPages"), "WatchlistPage");
+const AgentActivityPage = page(
+  () => import("@/components/app/pages/IntelligencePages"),
+  "AgentActivityPage",
+);
+const CommitteePage = page(
+  () => import("@/components/app/pages/IntelligencePages"),
+  "CommitteePage",
+);
+const DecisionsPage = page(
+  () => import("@/components/app/pages/IntelligencePages"),
+  "DecisionsPage",
+);
+const HistoryPage = page(() => import("@/components/app/pages/IntelligencePages"), "HistoryPage");
+const QuantAIPage = page(() => import("@/components/app/pages/IntelligencePages"), "QuantAIPage");
+const DataSourcesPage = page(() => import("@/components/app/pages/SystemPages"), "DataSourcesPage");
+const HelpPage = page(() => import("@/components/app/pages/SystemPages"), "HelpPage");
+const SettingsPage = page(() => import("@/components/app/pages/SystemPages"), "SettingsPage");
+const OrdersPage = page(() => import("@/components/app/pages/OrdersPage"), "OrdersPage");
+const WalletPage = page(() => import("@/components/app/pages/WalletPage"), "WalletPage");
+const AlertsPage = page(() => import("@/components/app/pages/ProductPages"), "AlertsPage");
+const RiskPage = page(() => import("@/components/app/pages/ProductPages"), "RiskPage");
+const ScreenerPage = page(() => import("@/components/app/pages/ScreenerPage"), "ScreenerPage");
+const BasketPage = page(() => import("@/components/app/pages/NextPages"), "BasketPage");
+const XrayBase = page(() => import("@/components/app/pages/NextPages"), "XrayPage");
+const OptionsPage = page(() => import("@/components/app/pages/OptionChainPage"), "OptionsPage");
+const TradeReviewPanel = page(
+  () => import("@/components/app/TradeReviewPanel"),
+  "TradeReviewPanel",
+);
+const DecisionLifecyclePage = page(
+  () => import("@/components/app/pages/DecisionLifecyclePage"),
+  "DecisionLifecyclePage",
+);
+const BehaviorPage = page(() => import("@/components/app/pages/BehaviorPage"), "BehaviorPage");
+const TrackRecordPage = page(
+  () => import("@/components/app/pages/TrackRecordPage"),
+  "TrackRecordPage",
+);
+const RegimePage = page(() => import("@/components/app/pages/RegimePage"), "RegimePage");
+const StrategyLabPage = page(
+  () => import("@/components/app/pages/StrategyLabPage"),
+  "StrategyLabPage",
+);
+const EventRadarPage = page(
+  () => import("@/components/app/pages/EventRadarPage"),
+  "EventRadarPage",
+);
+const PortfolioIntelligence = page(
+  () => import("@/components/app/pages/PortfolioIntelligence"),
+  "PortfolioIntelligence",
+);
+const FlightSimulatorPage = page(
+  () => import("@/components/app/pages/FlightSimulatorPage"),
+  "FlightSimulatorPage",
+);
+const TrustControlRoom = page(
+  () => import("@/components/app/pages/TrustControlRoom"),
+  "TrustControlRoom",
+);
+const ResearchNetworkPage = page(
+  () => import("@/components/app/pages/ResearchNetworkPage"),
+  "ResearchNetworkPage",
+);
+const CapabilitiesPage = page(
+  () => import("@/components/app/pages/CapabilitiesPage"),
+  "CapabilitiesPage",
+);
+const ReviewHub = page(() => import("@/components/app/pages/ReviewHub"), "ReviewHub");
+const RipplePage = page(() => import("@/components/app/pages/RipplePage"), "RipplePage");
+const LearnPage = page(() => import("@/components/app/learn/LearnPage"), "LearnPage");
+const InvestorDnaPage = page(
+  () => import("@/components/app/learn/InvestorDnaPage"),
+  "InvestorDnaPage",
+);
+const CompanySimPage = page(
+  () => import("@/components/app/learn/CompanySimPage"),
+  "CompanySimPage",
+);
+const TutorPage = page(() => import("@/components/app/learn/TutorPage"), "TutorPage");
+const WorkspaceToolsPage = page(
+  () => import("@/components/app/pages/WorkspaceToolsPage"),
+  "WorkspaceToolsPage",
+);
 
 function JournalPage() {
   const search = useRouterState({ select: (state) => state.location.searchStr });
@@ -174,9 +232,8 @@ const pageMeta: Record<string, { title: string; description: string }> = {
     description: "Capability gates for broader markets, in order.",
   },
   options: {
-    title: "Options — Quant Plus Terminal",
-    description:
-      "Unavailable until observed option chains and verified contract rules are connected.",
+    title: "Option chain — Quant Plus Terminal",
+    description: "Observed FYERS calls, puts and open interest by strike, with PCR and max pain.",
   },
   basket: {
     title: "Basket Orders — Quant Plus Terminal",
@@ -289,7 +346,7 @@ export const Route = createFileRoute("/_authenticated/app/$section")({
   component: SectionPage,
 });
 
-const pages: Record<string, () => React.JSX.Element> = {
+const pages: Record<string, ComponentType> = {
   learn: LearnPage,
   "investor-dna": InvestorDnaPage,
   "be-the-company": CompanySimPage,
@@ -346,7 +403,12 @@ function SectionPage() {
   }
 
   const Page = pages[canonical];
-  if (Page) return <Page />;
+  if (Page)
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <Page />
+      </Suspense>
+    );
 
   return (
     <div className="flex flex-col gap-5">
@@ -361,6 +423,16 @@ function SectionPage() {
           body="Choose a workspace from the sidebar to continue."
         />
       </Card>
+    </div>
+  );
+}
+
+function PageFallback() {
+  return (
+    <div className="flex flex-col gap-4" role="status" aria-label="Loading">
+      <Skeleton className="h-7 w-48" />
+      <Skeleton className="h-4 w-96 max-w-full" />
+      <Skeleton className="h-[320px] w-full rounded-lg" />
     </div>
   );
 }

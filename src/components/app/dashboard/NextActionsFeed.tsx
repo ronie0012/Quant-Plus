@@ -96,7 +96,14 @@ export function NextActionsFeed() {
         />
       )}
 
-      {!loading && (!failed || hasData) && actions.length === 0 && (
+      {!loading && failed && hasData && (
+        <p role="status" className="border-b border-border px-5 py-3 text-xs text-warning">
+          Some workspace signals are unavailable. Available actions are shown below; retry to
+          restore the complete queue.
+        </p>
+      )}
+
+      {!loading && !failed && actions.length === 0 && (
         <EmptyState
           title="You are up to date"
           hint="No alerts, incomplete plans or time-sensitive reviews need attention."

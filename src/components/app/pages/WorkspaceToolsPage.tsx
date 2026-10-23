@@ -49,7 +49,7 @@ const PURPOSE: Record<string, string> = {
   basket: "Prepare multiple paper orders for review",
   risk: "Review risk limits before a paper decision",
   xray: "Inspect portfolio exposure and stress scenarios",
-  options: "See why derivatives are not yet available",
+  options: "Calls, puts and open interest by strike",
   behavior: "Reflect on your trading habits with consent",
   replay: "Practise with historical information only",
   history: "Revisit previous research",

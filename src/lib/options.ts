@@ -53,3 +53,42 @@ export function payoffAt(legs: Leg[], price: number, lotSize: number) {
     return sum + perUnit * l.lots * lotSize;
   }, 0);
 }
+
+export type ChainSide = {
+  symbol?: string | null;
+  ltp: number | null;
+  change: number | null;
+  change_pct: number | null;
+  oi: number | null;
+  oi_change: number | null;
+  volume: number | null;
+  bid: number | null;
+  ask: number | null;
+};
+export type ChainRow = { strike: number; call: ChainSide | null; put: ChainSide | null };
+
+/**
+ * Max pain: the expiry price at which option writers pay out the least, using
+ * observed open interest only. Returns null when no strike carries OI.
+ */
+export function maxPain(rows: ChainRow[]) {
+  let best: { strike: number; payout: number } | null = null;
+  for (const { strike: settle } of rows) {
+    let payout = 0;
+    for (const row of rows) {
+      payout += (row.call?.oi ?? 0) * Math.max(0, settle - row.strike);
+      payout += (row.put?.oi ?? 0) * Math.max(0, row.strike - settle);
+    }
+    if (!best || payout < best.payout) best = { strike: settle, payout };
+  }
+  const anyOi = rows.some((row) => (row.call?.oi ?? 0) > 0 || (row.put?.oi ?? 0) > 0);
+  return anyOi && best ? best.strike : null;
+}
+
+/** Strike nearest the spot price (the at-the-money row). */
+export function atmStrike(rows: ChainRow[], spot: number | null) {
+  if (spot == null || !rows.length) return null;
+  return rows.reduce((nearest, row) =>
+    Math.abs(row.strike - spot) < Math.abs(nearest.strike - spot) ? row : nearest,
+  ).strike;
+}

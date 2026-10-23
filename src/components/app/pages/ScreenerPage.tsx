@@ -1,27 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, CircleAlert, Save, Trash2, XCircle } from "lucide-react";
 import { Card, CardHead } from "@/components/app/cards";
 import { EmptyModule, MetricStrip, PageIntro } from "@/components/app/pages/workspace";
 import { Button } from "@/components/ui/button";
 import { nifty50, nifty50Sectors } from "@/data/nifty50";
 import { useStockQuotes } from "@/hooks/use-agent-stock";
 import { agentFetch } from "@/lib/agent-api";
+import {
+  evaluateScreenerCandidate,
+  type ScreenerFilters,
+  type ScreeningStatus,
+} from "@/lib/quant/screener";
 import { useStockUniverse } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
 
-type Filters = {
-  sector: string;
-  minMomentum: number;
-  maxVol: number;
-  minConviction: number;
-  verdict: string;
-};
 // Bump when factor formulas or filter semantics change; older screens are flagged on load.
 const FACTOR_VERSION = "factors-v2 (provider metrics; unknown factors excluded)";
-type Saved = { name: string; filters: Filters; version?: string; saved_at?: string };
-const initial: Filters = {
+type Saved = { name: string; filters: ScreenerFilters; version?: string; saved_at?: string };
+type SortKey = "symbol" | "price" | "change" | "momentum" | "volatility" | "conviction";
+const COLUMNS: { label: string; sort?: SortKey; numeric?: boolean }[] = [
+  { label: "Symbol", sort: "symbol" },
+  { label: "Sector" },
+  { label: "Price", sort: "price", numeric: true },
+  { label: "Change", sort: "change", numeric: true },
+  { label: "Momentum", sort: "momentum", numeric: true },
+  { label: "Volatility", sort: "volatility", numeric: true },
+  { label: "Verdict", numeric: true },
+  { label: "Conviction", sort: "conviction", numeric: true },
+  { label: "Screen result" },
+];
+
+const initial: ScreenerFilters = {
   sector: "All",
   minMomentum: 0,
   maxVol: 100,
@@ -36,11 +47,41 @@ const presets: Saved[] = [
   { name: "Strong-opinion buys", filters: { ...initial, verdict: "BUY", minConviction: 60 } },
 ];
 
+function ScreeningResult({ status, reasons }: { status: ScreeningStatus; reasons: string[] }) {
+  const Icon = status === "PASS" ? CheckCircle2 : status === "MISSING" ? CircleAlert : XCircle;
+  const tone =
+    status === "PASS"
+      ? "border-positive/30 bg-positive/10 text-positive"
+      : status === "MISSING"
+        ? "border-warning/30 bg-warning/10 text-warning"
+        : "border-negative/30 bg-negative/10 text-negative";
+
+  return (
+    <div title={reasons.join(" ")}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold",
+          tone,
+        )}
+      >
+        <Icon className="h-3 w-3" aria-hidden="true" />
+        {status}
+      </span>
+      <span className="mt-1 block truncate text-[11px] text-subtle">{reasons[0]}</span>
+    </div>
+  );
+}
+
 export function ScreenerPage() {
-  const [f, setF] = useState<Filters>(initial);
+  const [f, setF] = useState<ScreenerFilters>(initial);
   const [saved, setSaved] = useState<Saved[]>([]);
   const [name, setName] = useState("");
   const [loadedNote, setLoadedNote] = useState<string | null>(null);
+  const [showExcluded, setShowExcluded] = useState(false);
+  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({
+    key: "momentum",
+    desc: true,
+  });
   useEffect(() => {
     try {
       setSaved(JSON.parse(localStorage.getItem(KEY) ?? "[]") as Saved[]);
@@ -118,16 +159,39 @@ export function ScreenerPage() {
       }),
     [feed.quotes, predictions.data, factors.data, symbols, universe.data],
   );
-  const results = rows
-    .filter(
-      ({ s, st, v }) =>
-        (f.sector === "All" || s.sector === f.sector) &&
-        (f.minMomentum === 0 || (st.momentum != null && st.momentum >= f.minMomentum)) &&
-        (f.maxVol === 100 || (st.volatility != null && st.volatility <= f.maxVol)) &&
-        (f.minConviction === 0 || (v.conviction != null && v.conviction >= f.minConviction)) &&
-        (f.verdict === "ANY" || v.verdict === f.verdict),
-    )
-    .sort((a, b) => (b.st.momentum ?? -1) - (a.st.momentum ?? -1));
+  const screenedRows = rows.map((row) => ({
+    ...row,
+    screening: evaluateScreenerCandidate(
+      {
+        sector: row.s.sector,
+        momentum: row.st.momentum,
+        volatility: row.st.volatility,
+        verdict: row.v.verdict,
+        conviction: row.v.conviction,
+      },
+      f,
+    ),
+  }));
+  const sortedRows = screenedRows.sort((a, b) => {
+    if (sort.key === "symbol") return (sort.desc ? -1 : 1) * a.s.symbol.localeCompare(b.s.symbol);
+    const value = (row: (typeof rows)[number]) =>
+      ({
+        price: row.s.price,
+        change: row.s.changePct,
+        momentum: row.st.momentum,
+        volatility: row.st.volatility,
+        conviction: row.v.conviction,
+      })[sort.key as Exclude<SortKey, "symbol">];
+    // Missing values always sort last, whichever the direction.
+    const x = value(a);
+    const y = value(b);
+    if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+    return sort.desc ? y - x : x - y;
+  });
+  const results = sortedRows.filter((row) => row.screening.status === "PASS");
+  const excluded = sortedRows.filter((row) => row.screening.status !== "PASS");
+  const missingCount = sortedRows.filter((row) => row.screening.status === "MISSING").length;
+  const visibleRows = showExcluded ? sortedRows : results;
 
   const slider = (label: string, key: "minMomentum" | "maxVol" | "minConviction") => (
     <label className="block">
@@ -150,22 +214,28 @@ export function ScreenerPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Screener"
-        title="Find the setups that fit."
+        title="Screener"
         body="Filter the official NIFTY 50 universe by provider-backed movement and completed Quant AI research. Missing factors remain unavailable."
       >
         <MetricStrip
           items={[
             { label: "Universe", value: symbols.length },
             { label: "Matches", value: results.length, tone: "primary" },
+            {
+              label: "Needs data",
+              value: missingCount,
+              tone: missingCount > 0 ? "warning" : "positive",
+              note: "Excluded because an active rule cannot be checked",
+            },
             { label: "Saved screens", value: saved.length },
             { label: "Data", value: feed.connected ? "Provider quotes" : "Awaiting quotes" },
           ]}
         />
       </PageIntro>
-      <div className="grid items-start gap-5 xl:grid-cols-[320px_1fr]">
+      <div className="grid items-start gap-4 xl:grid-cols-[280px_1fr]">
         <Card>
           <CardHead title="Filters" />
-          <div className="space-y-5 p-5">
+          <div className="space-y-4 p-4">
             <label className="block">
               <span className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
                 Sector
@@ -173,7 +243,7 @@ export function ScreenerPage() {
               <select
                 value={f.sector}
                 onChange={(e) => setF({ ...f, sector: e.target.value })}
-                className="mt-2 h-10 w-full border border-border bg-background px-2 text-sm"
+                className="mt-2 h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
               >
                 {nifty50Sectors.map((s) => (
                   <option key={s}>{s}</option>
@@ -216,7 +286,7 @@ export function ScreenerPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Name this screen"
-                  className="h-9 min-w-0 flex-1 border border-border bg-background px-2 text-sm"
+                  className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm"
                 />
                 <Button
                   size="sm"
@@ -240,7 +310,10 @@ export function ScreenerPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {[...presets, ...saved].map((s) => (
-                  <span key={s.name} className="inline-flex items-center border border-border">
+                  <span
+                    key={s.name}
+                    className="inline-flex items-center rounded border border-border"
+                  >
                     <button
                       type="button"
                       onClick={() => {
@@ -276,92 +349,173 @@ export function ScreenerPage() {
           </div>
         </Card>
         <Card className="overflow-hidden">
-          {results.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <div>
+              <p className="font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
+                {showExcluded ? "All candidates" : "Passing candidates"}
+              </p>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                {showExcluded
+                  ? "Each row explains the first-class screen outcome and any missing inputs."
+                  : "Use Explain exclusions to audit candidates that did not pass."}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              aria-pressed={showExcluded}
+              onClick={() => setShowExcluded((current) => !current)}
+              disabled={excluded.length === 0}
+            >
+              {showExcluded ? "Show matches" : `Explain exclusions (${excluded.length})`}
+            </Button>
+          </div>
+          {visibleRows.length === 0 ? (
             <EmptyModule title="No matches" body="Loosen a filter to see more instruments." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[960px] text-[13px]">
+            <div className="max-h-[calc(100dvh-13rem)] overflow-auto">
+              <table className="w-full min-w-[1060px] text-[13px]">
                 <thead>
-                  <tr className="border-b border-border text-left font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
-                    {[
-                      "Symbol",
-                      "Sector",
-                      "Price",
-                      "Change",
-                      "Momentum",
-                      "Volatility",
-                      "Verdict",
-                      "Conviction",
-                    ].map((h) => (
-                      <th key={h} className="px-4 py-3 font-normal">
-                        {h}
-                      </th>
-                    ))}
+                  <tr className="border-b border-border text-left">
+                    {COLUMNS.map((column) => {
+                      const active = column.sort != null && sort.key === column.sort;
+                      return (
+                        <th
+                          key={column.label}
+                          aria-sort={active ? (sort.desc ? "descending" : "ascending") : undefined}
+                          className={cn(
+                            "px-3 py-2 font-medium whitespace-nowrap",
+                            column.numeric && "text-right",
+                          )}
+                        >
+                          {column.sort ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSort((current) => ({
+                                  key: column.sort!,
+                                  desc: current.key === column.sort ? !current.desc : true,
+                                }))
+                              }
+                              className={cn(
+                                "inline-flex items-center gap-1 uppercase hover:text-foreground",
+                                active && "text-foreground",
+                              )}
+                            >
+                              {column.label}
+                              {active &&
+                                (sort.desc ? (
+                                  <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                                ) : (
+                                  <ArrowUp className="h-3 w-3" aria-hidden="true" />
+                                ))}
+                            </button>
+                          ) : (
+                            <span className="uppercase">{column.label}</span>
+                          )}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map(({ s, st, v }, i) => (
-                    <tr
-                      key={s.symbol}
-                      className="dash-rise border-b border-border/60 transition-colors hover:bg-panel/60"
-                      style={{ ["--d" as string]: `${Math.min(i, 20) * 25}ms` }}
-                    >
-                      <td className="px-4 py-3">
+                  {visibleRows.map(({ s, st, v, screening }) => (
+                    <tr key={s.symbol} className="border-b border-border/60">
+                      <td className="max-w-[260px] px-3 py-1.5">
                         <Link
                           to="/app/stocks/$symbol"
                           params={{ symbol: s.symbol }}
-                          className="font-semibold hover:text-primary-soft"
+                          className="flex min-w-0 items-baseline gap-2 hover:text-primary-soft"
                         >
-                          {s.symbol}
+                          <span className="font-semibold">{s.symbol}</span>
+                          <span className="truncate text-[12px] text-subtle">{s.company}</span>
                         </Link>
-                        <p className="max-w-[200px] truncate text-[12px] text-subtle">
-                          {s.company}
-                        </p>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                      <td className="px-3 py-1.5 whitespace-nowrap text-[12px] text-muted-foreground">
                         {s.sector}
-                      </td>
-                      <td className="px-4 py-3 font-mono num-tabular">
-                        {s.price == null ? "—" : `₹${s.price.toLocaleString("en-IN")}`}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-3 font-mono",
-                          (s.changePct ?? 0) >= 0 ? "text-positive" : "text-negative",
+                          "px-3 py-1.5 text-right font-mono num-tabular",
+                          s.price == null && "text-subtle",
+                        )}
+                      >
+                        {s.price == null
+                          ? "—"
+                          : s.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-3 py-1.5 text-right font-mono num-tabular",
+                          s.changePct == null
+                            ? "text-subtle"
+                            : s.changePct >= 0
+                              ? "text-positive"
+                              : "text-negative",
                         )}
                       >
                         {s.changePct == null
                           ? "—"
                           : `${s.changePct >= 0 ? "+" : ""}${s.changePct.toFixed(2)}%`}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1 w-16 bg-border">
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${st.momentum ?? 0}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-xs">{st.momentum ?? "—"}</span>
+                      <td className="px-3 py-1.5">
+                        <div className="flex items-center justify-end gap-2">
+                          {st.momentum != null && (
+                            <div className="h-1 w-14 overflow-hidden rounded-full bg-border">
+                              <div
+                                className="h-full bg-primary"
+                                style={{ width: `${st.momentum}%` }}
+                              />
+                            </div>
+                          )}
+                          <span
+                            className={cn(
+                              "w-7 text-right font-mono text-xs",
+                              st.momentum == null && "text-subtle",
+                            )}
+                          >
+                            {st.momentum ?? "—"}
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 font-mono">
-                        {st.volatility == null ? "—" : `${st.volatility}%`}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-3 font-mono text-xs",
-                          v.verdict === "BUY"
-                            ? "text-positive"
-                            : v.verdict === "SELL"
-                              ? "text-negative"
-                              : "text-muted-foreground",
+                          "px-3 py-1.5 text-right font-mono num-tabular",
+                          st.volatility == null && "text-subtle",
                         )}
                       >
-                        {v.verdict}
+                        {st.volatility == null ? "—" : `${st.volatility}%`}
                       </td>
-                      <td className="px-4 py-3 font-mono">
+                      <td className="px-3 py-1.5 text-right">
+                        {v.verdict === "UNAVAILABLE" ? (
+                          <span className="text-subtle" title="No completed research">
+                            —
+                          </span>
+                        ) : (
+                          <span
+                            className={cn(
+                              "inline-flex rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold",
+                              v.verdict === "BUY"
+                                ? "bg-positive/12 text-positive"
+                                : v.verdict === "SELL"
+                                  ? "bg-negative/12 text-negative"
+                                  : "bg-foreground/[0.06] text-muted-foreground",
+                            )}
+                          >
+                            {v.verdict}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-3 py-1.5 text-right font-mono num-tabular",
+                          v.conviction == null && "text-subtle",
+                        )}
+                      >
                         {v.conviction == null ? "—" : `${v.conviction}/100`}
+                      </td>
+                      <td className="max-w-[280px] px-3 py-1.5">
+                        <ScreeningResult status={screening.status} reasons={screening.reasons} />
                       </td>
                     </tr>
                   ))}

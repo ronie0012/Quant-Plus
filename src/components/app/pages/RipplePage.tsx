@@ -5,6 +5,7 @@ import { Card, CardHead, EmptyState, Pill, Skeleton } from "@/components/app/car
 import { MetricStrip, PageIntro, Segmented } from "@/components/app/pages/workspace";
 import { RippleGraph } from "@/components/app/ripple/RippleGraph";
 import { RippleResearchActions } from "@/components/app/ripple/RippleResearchActions";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { AiExplain } from "@/components/app/AiExplain";
 import { nifty50 } from "@/data/nifty50";
 import { relativeTime } from "@/hooks/use-dashboard-data";
@@ -508,9 +509,9 @@ function ImpactDetail({ origin, impact }: { origin: RippleOrigin; impact: Ripple
 
         <RippleResearchActions symbol={impact.symbol} />
 
-        {origin.url && (
+        {safeExternalUrl(origin.url) && (
           <a
-            href={origin.url}
+            href={safeExternalUrl(origin.url)!}
             target="_blank"
             rel="noreferrer"
             className="inline-flex min-h-11 items-center gap-2 self-start text-[13px] text-primary-soft underline-offset-4 hover:underline"

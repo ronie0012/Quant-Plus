@@ -174,7 +174,7 @@ export function StrategyLabPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Research compiler"
-        title="Describe a hypothesis. Try to break it."
+        title="Strategy lab"
         body="Plain language is compiled into a typed, visible strategy definition. Anything the compiler did not understand is listed, never guessed. Each definition then faces the same falsification pipeline: baseline, walk-forward, costs, regimes, a placebo test, parameter sensitivity and a shadow paper run before it can be promoted."
         status="Backtests are evidence, not proof"
       >

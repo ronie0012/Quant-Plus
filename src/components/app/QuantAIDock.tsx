@@ -48,7 +48,7 @@ export function QuantAIDock() {
 
   return (
     <div
-      className="pointer-events-none fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex w-[calc(100vw-2rem)] max-w-[420px] flex-col items-end gap-3 sm:right-6 sm:bottom-6"
+      className="pointer-events-none fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-6 z-40 flex w-[calc(100vw-2rem)] max-w-[420px] flex-col items-end gap-3 sm:right-6"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();

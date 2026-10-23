@@ -94,7 +94,11 @@ No application tables, users, migrations or deployed functions were created by t
   user's JWT under RLS, verifies owner/reconciliation, and performs no writes.
 - Step 10 cleanup: unused Supabase SDK/auth adapters and backend configuration
   were removed; historical source is retained under `audit/implementation`.
-- Still pending: fresh live two-user/worker checks and hosted runtime cutover.
+- Fresh live two-user isolation was rerun on 2026-10-19: 29/29 checks passed, including hosted
+  settlement/replay, owner-scoped reads, browser-write rejection, CAS conflict handling,
+  reconciliation refusal, throwaway-user deletion and email-verification restoration.
+- Still pending: the worker-closed-browser run, final hosted readback approval and hosted runtime
+  cutover.
   The old isolation harness changes project-wide email-verification settings;
   do not run it during real-account onboarding. The local book remains active.
   Any local writes after the import must be reconciled before cutover; the
@@ -114,8 +118,8 @@ No application tables, users, migrations or deployed functions were created by t
   reconciled hosted book. This is an operator/readback fact, not a claim that the frontend has
   been cut over.
 
-The activation flags remain unset in the ignored local environment until the fresh live
-two-user/worker check and final hosted readback are approved. Do not enable hosted writes while
+The activation flags remain unset in the ignored local environment until the worker-closed-browser
+check and final hosted readback are approved. Do not enable hosted writes while
 the local book is still changing; after the first hosted write, rollback requires reconciliation
 of both histories.
 
@@ -124,3 +128,22 @@ Provider activation requires both `QUANT_PLUS_BOOK_PROVIDER=insforge` and
 unset until the remaining checks pass. Rollback before hosted writes is to leave
 them unset and continue using the preserved local book. After hosted writes,
 rollback requires reconciling both histories; do not simply switch to a stale file.
+
+## Cutover (2026-10-20)
+
+- Read-only comparison (`node scripts/compare-hosted-book.mjs`): cash ₹9,92,910.50,
+  HDFCBANK ×10, one filled order, one fill and two ledger entries match exactly;
+  both books reconcile. Local changes after the 14 Oct import were non-financial:
+  a refreshed holding mark, risk-day anchors, worker lease events and the
+  workspace preferences row.
+- `node scripts/reconcile-hosted-preferences.mjs --apply` copied the single
+  preferences row (display name, onboarding, Investor DNA, learning) to the hosted
+  book through the CAS commit path. No financial rows were written.
+- `QUANT_PLUS_BOOK_PROVIDER=insforge` and `VITE_QUANT_PLUS_AUTH=insforge` are set
+  in `.env.local` (backup in `.local-data/backups/`). The local runtime now
+  requires InsForge sign-in; unauthenticated workspace calls return 401. The local
+  `workspace.json` is frozen at the cutover state.
+- Browser tests pin `QUANT_PLUS_BOOK_PROVIDER=local` and `VITE_QUANT_PLUS_AUTH=local`
+  in `playwright.config.ts`, so they keep exercising the isolated local profile.
+- Not yet done: the worker-closed-browser check (needs live Fyers quotes during
+  market hours) and cloud deployment. See `DEPLOYMENT.md`.

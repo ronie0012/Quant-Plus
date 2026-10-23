@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 
 const explore = [
   { label: "Platform", to: "/platform" },
@@ -18,9 +19,10 @@ export function Footer() {
             <Link
               to="/"
               aria-label="Quant Plus home"
-              className="inline-flex min-h-11 items-center font-mono text-sm tracking-[0.18em] uppercase"
+              className="inline-flex min-h-11 items-center gap-2.5"
             >
-              Quant<span className="text-primary-soft">+</span>
+              <BrandMark className="h-7 w-7" />
+              <BrandWordmark className="text-[16px]" />
             </Link>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
               A personal workspace for Indian-equity research, learning and paper trading.

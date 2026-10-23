@@ -72,7 +72,7 @@ export function DecisionsPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Decision intelligence"
-        title="From signal to decision."
+        title="Decision intelligence"
         body="Review committee verdicts with their opinion strength, risks, rationale and audit trail. Opinion scores are not probabilities."
         action={
           <Button
@@ -119,6 +119,11 @@ export function DecisionsPage() {
               title="Queue unavailable"
               hint="Analysis records could not be loaded."
               onRetry={() => void refetch()}
+            />
+          ) : !data?.length ? (
+            <EmptyState
+              title="No decisions yet"
+              hint="Completed committee analyses will appear here."
             />
           ) : (
             <div className="divide-y divide-border">
@@ -210,7 +215,7 @@ export function DecisionsPage() {
 }
 
 export function HistoryPage() {
-  const { data, isLoading } = useAnalyses();
+  const { data, isLoading, isError, refetch } = useAnalyses();
   const [open, setOpen] = useState<string | null>(null);
   const groups = (data ?? []).reduce<Record<string, Analysis[]>>((a, x) => {
     const k = new Date(x.created_at).toLocaleDateString("en-IN", {
@@ -255,6 +260,12 @@ export function HistoryPage() {
           <div className="p-5">
             <Skeleton className="h-52" />
           </div>
+        ) : isError ? (
+          <EmptyState
+            title="History unavailable"
+            hint="The decision history could not be loaded."
+            onRetry={() => void refetch()}
+          />
         ) : !data?.length ? (
           <EmptyState title="No history yet" hint="Completed analyses will appear here." />
         ) : (
@@ -375,7 +386,7 @@ export function QuantAIPage() {
     <div className="flex min-h-[calc(100vh-132px)] flex-col gap-5">
       <PageIntro
         eyebrow="Quant AI · grounded reasoning"
-        title="Ask the market."
+        title="Quant AI"
         body="A read-only copilot that answers from cited evidence: provider quotes and history, news tone, saved research and your paper book. Figures it cannot trace are flagged."
         action={<SourceTag label="Read-only tools" />}
       />
@@ -514,6 +525,17 @@ export function QuantAIPage() {
               className="h-9 w-full rounded-md border border-border bg-background/40 px-2 text-[12px] outline-none focus:border-primary/50"
             />
           </div>
+          {conversations.isLoading && (
+            <p className="px-3 py-6 text-[12px] text-muted-foreground">Loading conversations…</p>
+          )}
+          {conversations.isError && (
+            <div className="space-y-2 px-3 py-6 text-[12px] text-negative" role="alert">
+              <p>Conversation history is unavailable.</p>
+              <Button size="sm" variant="outline" onClick={() => void conversations.refetch()}>
+                Retry history
+              </Button>
+            </div>
+          )}
           <ul className="max-h-[480px] divide-y divide-border overflow-y-auto">
             {(conversations.data ?? []).map((c) => (
               <li key={c.id} className="px-3 py-2.5">
@@ -546,6 +568,7 @@ export function QuantAIPage() {
                           if (copilot.conversationId === c.id) copilot.reset();
                           toast.success("Conversation deleted");
                         },
+                        onError: () => toast.error("Conversation could not be deleted"),
                       })
                     }
                   >

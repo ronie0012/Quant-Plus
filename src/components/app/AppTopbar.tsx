@@ -15,6 +15,8 @@ import { usePriceAlerts } from "@/hooks/use-trading-product";
 import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
 import { regularNseSession } from "@/lib/market-session";
 import { workspaceLocationForPathname } from "@/components/app/workspace-routes";
+import { toast } from "sonner";
+import { ConnectionStatus } from "@/components/app/ConnectionStatus";
 
 /** The shell keeps the review-mode control, but gives it a distinct action label. */
 function TopbarModeToggles() {
@@ -42,7 +44,7 @@ function TopbarModeToggles() {
           aria-label="Workspace options"
           title="Workspace options"
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-md border border-border text-subtle hover:text-foreground",
+            "flex h-9 w-9 items-center justify-center rounded-md border border-border text-subtle hover:text-foreground",
             workspace.focus_mode && "border-primary/50 text-primary-soft",
           )}
         >
@@ -56,7 +58,12 @@ function TopbarModeToggles() {
             key={key}
             checked={on}
             disabled={save.isPending}
-            onCheckedChange={(value) => save.mutate({ [key]: value })}
+            onCheckedChange={(value) =>
+              save.mutate(
+                { [key]: value },
+                { onError: () => toast.error(`${label} could not be saved`) },
+              )
+            }
             className="min-h-11 items-start"
           >
             <span>
@@ -96,7 +103,7 @@ export function AppTopbar({
   const open = now ? regularNseSession(now) : false;
 
   return (
-    <header className="vt-app-topbar sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+    <header className="vt-app-topbar flex h-12 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur-md sm:px-4 lg:px-6">
       <button
         type="button"
         id="workspace-menu-trigger"
@@ -126,7 +133,7 @@ export function AppTopbar({
         type="button"
         onClick={openCommand}
         aria-label="Search symbols, pages and orders"
-        className="ml-auto flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border bg-panel/70 px-3 text-left transition-colors duration-200 hover:border-border-strong xl:max-w-[380px]"
+        className="ml-auto flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border bg-panel/70 px-3 text-left transition-colors duration-200 hover:border-border-strong xl:max-w-[420px]"
       >
         <Search className="h-3.5 w-3.5 shrink-0 text-subtle" />
         <span className="w-full truncate text-[13px] text-subtle">
@@ -137,11 +144,18 @@ export function AppTopbar({
         </kbd>
       </button>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5">
+        <span
+          title="All orders use virtual funds"
+          className="hidden h-6 items-center rounded border border-primary/30 bg-primary/10 px-1.5 text-[11px] font-semibold tracking-wide text-primary-soft md:inline-flex"
+        >
+          PAPER
+        </span>
+        <ConnectionStatus />
         <span
           title="Regular NSE hours in Asia/Kolkata. Holidays and special sessions may differ; stock pages show provider status."
           className={cn(
-            "hidden h-8 items-center gap-2 rounded-md px-2.5 text-[12px] xl:flex",
+            "hidden h-8 items-center gap-1.5 rounded-md px-2 text-[12px] xl:flex",
             open ? "text-positive" : "text-muted-foreground",
           )}
         >
@@ -157,7 +171,7 @@ export function AppTopbar({
           aria-label={`Notifications — ${triggered} triggered alerts`}
           title={`${triggered} triggered alerts`}
           onClick={() => void navigate({ to: "/app/$section", params: { section: "alerts" } })}
-          className="relative flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+          className="relative flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
         >
           <Bell className="h-3.5 w-3.5" />
           {triggered > 0 && (
@@ -167,9 +181,8 @@ export function AppTopbar({
         {(location.area === "Portfolio" || pathname.startsWith("/app/stocks/")) && (
           <Button
             size="sm"
-            variant="outline"
             onClick={() => openTicket()}
-            className="hidden h-10 rounded-md px-4 text-[13px] font-medium sm:inline-flex"
+            className="hidden h-9 rounded-md bg-primary-action px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary sm:inline-flex"
           >
             Paper trade
           </Button>

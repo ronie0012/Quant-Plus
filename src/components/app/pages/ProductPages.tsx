@@ -67,7 +67,7 @@ export function RiskPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Risk command centre"
-        title="Know the downside first."
+        title="Risk"
         body="Set hard guardrails, stress the portfolio and see where concentration can amplify losses."
         action={<SourceTag label="Private account model" />}
       >
@@ -260,7 +260,7 @@ export function AlertsPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Intelligent alerts"
-        title="Attention, on your terms."
+        title="Alerts"
         body="Price and day-move triggers checked by the local server worker against fresh live quotes, even with the terminal closed. Each alert fires once until you re-arm it."
         action={<SourceTag label="Server-evaluated" />}
       >
@@ -492,7 +492,7 @@ export function JournalPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Decision journal"
-        title="Remember the why."
+        title="Journal"
         body="Capture thesis, evidence, risks, invalidation and exit plan before outcome bias takes over. New entries record the market price at the moment you wrote them; that snapshot cannot be edited later."
         action={
           <Button size="sm" onClick={reset}>

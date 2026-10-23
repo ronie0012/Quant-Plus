@@ -1,6 +1,15 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { ema, rsi, sma, validateCandles } from "./market-history.ts";
+import {
+  bollinger,
+  ema,
+  macd,
+  rsi,
+  sma,
+  supertrend,
+  validateCandles,
+  vwap,
+} from "./market-history.ts";
 
 const close = (values: number[]) => values;
 
@@ -84,5 +93,61 @@ describe("indicators", () => {
     assert.equal(rsi([1, 2, 3, 4, 5, 6], 3).at(-1), 100);
     assert.equal(rsi([6, 5, 4, 3, 2, 1], 3).at(-1), 0);
     assert.equal(rsi([5, 5, 5, 5, 5], 3).at(-1), 50);
+  });
+});
+
+describe("chart indicators", () => {
+  const bars = (closes: number[], start = 1_760_000_000, step = 60) =>
+    closes.map((c, i) => ({
+      time: start + i * step,
+      open: c,
+      high: c + 2,
+      low: c - 2,
+      close: c,
+      volume: 100 + i,
+    }));
+
+  it("VWAP weights typical price by volume and resets each IST session", () => {
+    const day = bars([100, 110]);
+    const result = vwap(day, true);
+    assert.equal(result[0], 100);
+    assert.ok(Math.abs(result[1]! - (100 * 100 + 110 * 101) / 201) < 1e-9);
+    const twoDays = [...day, ...bars([200], day[0]!.time + 86_400)];
+    assert.equal(vwap(twoDays, true)[2], 200);
+    assert.deepEqual(vwap(day, false), [null, null]);
+  });
+
+  it("Bollinger bands are symmetric around the SMA and flat for constant prices", () => {
+    const flat = bollinger(close(Array(20).fill(50)));
+    assert.equal(flat.middle[19], 50);
+    assert.equal(flat.upper[19], 50);
+    assert.equal(flat.lower[18], null);
+    const moving = bollinger(close(Array.from({ length: 25 }, (_, i) => i)));
+    assert.ok(
+      Math.abs(moving.upper[24]! - moving.middle[24]! - (moving.middle[24]! - moving.lower[24]!)) <
+        1e-9,
+    );
+  });
+
+  it("MACD histogram is line minus signal and waits for both EMAs", () => {
+    const values = Array.from({ length: 60 }, (_, i) => 100 + Math.sin(i / 3) * 5 + i * 0.2);
+    const { line, signal, histogram } = macd(values);
+    assert.equal(line[24], null);
+    assert.notEqual(line[25], null);
+    assert.equal(signal[32], null);
+    assert.notEqual(signal[33], null);
+    assert.ok(Math.abs(histogram[40]! - (line[40]! - signal[40]!)) < 1e-12);
+  });
+
+  it("Supertrend trails below rising prices and flips when price breaks the band", () => {
+    const up = bars(Array.from({ length: 30 }, (_, i) => 100 + i * 3));
+    const rising = supertrend(up);
+    assert.equal(rising.value[8], null);
+    assert.equal(rising.direction[29], 1);
+    assert.ok(rising.value[29]! < up[29]!.close);
+    const crash = [...up, ...bars([40, 30, 20], up[29]!.time + 60)];
+    const flipped = supertrend(crash);
+    assert.equal(flipped.direction[crash.length - 1], -1);
+    assert.ok(flipped.value[crash.length - 1]! > crash[crash.length - 1]!.close);
   });
 });

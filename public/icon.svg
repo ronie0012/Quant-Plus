@@ -1,5 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#05070C"/>
-  <rect x="136" y="136" width="240" height="240" fill="none" stroke="#6E8BFF" stroke-width="20"/>
-  <rect x="236" y="236" width="40" height="40" fill="#9DB0FF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="ring" x1="10" y1="8" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8DB8FF"/>
+      <stop offset="1" stop-color="#2E7DFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#0B1220"/>
+  <circle cx="28" cy="31" r="14" fill="none" stroke="url(#ring)" stroke-width="6"/>
+  <path d="M32 35 L46 49" stroke="#35D49A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M48 11 v10 M43 16 h10" stroke="#35D49A" stroke-width="4" stroke-linecap="round"/>
 </svg>

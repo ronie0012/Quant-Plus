@@ -30,7 +30,7 @@ export function LearnPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Learn"
-        title="Build your market confidence"
+        title="Learn"
         body="Understand your starting point, run a small business, then practise market concepts. Learn at your pace; a wallet and trades are optional."
         status="Paper practice"
         action={

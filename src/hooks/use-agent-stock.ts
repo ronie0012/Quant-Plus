@@ -96,12 +96,18 @@ export function useStockPrediction(symbol: string) {
   };
 }
 
-export function useMarketHistory(symbol: string, range: string) {
+/** Candles for a chart range; `interval` overrides the range's default bar size. */
+export function useMarketHistory(symbol: string, range: string, interval?: string | null) {
   return useQuery<MarketHistory, Error>({
-    queryKey: ["market-history", symbol, range],
+    queryKey: interval
+      ? ["market-history", symbol, range, interval]
+      : ["market-history", symbol, range],
     queryFn: async ({ signal }) =>
       (
-        await agentFetch(`market/${encodeURIComponent(symbol)}/history?range=${range}`, { signal })
+        await agentFetch(
+          `market/${encodeURIComponent(symbol)}/history?range=${range}${interval ? `&interval=${interval}` : ""}`,
+          { signal },
+        )
       ).json(),
     staleTime: 60_000,
     refetchInterval: 60_000,

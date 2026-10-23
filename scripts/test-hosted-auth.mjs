@@ -57,6 +57,20 @@ const sdk = {
           assert.equal(input.email, user.email);
           return { data: { success: true }, error: null };
         },
+        async sendResetPasswordEmail(input) {
+          assert.equal(input.email, user.email);
+          return { data: { success: true }, error: null };
+        },
+        async exchangeResetPasswordToken(input) {
+          assert.equal(input.email, user.email);
+          assert.equal(input.code, "000123");
+          return { data: { token: "reset-token" }, error: null };
+        },
+        async resetPassword(input) {
+          assert.equal(input.otp, "reset-token");
+          assert.equal(input.newPassword, "new-password");
+          return { data: { success: true }, error: null };
+        },
       },
     };
   },
@@ -136,6 +150,30 @@ try {
   );
   assert.equal(
     (await module.hostedAuth(request("resend-verification", { email: user.email }))).status,
+    200,
+  );
+  assert.equal(
+    (await module.hostedAuth(request("send-reset-password", { email: user.email }))).status,
+    200,
+  );
+  assert.equal(
+    (
+      await module.hostedAuth(
+        request("exchange-reset-password", { email: user.email, otp: "000123" }),
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await module.hostedAuth(
+        request("reset-password", {
+          email: user.email,
+          otp: "reset-token",
+          password: "new-password",
+        }),
+      )
+    ).status,
     200,
   );
   const logout = await module.hostedAuth(request("sign-out"));

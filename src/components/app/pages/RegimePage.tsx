@@ -129,7 +129,7 @@ export function RegimePage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Market regime"
-        title="Where are we, and what followed similar states?"
+        title="Market regime"
         body="The current market is described by observable features computed only from data available at each date. The nearest historical states are listed with what happened next, as a range. A wide range is the honest answer more often than a direction."
         status={`${rows.length} historical states`}
         action={

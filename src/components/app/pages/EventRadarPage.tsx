@@ -25,6 +25,7 @@ import {
 } from "@/lib/quant/events";
 import { quantile } from "@/lib/quant/stats";
 import { cn } from "@/lib/utils";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 const WINDOWS = ["UPCOMING", "PAST 30D", "ALL"] as const;
 const pct = (v: number | null | undefined, d = 2) => (v == null ? "—" : `${(v * 100).toFixed(d)}%`);
@@ -105,7 +106,8 @@ export function EventRadarPage() {
     (e) => e.symbol && held.has(e.symbol) && Date.parse(e.event_at) >= now - 86_400_000,
   );
   const kinds = [...new Set(events.map((e) => e.kind))];
-  const loading = calendar.isLoading && news.isLoading;
+  const loading = calendar.isLoading || news.isLoading;
+  const sourceError = calendar.isError || news.isError;
 
   function preRisk(e: RadarEvent) {
     if (!e.symbol || !held.has(e.symbol)) return null;
@@ -124,8 +126,10 @@ export function EventRadarPage() {
         title="Event radar"
         body="Earnings, board meetings, dividends, splits and bonuses, regulatory news, shareholder transactions, macro releases, derivatives expiry and settlement dates. Every event keeps its original source and publication time, so you can see whether it was knowable when a decision was made."
         status={
-          calendar.data?.providers.map((p) => `${p.source}: ${p.status}`).join(" · ") ||
-          "Loading sources"
+          sourceError
+            ? "One or more event sources are unavailable"
+            : calendar.data?.providers.map((p) => `${p.source}: ${p.status}`).join(" · ") ||
+              "Loading sources"
         }
       >
         <MetricStrip
@@ -181,13 +185,45 @@ export function EventRadarPage() {
           </label>
         </div>
       </Card>
+      {sourceError && (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4" role="alert">
+            <p className="text-sm text-warning">
+              Some event sources failed. Available events remain visible, but this view may be
+              incomplete.
+            </p>
+            <button
+              type="button"
+              className="min-h-11 rounded-md border border-border px-3 text-xs text-primary-soft hover:text-foreground"
+              onClick={() => {
+                void calendar.refetch();
+                void news.refetch();
+              }}
+            >
+              Retry sources
+            </button>
+          </div>
+        </Card>
+      )}
       {loading ? (
         <Skeleton className="h-64" />
       ) : !filtered.length ? (
         <Card>
           <EmptyState
-            title="No events in this view"
-            hint="Change the window or filters. Sources that failed are listed at the top of the page."
+            title={sourceError ? "Event sources unavailable" : "No events in this view"}
+            hint={
+              sourceError
+                ? "Retry the failed sources, or change the filters after the available data loads."
+                : "Change the window or filters."
+            }
+            onRetry={
+              sourceError
+                ? () => {
+                    void calendar.refetch();
+                    void news.refetch();
+                  }
+                : undefined
+            }
           />
         </Card>
       ) : (
@@ -259,9 +295,9 @@ export function EventRadarPage() {
                       {event.published_at
                         ? ` · published ${new Date(event.published_at).toLocaleString("en-IN")}`
                         : " · no publication time from source"}
-                      {event.url && (
+                      {safeExternalUrl(event.url) && (
                         <a
-                          href={event.url}
+                          href={safeExternalUrl(event.url)!}
                           target="_blank"
                           rel="noreferrer"
                           className="ml-1 inline-flex items-center gap-0.5 text-primary-soft"

@@ -27,6 +27,7 @@ import { analogSentence, featureHistory, findAnalogs } from "@/lib/quant/regime"
 import { useQuery } from "@tanstack/react-query";
 import { paperOrderFetch } from "@/lib/paper-trading";
 import { useStockQuotes } from "@/hooks/use-agent-stock";
+import { toast } from "sonner";
 
 export function PlansWidget() {
   const { data, isLoading } = useJournal();
@@ -298,7 +299,7 @@ export function DashboardCustomizer() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Move up"
+                    aria-label={`Move ${DASHBOARD_PANELS.find((p) => p.id === id)?.label ?? id} up`}
                     disabled={i === 0}
                     onClick={() => move(i, -1)}
                   >
@@ -307,7 +308,7 @@ export function DashboardCustomizer() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Move down"
+                    aria-label={`Move ${DASHBOARD_PANELS.find((p) => p.id === id)?.label ?? id} down`}
                     disabled={i === draft.length - 1}
                     onClick={() => move(i, 1)}
                   >
@@ -353,7 +354,10 @@ export function DashboardCustomizer() {
             onClick={() =>
               save.mutate(
                 { mode, panels: mode === "CUSTOM" ? draft : [] },
-                { onSuccess: () => setOpen(false) },
+                {
+                  onSuccess: () => setOpen(false),
+                  onError: () => toast.error("Dashboard layout could not be saved"),
+                },
               )
             }
           >

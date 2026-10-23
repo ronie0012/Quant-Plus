@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck, User } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import {
   hostedAuthConfig,
   hostedAuthEnabled,
+  sendResetPasswordEmail,
+  exchangeResetPasswordToken,
+  resetHostedPassword,
   signInHosted,
   signUpHostedResult,
 } from "@/lib/workspace-session";
@@ -39,7 +43,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Mode = "signin" | "signup";
+type Mode = "signin" | "signup" | "reset";
 type VerificationMethod = "code" | "link";
 
 const PENDING_VERIFICATION_KEY = "qp-pending-auth-verification";
@@ -84,6 +88,8 @@ function AuthPage() {
     pendingVerification?.method ?? "code",
   );
   const [verificationMessage, setVerificationMessage] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetToken, setResetToken] = useState("");
 
   useEffect(() => {
     if (session) void navigate({ to: redirect, replace: true });
@@ -100,7 +106,24 @@ function AuthPage() {
       return;
     }
     try {
-      if (mode === "signup") {
+      if (mode === "reset") {
+        if (!resetSent) {
+          await sendResetPasswordEmail(email);
+          setResetSent(true);
+          setVerificationMessage("If that account exists, a reset code is on its way.");
+        } else if (!resetToken) {
+          setResetToken(await exchangeResetPasswordToken(email, password));
+          setPassword("");
+          setVerificationMessage("Code accepted. Choose a new password.");
+        } else {
+          await resetHostedPassword(resetToken, password);
+          setMode("signin");
+          setResetSent(false);
+          setResetToken("");
+          setPassword("");
+          setVerificationMessage("Password updated. Sign in with your new password.");
+        }
+      } else if (mode === "signup") {
         if (!hostedAuthConfig()) {
           setError("Hosted authentication is misconfigured; contact the workspace administrator.");
           return;
@@ -146,13 +169,8 @@ function AuthPage() {
           }}
         />
         <Link to="/" className="relative flex items-center gap-2.5">
-          <span className="relative flex h-4 w-4 items-center justify-center">
-            <span className="absolute inset-0 border border-primary/70" aria-hidden="true" />
-            <span className="h-1 w-1 bg-primary" />
-          </span>
-          <span className="font-mono text-[13px] tracking-[0.2em] uppercase">
-            Quant<span className="text-primary-soft">+</span>
-          </span>
+          <BrandMark className="h-7 w-7" />
+          <BrandWordmark className="text-[16px]" />
         </Link>
 
         <div className="relative max-w-md">
@@ -188,10 +206,8 @@ function AuthPage() {
       >
         <div className="w-full max-w-[420px]">
           <Link to="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
-            <span className="h-4 w-4 border border-primary/70" aria-hidden="true" />
-            <span className="font-mono text-[13px] tracking-[0.2em] uppercase">
-              Quant<span className="text-primary-soft">+</span>
-            </span>
+            <BrandMark className="h-7 w-7" />
+            <BrandWordmark className="text-[16px]" />
           </Link>
 
           <div className="flex border border-border">
@@ -207,7 +223,7 @@ function AuthPage() {
                 }}
                 aria-pressed={mode === m}
                 className={cn(
-                  "relative flex-1 px-4 py-3 font-mono text-[10px] tracking-[0.18em] uppercase transition-colors duration-300",
+                  "relative flex-1 px-4 py-3 text-[13px] font-medium transition-colors duration-300",
                   mode === m
                     ? "bg-panel text-foreground"
                     : "text-subtle hover:text-muted-foreground",
@@ -226,12 +242,18 @@ function AuthPage() {
           </div>
 
           <h1 className="mt-9 text-2xl tracking-tight">
-            {mode === "signin" ? "Welcome back." : "Open your terminal."}
+            {mode === "signin"
+              ? "Welcome back."
+              : mode === "reset"
+                ? "Recover your terminal."
+                : "Open your terminal."}
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {mode === "signin"
               ? "Sign in to view your portfolio and the market overview."
-              : "Your paper book starts empty: add virtual funds, then place your first simulated trade."}
+              : mode === "reset"
+                ? "Request a one-time code, then choose a new password."
+                : "Your paper book starts empty: add virtual funds, then place your first simulated trade."}
           </p>
 
           {confirmSent ? (
@@ -283,6 +305,11 @@ function AuthPage() {
                       autoComplete="name"
                     />
                   )}
+                  {mode === "reset" && resetSent && !resetToken && (
+                    <p className="text-xs text-muted-foreground">
+                      Enter the six-digit code from your reset email.
+                    </p>
+                  )}
                   <Field
                     icon={<Mail className="h-3.5 w-3.5" />}
                     label="Email"
@@ -295,13 +322,21 @@ function AuthPage() {
                   />
                   <Field
                     icon={<Lock className="h-3.5 w-3.5" />}
-                    label="Password"
+                    label={mode === "reset" && resetSent && !resetToken ? "Reset code" : "Password"}
                     value={password}
                     onChange={setPassword}
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                    required
+                    type={mode === "reset" && resetSent && !resetToken ? "text" : "password"}
+                    placeholder={
+                      mode === "reset" && resetSent && !resetToken ? "123456" : "••••••••"
+                    }
+                    autoComplete={
+                      mode === "reset" && resetSent && !resetToken
+                        ? "one-time-code"
+                        : mode === "signin"
+                          ? "current-password"
+                          : "new-password"
+                    }
+                    required={mode !== "reset" || resetSent}
                   />
 
                   {error && (
@@ -316,19 +351,42 @@ function AuthPage() {
                   <button
                     type="submit"
                     disabled={busy !== null || sessionLoading}
-                    className="group mt-2 flex w-full items-center justify-center gap-2.5 border border-primary/60 bg-primary px-6 py-3.5 font-mono text-[11px] tracking-[0.18em] uppercase text-primary-foreground transition-all duration-500 hover:border-primary-soft hover:bg-primary-soft disabled:opacity-60"
+                    className="group mt-2 flex w-full items-center justify-center gap-2.5 rounded-md bg-primary-action px-6 py-3 text-[14px] font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary disabled:opacity-60"
                   >
                     {busy === "email" ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <>
-                        {mode === "signin" ? "Enter terminal" : "Create account"}
+                        {mode === "signin"
+                          ? "Enter terminal"
+                          : mode === "reset"
+                            ? !resetSent
+                              ? "Send reset code"
+                              : !resetToken
+                                ? "Verify reset code"
+                                : "Update password"
+                            : "Create account"}
                         <ArrowRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1" />
                       </>
                     )}
                   </button>
                 </fieldset>
               </form>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  className="mt-4 text-xs text-primary-soft underline-offset-4 hover:underline"
+                  onClick={() => {
+                    setMode("reset");
+                    setError(null);
+                    setPassword("");
+                    setResetSent(false);
+                    setResetToken("");
+                  }}
+                >
+                  Forgot password?
+                </button>
+              )}
             </>
           )}
 

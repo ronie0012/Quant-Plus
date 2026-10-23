@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, RefreshCw, ShieldCheck } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { agentFetch } from "@/lib/agent-api";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,10 @@ type FeedStatus = {
   login_required: boolean;
 };
 
-/** Provider readiness is distinct from the freshness of an individual quote. */
+/**
+ * Compact feed indicator for the top bar. Provider readiness is distinct from
+ * the freshness of an individual quote; the full state lives in the tooltip.
+ */
 export function ConnectionStatus() {
   const status = useQuery<FeedStatus, Error>({
     queryKey: ["feed-status"],
@@ -21,46 +24,55 @@ export function ConnectionStatus() {
   });
   const authenticated = status.data?.authenticated;
   const ready = authenticated && status.data?.connected;
-  const label = status.isPending
+  const detail = status.isPending
     ? "Checking market connection"
     : status.isError
-      ? "Market service unavailable"
+      ? "Market data service is offline. Prices and charts resume when it reconnects."
       : ready
         ? "Fyers feed connected"
         : authenticated
           ? "Fyers signed in · awaiting feed"
           : "Fyers sign-in required · delayed fallback";
+  const [label, tone] = status.isPending
+    ? (["Connecting", "muted"] as const)
+    : status.isError
+      ? (["Offline", "muted"] as const)
+      : ready
+        ? (["Live", "positive"] as const)
+        : (["Delayed", "warning"] as const);
   return (
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-[12px]">
-      <span className="flex items-center gap-2 font-medium text-primary-soft">
-        <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-        Paper trading <span className="font-normal text-subtle">· virtual funds</span>
-      </span>
-      <div className="flex items-center gap-3">
+    <button
+      type="button"
+      onClick={() => void status.refetch()}
+      disabled={status.isFetching}
+      title={`${detail}. Select to check again.`}
+      aria-label={`Market data: ${detail}. Check again`}
+      className="flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] text-muted-foreground transition-colors hover:bg-panel hover:text-foreground"
+    >
+      {status.isFetching ? (
+        <RefreshCw className="h-3 w-3 animate-spin" aria-hidden="true" />
+      ) : (
         <span
-          role="status"
+          aria-hidden="true"
           className={cn(
-            "flex items-center gap-2",
-            ready && !status.isError ? "text-positive" : "text-warning",
+            "h-1.5 w-1.5 rounded-full",
+            tone === "positive"
+              ? "live-dot bg-positive"
+              : tone === "warning"
+                ? "bg-warning"
+                : "bg-subtle",
           )}
-        >
-          <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-          {label}
-        </span>
-        <button
-          type="button"
-          onClick={() => void status.refetch()}
-          disabled={status.isFetching}
-          aria-label="Check market connection"
-          title="Check market connection"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-subtle hover:bg-panel hover:text-foreground disabled:opacity-50"
-        >
-          <RefreshCw
-            className={cn("h-3.5 w-3.5", status.isFetching && "animate-spin")}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-    </div>
+        />
+      )}
+      <span className="hidden sm:inline">Data</span>
+      <span
+        className={cn(
+          "font-medium",
+          tone === "positive" ? "text-positive" : tone === "warning" ? "text-warning" : "",
+        )}
+      >
+        {label}
+      </span>
+    </button>
   );
 }

@@ -1,7 +1,7 @@
 {
   "name": "Quant Plus Terminal",
   "short_name": "Quant+",
-  "description": "Evidence-led paper trading, research and risk terminal.",
+  "description": "Pro charts, live NSE data, AI research and paper trading in one workspace.",
   "start_url": "/app/dashboard",
   "scope": "/",
   "display": "standalone",
@@ -9,7 +9,29 @@
   "background_color": "#05070C",
   "theme_color": "#05070C",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

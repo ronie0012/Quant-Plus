@@ -82,7 +82,7 @@ export function ReviewHub() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Review"
-        title="Turn outcomes into better decisions."
+        title="Review"
         body="Review the decision record, execution, research maturity and trading process together. Profit is an outcome; the process is what you can improve."
         action={<Pill tone="primary">Paper account · educational</Pill>}
       />

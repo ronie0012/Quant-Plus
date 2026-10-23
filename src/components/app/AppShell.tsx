@@ -8,11 +8,14 @@ import { QuantAIDock } from "@/components/app/QuantAIDock";
 import { TradingDeskProvider } from "@/components/app/TradingDesk";
 import { OnboardingFlow } from "@/components/app/learn/OnboardingFlow";
 import { TradingMonitor } from "@/components/app/TradingMonitor";
-import { ConnectionStatus } from "@/components/app/ConnectionStatus";
+import { MarketTicker } from "@/components/app/MarketTicker";
+import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { WorkspaceNavigation } from "@/components/app/WorkspaceNavigation";
 import { workspaceLocationForPathname } from "@/components/app/workspace-routes";
 import { safeWorkspaceReturn } from "@/lib/workspace-return";
 import { cn } from "@/lib/utils";
+import { identifyUser } from "@/lib/telemetry";
+import { useSession } from "@/hooks/use-session";
 import { useTradingPreferences } from "@/hooks/use-trading-product";
 import { useWorkspacePrefs } from "@/hooks/use-workspace-prefs";
 import {
@@ -47,6 +50,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { workspace } = useWorkspacePrefs();
   const client = useQueryClient();
   const navigate = useNavigate();
+  const { session } = useSession();
+  const userId = session?.user.id ?? null;
+  const mode = session?.mode ?? null;
+  useEffect(() => identifyUser(userId, mode), [userId, mode]);
   useEffect(() => {
     let active = true;
     const check = () => {
@@ -100,16 +107,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <AppTopbar onOpenMobile={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
+            <div className="sticky top-0 z-30">
+              <AppTopbar onOpenMobile={() => setMobileOpen(true)} mobileOpen={mobileOpen} />
+              {!["Learn", "More"].includes(workspaceLocationForPathname(pathname).area) && (
+                <MarketTicker />
+              )}
+            </div>
             <main
               id="main-content"
               tabIndex={-1}
-              className="min-w-0 flex-1 px-4 pt-4 pb-28 outline-none sm:px-6 sm:pt-5 lg:px-8"
+              className="min-w-0 flex-1 px-3 pt-3 pb-28 outline-none sm:px-4 lg:px-6"
             >
-              <div className="mx-auto w-full max-w-[1560px]">
-                {!["Learn", "More"].includes(workspaceLocationForPathname(pathname).area) && (
-                  <ConnectionStatus />
-                )}
+              <div className="mx-auto w-full max-w-[1840px]">
                 <WorkspaceNavigation />
                 {children}
               </div>
@@ -119,6 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {!["Learn", "More"].includes(workspaceLocationForPathname(pathname).area) &&
           !workspace.focus_mode && <QuantAIDock />}
+        <MobileTabBar />
         <ServiceWorkerRegistrar />
         <BandwidthPolicy />
         <OfflineSnapshot />

@@ -10,6 +10,8 @@ from .intelligence import stock_intelligence, market_intelligence
 router = APIRouter(dependencies=[Depends(website_auth)], tags=["QuantPlus intelligence"])
 from .terminal_api import router as terminal_router
 router.include_router(terminal_router)
+from .forecast_api import router as forecast_router
+router.include_router(forecast_router)
 
 
 def symbol(value):

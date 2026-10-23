@@ -24,22 +24,22 @@ export function PageIntro({
 }) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
   return (
-    <header className="dash-rise flex flex-col gap-5 border-b border-border pb-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0 max-w-3xl">
-          <p className="text-[12px] font-medium text-primary-soft">{eyebrow}</p>
-          <Heading className="mt-1 text-[26px] leading-tight font-semibold tracking-tight text-foreground">
+    <header className="dash-rise flex flex-col gap-3 pb-1">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 max-w-4xl">
+          <span className="sr-only">{eyebrow}</span>
+          <Heading className="text-[20px] leading-tight font-semibold tracking-tight text-foreground">
             {title}
           </Heading>
-          <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-            {body}
-          </p>
+          <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-subtle">{body}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-panel/60 px-2.5 text-[12px] text-muted-foreground">
-            <Activity className="h-3.5 w-3.5 text-primary-soft" aria-hidden="true" />
-            {status}
-          </span>
+          {status !== "Paper workspace" && (
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-panel/60 px-2 text-[12px] text-muted-foreground">
+              <Activity className="h-3.5 w-3.5 text-primary-soft" aria-hidden="true" />
+              {status}
+            </span>
+          )}
           {action}
         </div>
       </div>
@@ -59,17 +59,17 @@ export function MetricStrip({
   }>;
 }) {
   return (
-    <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-3">
+    <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,11rem),1fr))] gap-px overflow-hidden rounded-lg border border-border bg-border">
       {items.map((item, i) => (
         <div
           key={item.label}
-          className="dash-rise rounded-lg border border-border bg-panel/80 px-4 py-3.5"
+          className="dash-rise bg-panel px-4 py-2.5"
           style={{ ["--d" as string]: `${60 + i * 40}ms` }}
         >
           <dt className="label-tech text-subtle">{item.label}</dt>
           <dd
             className={cn(
-              "mt-1.5 text-[20px] leading-tight font-semibold tracking-tight num-tabular",
+              "mt-1 text-[17px] leading-tight font-semibold tracking-tight num-tabular",
               item.tone === "positive" && "text-positive",
               item.tone === "negative" && "text-negative",
               item.tone === "primary" && "text-primary-soft",

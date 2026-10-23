@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatINR, useAccount } from "@/hooks/use-dashboard-data";
 import { tradingErrorMessage, useFundWallet } from "@/hooks/use-wallet";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 const presets = [
   { label: "₹1 L", value: 100_000 },
@@ -23,17 +24,11 @@ export function WalletGate({ step }: { step?: { current: number; total: number }
   const [amount, setAmount] = useState(20_000_000);
   const [custom, setCustom] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const open = !isLoading && !!account && !account.onboarded;
 
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [open]);
+  useFocusTrap(open, dialogRef);
 
   if (!open) return null;
 
@@ -56,9 +51,11 @@ export function WalletGate({ step }: { step?: { current: number; total: number }
     <div className="fixed inset-0 z-[90] flex items-center justify-center px-4 py-8">
       <div aria-hidden="true" className="absolute inset-0 bg-background/85 backdrop-blur-md" />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="wallet-gate-title"
+        tabIndex={-1}
         className="dash-rise relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-panel/95 shadow-2xl"
       >
         <div

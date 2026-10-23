@@ -54,9 +54,9 @@ export function FundsRow() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <Card key={i} className="p-5" delay={i * 70}>
+          <Card key={i} className="p-3 sm:p-4" delay={i * 70}>
             <Skeleton className="h-3 w-24" />
             <Skeleton className="mt-4 h-8 w-36" />
             <Skeleton className="mt-4 h-2 w-full" />
@@ -79,10 +79,15 @@ export function FundsRow() {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       {specs(data).map((s, i) => {
         return (
-          <Card key={s.label} glow={s.tone === "positive"} delay={140 + i * 80} className="p-5">
+          <Card
+            key={s.label}
+            glow={s.tone === "positive"}
+            delay={140 + i * 80}
+            className="p-3 sm:p-4"
+          >
             <div className="relative">
               <div className="flex items-center justify-between gap-3">
                 <span className="label-tech">{s.label}</span>
@@ -99,7 +104,7 @@ export function FundsRow() {
 
               <p
                 className={cn(
-                  "mt-3 font-mono text-[26px] leading-tight font-semibold num-tabular tracking-tight",
+                  "mt-2 font-mono text-[18px] leading-tight font-semibold num-tabular tracking-tight sm:text-[22px]",
                   s.tone === "positive" && "text-positive",
                   s.tone === "negative" && "text-negative",
                 )}
@@ -111,7 +116,7 @@ export function FundsRow() {
               <p className="mt-1 text-[12px] text-subtle">{s.support}</p>
 
               <span
-                className="mt-4 block h-1 w-full overflow-hidden rounded-full bg-border"
+                className="mt-3 block h-1 w-full overflow-hidden rounded-full bg-border"
                 aria-hidden="true"
               >
                 <span

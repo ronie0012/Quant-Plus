@@ -29,9 +29,9 @@ Changes preserve existing local work and published Git history.
 - Frontend regression suite: options, alerts, bracket exits, NSE boundaries,
   freshness, proxy authentication, paper prices, paper API routing, polling and
   chat streaming.
-- Paper-order SQL regression file added at
-  `supabase/tests/20261013120000_server_authoritative_paper_orders.sql`; it is
-  rollback-scoped and requires a local Supabase/Postgres instance.
+- The historical SQL regression file under `supabase/tests/` is retained as
+  archival evidence only. The active paper-book authority is the InsForge
+  migration and the server-owned local/hosted book adapters.
 - Agent full suite: 430 tests passed. After adding the fail-closed authentication
   regression, 36 stock, Fyers and prediction tests passed.
 - TypeScript and production build checked. ESLint has no errors; seven existing
@@ -39,20 +39,29 @@ Changes preserve existing local work and published Git history.
 - Local HTTP smoke checks: home, sign-in, markets and app routes serve; chat and
   agent endpoints reject unauthenticated requests with HTTP 401.
 
+## Current release checks — 2026-10-19
+
+- `npm.cmd test`: 74 tests passed plus the full local paper, auth, settlement,
+  fault, migration, worker and decision-plan checks.
+- `npm.cmd run test:intelligence`: 316 passed.
+- `npm.cmd run test:backend`: 473 passed.
+- `npx.cmd playwright test tests/browser/coverage.spec.ts`: 49 passed,
+  including all canonical routes, accessibility checks and local UI flows.
+- Fresh live InsForge two-user isolation: 29/29 checks passed. Test users were
+  deleted and email verification was restored. The worker-closed-browser run
+  and hosted cutover remain separate gates.
+
 ## Remaining verification and release requirements
 
 - Authenticated browser interactions and visual layouts have not been verified
   with a browser in this run. No browser automation tool was available.
-- Hosted deployment and the paper-fill/server-authority Supabase migrations were
-  not applied in this run. Apply the migrations documented in
-  `AGENT_INTEGRATION.md` and configure the server-only Supabase service key
-  before releasing paper-order behavior.
-- The local SQL regression file was not executed because the local Supabase
-  database was unavailable on this machine (`127.0.0.1:54322` refused the
-  connection; Docker's Linux daemon was not running).
+- Hosted deployment and the final InsForge runtime cutover were not performed
+  in this local verification run. Follow `INSFORGE_MIGRATION.md`; do not enable
+  hosted writes until fresh two-user, worker-closed-browser and final readback
+  checks pass.
 - Live provider/model calls depend on configured services and daily Fyers login.
   Regression tests do not establish live-session uptime or prediction quality.
 - Several dashboard and product widgets retain labelled demonstrative data.
   Orders remain paper trading; research sessions do not execute broker orders.
-- Daily-loss enforcement, durable background alert/bracket workers, idempotency,
-  actual fee debits, and mark-to-market position limits remain future work.
+- Remaining release gates are documented in `IMPLEMENTATION_STATUS.md`,
+  including live provider uptime, the real-session soak and independent review.

@@ -4,6 +4,7 @@ import { ProgressBar } from "@/components/app/pages/workspace";
 import { relativeTime } from "@/hooks/use-dashboard-data";
 import { useStockNews, useStockNewsSentiment } from "@/hooks/use-intelligence";
 import { newsUnavailableHint, priceConfirmationText, relevantNews } from "@/lib/intelligence-view";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 export function StockNewsIntelligence({ symbol }: { symbol: string }) {
   const news = useStockNews(symbol);
@@ -60,14 +61,18 @@ export function StockNewsIntelligence({ symbol }: { symbol: string }) {
                 <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
                   {summary.top_drivers.slice(0, 3).map((article) => (
                     <li key={article.id}>
-                      <a
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary-soft"
-                      >
-                        {article.title}
-                      </a>
+                      {safeExternalUrl(article.url) ? (
+                        <a
+                          href={safeExternalUrl(article.url)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-primary-soft"
+                        >
+                          {article.title}
+                        </a>
+                      ) : (
+                        article.title
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -128,14 +133,18 @@ export function StockNewsIntelligence({ symbol }: { symbol: string }) {
             <ul className="divide-y divide-border">
               {articles.map((article) => (
                 <li key={article.id} className="p-4 transition-colors hover:bg-panel-elevated">
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[13px] leading-relaxed hover:text-primary-soft"
-                  >
-                    {article.title}
-                  </a>
+                  {safeExternalUrl(article.url) ? (
+                    <a
+                      href={safeExternalUrl(article.url)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] leading-relaxed hover:text-primary-soft"
+                    >
+                      {article.title}
+                    </a>
+                  ) : (
+                    <span className="text-[13px] leading-relaxed">{article.title}</span>
+                  )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="text-[10px] text-subtle">
                       {article.source} · {relativeTime(article.published_at)}

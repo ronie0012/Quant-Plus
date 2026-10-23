@@ -224,13 +224,12 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
   },
   {
     section: "options",
-    label: "Options",
-    area: "Portfolio",
+    label: "Option chain",
+    area: "Discover",
     group: "Terminal",
-    keywords: "options options lab derivatives unavailable",
+    keywords: "options option chain derivatives calls puts open interest pcr max pain f&o",
     primary: false,
-    aliases: ["options-lab"],
-    available: false,
+    aliases: ["options-lab", "option-chain", "fno"],
   },
   {
     section: "behavior",
@@ -367,11 +366,22 @@ export const SECONDARY_WORKSPACE_ROUTES = WORKSPACE_ROUTES.filter((route) => !ro
 export const AREA_NAVIGATION: Record<WorkspaceArea, readonly string[]> = {
   Home: ["dashboard", "learn"],
   Learn: ["learn", "investor-dna", "be-the-company", "tutor"],
-  Discover: ["markets", "watchlist", "screener", "ripple", "events", "research"],
+  Discover: ["markets", "watchlist", "screener", "options", "ripple", "events", "research"],
   Portfolio: ["portfolio", "orders", "wallet", "risk", "alerts"],
   Review: ["journal", "history", "behavior", "replay", "track-record"],
   More: ["more", "settings", "data-sources", "help"],
 };
+
+/**
+ * Every other tool owned by an area, offered from that area's "More tools"
+ * menu so depth stays one click away without crowding the tab bar.
+ */
+export function areaOverflow(area: WorkspaceArea) {
+  const shown = new Set(AREA_NAVIGATION[area]);
+  return WORKSPACE_ROUTES.filter(
+    (route) => route.area === area && !route.primary && !shown.has(route.section),
+  );
+}
 
 export function resolveWorkspaceRoute(section: string | undefined) {
   if (!section) return undefined;

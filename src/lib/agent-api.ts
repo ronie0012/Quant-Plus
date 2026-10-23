@@ -88,6 +88,9 @@ export type MarketHistory = {
   interval: string;
   delayed?: boolean;
   candles: MarketCandle[];
+  /** Set by the app server when the provider was unreachable. */
+  served_from_cache?: boolean;
+  cached_at?: string;
 };
 
 export async function agentFetch(path: string, options: RequestInit = {}) {

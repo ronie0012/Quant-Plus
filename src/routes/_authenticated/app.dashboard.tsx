@@ -104,8 +104,8 @@ function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="dash-rise flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
+    <div className="flex flex-col gap-4">
+      <header className="dash-rise flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[12px] text-subtle">
             {new Date().toLocaleDateString("en-IN", {
@@ -115,18 +115,15 @@ function DashboardPage() {
               year: "numeric",
             })}
           </p>
-          <h1 className="mt-1 text-[24px] leading-tight font-semibold tracking-tight">
+          <h1 className="mt-0.5 text-[20px] leading-tight font-semibold tracking-tight">
             {greetingFor()}, {displayNameFrom(session)}
           </h1>
-          <p className="mt-1 max-w-xl text-[13px] text-muted-foreground">
-            Start with what needs your attention, then follow the evidence into a decision.
-          </p>
         </div>
         <button
           type="button"
           onClick={() => setCustomLayout((value) => !value)}
           aria-pressed={customLayout}
-          className="min-h-10 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:border-border-strong hover:text-foreground"
+          className="min-h-9 rounded-md border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:border-border-strong hover:text-foreground"
         >
           {customLayout ? "Use overview" : "Custom dashboard"}
         </button>
@@ -150,41 +147,38 @@ function DashboardPage() {
         </section>
       ) : (
         <>
-          <NextActionsFeed />
-          <LicenceStrip />
-
-          <section aria-labelledby="home-money" className="flex flex-col gap-3">
-            <div>
-              <h2 id="home-money" className="text-lg font-semibold tracking-tight">
-                Money
-              </h2>
-              <p className="mt-1 text-[12px] text-subtle">
-                How your paper account and positions are doing.
-              </p>
-            </div>
+          <section aria-labelledby="home-money" className="flex flex-col gap-4">
+            <h2 id="home-money" className="sr-only">
+              Money
+            </h2>
             <FundsRow />
-            <PortfolioSnapshot />
           </section>
 
-          <section aria-labelledby="home-market" className="flex flex-col gap-3">
-            <div>
-              <h2 id="home-market" className="text-lg font-semibold tracking-tight">
+          <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+            <section aria-labelledby="home-market" className="flex min-w-0 flex-col gap-4">
+              <h2 id="home-market" className="sr-only">
                 Market
               </h2>
-              <p className="mt-1 text-[12px] text-subtle">
-                What is moving, and what could matter next.
-              </p>
-            </div>
-            <MarketOverview />
-            <div className="grid gap-5 xl:grid-cols-2">
-              <SentimentPanel />
-              <CalendarPanel />
-            </div>
-          </section>
+              <MarketOverview />
+              <NextActionsFeed />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <SentimentPanel />
+                <CalendarPanel />
+              </div>
+            </section>
+            <aside
+              aria-label="Your positions and watchlist"
+              className="flex min-w-0 flex-col gap-4"
+            >
+              <WatchlistPanel />
+              <PortfolioSnapshot />
+              <LicenceStrip />
+            </aside>
+          </div>
         </>
       )}
 
-      <p className="pb-10 text-[12px] text-subtle">
+      <p className="pb-10 text-[11px] text-subtle">
         Provider data is labelled by source and freshness · paper trading only · not investment
         advice
       </p>

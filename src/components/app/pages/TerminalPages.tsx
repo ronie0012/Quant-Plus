@@ -89,10 +89,23 @@ function ProviderIndexChart({
           />
         ) : (
           <text x="500" y="140" textAnchor="middle" className="fill-subtle text-[14px]">
-            Provider history unavailable
+            {history.isLoading
+              ? "Loading provider history…"
+              : history.isError
+                ? "Provider history unavailable"
+                : "No provider history for this range"}
           </text>
         )}
       </svg>
+      {history.isError && (
+        <button
+          type="button"
+          className="absolute bottom-8 left-1/2 min-h-11 -translate-x-1/2 rounded-md border border-border px-3 text-xs text-primary-soft hover:text-foreground"
+          onClick={() => void history.refetch()}
+        >
+          Retry history
+        </button>
+      )}
       <span className="absolute right-3 bottom-3 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">
         {history.data?.source ? `${history.data.source} OHLCV` : "Awaiting provider history"}
       </span>
@@ -323,7 +336,7 @@ export function PortfolioPage() {
     return (
       <PageIntro
         eyebrow="Portfolio intelligence"
-        title="Capital, understood."
+        title="Portfolio"
         body="Calculating exposure and contribution."
       >
         <Skeleton className="h-24 w-full" />
@@ -409,7 +422,7 @@ export function PortfolioPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Portfolio intelligence"
-        title="Capital, understood."
+        title="Portfolio"
         body="See what drives return, where risk concentrates, and how every position contributes."
         action={
           <Button asChild size="sm" className="font-medium text-[11px] tracking-[0.06em] uppercase">

@@ -62,7 +62,7 @@ export function Stat({
 }
 
 const baseAction =
-  "group relative inline-flex min-h-11 items-center justify-center gap-2.5 font-mono text-xs uppercase tracking-[0.1em] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-soft";
+  "group relative inline-flex min-h-11 items-center justify-center gap-2.5 rounded-md text-[14px] font-medium transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-soft";
 
 export function PrimaryAction({
   children,
@@ -78,12 +78,17 @@ export function PrimaryAction({
   const content = (
     <>
       {children}
-      <span aria-hidden="true" className="h-px w-5 bg-current" />
+      <span
+        aria-hidden="true"
+        className="transition-transform duration-200 group-hover:translate-x-0.5"
+      >
+        &rarr;
+      </span>
     </>
   );
   const classes = cn(
     baseAction,
-    "border border-primary-soft bg-primary-soft px-5 py-3 text-background hover:bg-foreground hover:border-foreground",
+    "border border-primary-action bg-primary-action px-5 py-2.5 text-primary-foreground hover:border-primary hover:bg-primary",
     className,
   );
   if (to) {
@@ -122,7 +127,7 @@ export function GhostAction({
   );
   const classes = cn(
     baseAction,
-    "border border-border-strong px-5 py-3 text-muted-foreground hover:text-foreground hover:border-foreground/30",
+    "border border-border-strong bg-foreground/[0.03] px-5 py-2.5 text-foreground hover:border-foreground/30 hover:bg-foreground/[0.06]",
     className,
   );
   if (to) {

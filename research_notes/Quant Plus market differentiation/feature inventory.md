@@ -171,7 +171,7 @@ Status labels used below:
 | BSE/global tradeable instruments | **Not started** | The gate distinguishes a SENSEX index quote from BSE/global tradeable instruments and says separate calendars, currencies, charges, and masters are required. Evidence: [`src/components/app/pages/CapabilitiesPage.tsx:93-97`](../../src/components/app/pages/CapabilitiesPage.tsx). |
 | Institutional FII/DII flows | **Unavailable** | Regime Map and Trust Control Room explicitly report no institutional-flow source. Evidence: [`src/components/app/pages/RegimePage.tsx:119-125`](../../src/components/app/pages/RegimePage.tsx), [`src/components/app/pages/TrustControlRoom.tsx:207-213`](../../src/components/app/pages/TrustControlRoom.tsx). |
 | Corporate-action adjustment accounting | **Partial / not implemented in the book** | Corporate-action calendar/event listing exists, but adjustment factors are not applied to history or positions; the capability gate keeps this `NOT_STARTED`/partial. Evidence: [`src/components/app/pages/CapabilitiesPage.tsx:66-73`](../../src/components/app/pages/CapabilitiesPage.tsx), [`src/components/app/pages/TrustControlRoom.tsx:199-205`](../../src/components/app/pages/TrustControlRoom.tsx). |
-| Direct support channel | **Unavailable** | Help page renders “Support coming soon” disabled. Evidence: [`src/components/app/pages/SystemPages.tsx:651-666`](../../src/components/app/pages/SystemPages.tsx). |
+| Direct support channel | **Unavailable** | Help page truthfully reports that no support channel is configured; it no longer exposes a dead disabled button. Evidence: [`src/components/app/pages/SystemPages.tsx:651-666`](../../src/components/app/pages/SystemPages.tsx). |
 
 ### Provider, data, and model availability
 

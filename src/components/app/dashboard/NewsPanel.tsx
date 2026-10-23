@@ -2,6 +2,7 @@ import { Card, CardHead, EmptyState, Pill, Skeleton } from "@/components/app/car
 import { relativeTime, useNews } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
 import { newsUnavailableHint } from "@/lib/intelligence-view";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 function sentimentTone(s: string) {
   const v = s.toUpperCase();
@@ -60,6 +61,7 @@ export function NewsPanel() {
           <ul className="divide-y divide-border">
             {data.map((n, i) => {
               const tone = sentimentTone(n.sentiment);
+              const url = safeExternalUrl(n.url);
               return (
                 <li
                   key={n.id}
@@ -77,14 +79,18 @@ export function NewsPanel() {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-[13.5px] leading-snug text-foreground/90 transition-colors group-hover/row:text-foreground">
-                      <a
-                        href={n.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary-soft"
-                      >
-                        {n.headline}
-                      </a>
+                      {url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-primary-soft"
+                        >
+                          {n.headline}
+                        </a>
+                      ) : (
+                        n.headline
+                      )}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Pill>{n.category}</Pill>

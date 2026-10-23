@@ -54,7 +54,7 @@ export function BehaviorPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Behavioural risk"
-        title="Most platforms analyse markets. This analyses the trader."
+        title="Behaviour"
         body="With your consent, Quant Plus looks for patterns in your own paper history that tend to hurt results: sizing up after losses, quick re-entries, moved stops, ignored invalidation. Findings are descriptive, use your data only, and come with their sample sizes. Protections are yours to configure and never block an exit."
         status={policy.consent ? "Analysis on · your data only" : "Analysis off"}
       >

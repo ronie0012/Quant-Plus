@@ -260,7 +260,7 @@ export function ResearchNetworkPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Research network"
-        title="Ideas that can be checked."
+        title="Research network"
         body="Every memo records its data cutoff, evidence bundle, assumptions, falsifiers, forecast horizon and maturity date, and keeps every revision. Bundles export with a SHA-256 hash so anyone can verify they were not edited. The leaderboard counts matured forecasts, not raw returns."
         action={
           <span className="flex gap-2">

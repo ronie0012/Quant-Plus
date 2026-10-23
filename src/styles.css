@@ -79,8 +79,8 @@
   --foreground: oklch(0.958 0.004 265);
   /* #8A94A6, lifted slightly for body copy on panels */
   --muted-foreground: oklch(0.7 0.02 264);
-  /* Raised from #505969 so 9-11px labels keep at least 5:1 contrast on the background. */
-  --subtle: oklch(0.625 0.021 264);
+  /* Secondary text remains subdued while clearing WCAG AA on dark panels. */
+  --subtle: oklch(0.69 0.021 264);
   --muted: oklch(0.213 0.024 265);
   /* #2E7DFF */
   --primary: oklch(0.611 0.204 262);
@@ -275,24 +275,21 @@
 
 /* ---- page transitions (View Transitions API; ignored where unsupported) -- */
 
+/* Tools switch screens instantly; a short cross-fade only softens the swap. */
 ::view-transition-old(root) {
-  animation: vt-out 220ms var(--ease-in-out) both;
+  animation: vt-out 90ms linear both;
 }
 ::view-transition-new(root) {
-  animation: vt-in 420ms var(--ease-out-expo) both;
+  animation: vt-in 140ms linear both;
 }
 @keyframes vt-out {
   to {
     opacity: 0;
-    transform: translate3d(0, -6px, 0);
-    filter: blur(3px);
   }
 }
 @keyframes vt-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0);
-    filter: blur(4px);
   }
 }
 /* Persistent chrome keeps its place instead of cross-fading. */
@@ -420,7 +417,7 @@
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   line-height: 1;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
 }
@@ -602,8 +599,61 @@
 
 @utility dash-rise {
   opacity: 0;
-  animation: dash-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--d, 0ms);
+  animation: dash-rise 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--d, 0ms) * 0.25);
+}
+
+/* ---- dealing-screen cues ----------------------------------------------- */
+
+/* A price cell flashes once when it ticks, the way exchange terminals do. */
+@keyframes tick-up {
+  from {
+    background-color: color-mix(in oklab, var(--color-positive) 32%, transparent);
+  }
+}
+@keyframes tick-down {
+  from {
+    background-color: color-mix(in oklab, var(--color-negative) 32%, transparent);
+  }
+}
+.tick-up {
+  animation: tick-up 0.9s ease-out;
+}
+.tick-down {
+  animation: tick-down 0.9s ease-out;
+}
+@keyframes live-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-positive) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+.live-dot {
+  animation: live-dot 2s ease-in-out infinite;
+}
+
+/* Data tables: compact rows, sticky headers, aligned figures. */
+.app-ui table {
+  font-variant-numeric: tabular-nums;
+}
+.app-ui thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--color-panel);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-subtle);
+}
+.app-ui tbody tr {
+  transition: background-color 120ms;
+}
+.app-ui tbody tr:hover {
+  background-color: color-mix(in oklab, var(--color-foreground) 3.5%, transparent);
 }
 
 @keyframes pulse-ring {

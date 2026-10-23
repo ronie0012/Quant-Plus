@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardHead, EmptyState, Pill, Skeleton } from "@/components/app/cards";
 import { MetricStrip, PageIntro, Segmented } from "@/components/app/pages/workspace";
 import { WhyButton } from "@/components/app/evidence/WhyButton";
+import { ForecastLedgerSection } from "@/components/app/pages/ForecastLedgerSection";
 import { stockBySymbol } from "@/data/nifty50";
 import {
   useHistories,
@@ -234,7 +235,7 @@ export function TrackRecordPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Calibrated track record"
-        title="Measured, not persuasive."
+        title="Track record"
         body="Every committee forecast is scored only after its horizon has passed in observed prices. Accuracy is compared with a constant baseline, opinion strength is checked for calibration, and abstentions are counted rather than hidden. Opinion strength is not a probability; it is converted to one here (50% + strength ÷ 2) only so it can be tested."
         action={
           <Segmented
@@ -271,6 +272,7 @@ export function TrackRecordPage() {
           ]}
         />
       </PageIntro>
+      <ForecastLedgerSection />
       <Card glow>
         <div className="flex items-start gap-2 p-5 text-[14px] leading-relaxed">
           <p>{loading ? "Loading research sessions and price history…" : sentence}</p>

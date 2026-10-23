@@ -8,7 +8,7 @@ import {
   useInstruments,
   type Instrument,
 } from "@/hooks/use-dashboard-data";
-import { toPath } from "@/data/market";
+import { AreaChart } from "@/components/app/AreaChart";
 import { cn } from "@/lib/utils";
 
 const ranges = ["1D", "1W", "1M", "3M", "1Y"] as const;
@@ -22,14 +22,7 @@ export function MarketOverview() {
   const instrument: Instrument | undefined = data?.[active];
   const history = useIndexHistory(instrument?.symbol, range);
 
-  const points = useMemo(() => {
-    const closes = history.data?.candles.map((c) => c.close) ?? [];
-    if (closes.length < 2) return [];
-    const low = Math.min(...closes);
-    const high = Math.max(...closes);
-    const span = high - low || 1;
-    return closes.map((value) => (value - low) / span);
-  }, [history.data]);
+  const candles = useMemo(() => history.data?.candles ?? [], [history.data]);
 
   if (isLoading) {
     return (
@@ -55,9 +48,6 @@ export function MarketOverview() {
 
   const hasValue = instrument.value != null;
   const up = Number(instrument.change_pct ?? 0) >= 0;
-  const w = 1000;
-  const h = 300;
-  const path = points.length > 1 ? toPath(points, w, h) : "";
   const hoverValue =
     hover !== null && history.data?.candles[hover]?.close != null
       ? history.data.candles[hover].close
@@ -167,82 +157,36 @@ export function MarketOverview() {
       </div>
 
       {/* chart */}
-      <div className="relative mt-5 flex-1 px-2 pb-4">
-        <svg
-          viewBox={`0 0 ${w} ${h}`}
-          preserveAspectRatio="none"
-          className="h-[240px] w-full sm:h-[300px]"
-          role="img"
-          aria-label={`${instrument.name} ${range} price trend`}
-          onMouseLeave={() => setHover(null)}
-          onMouseMove={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const ratio = (e.clientX - rect.left) / rect.width;
-            setHover(
-              Math.max(0, Math.min(points.length - 1, Math.round(ratio * (points.length - 1)))),
-            );
-          }}
-        >
-          <defs>
-            <linearGradient id="mo-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor={up ? "var(--color-positive)" : "var(--color-negative)"}
-                stopOpacity="0.22"
-              />
-              <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-
-          {[0.2, 0.4, 0.6, 0.8].map((g) => (
-            <line
-              key={g}
-              x1="0"
-              x2={w}
-              y1={h * g}
-              y2={h * g}
-              stroke="var(--color-border)"
-              strokeWidth="1"
-            />
-          ))}
-
-          {path ? (
-            <>
-              <path d={`${path} L${w},${h} L0,${h} Z`} fill="url(#mo-fill)" />
-              <path
-                key={`${instrument.symbol}-${range}`}
-                d={path}
-                fill="none"
-                strokeWidth="1.6"
-                className={cn("animate-draw", up ? "stroke-positive" : "stroke-negative")}
-                style={{ ["--draw-length" as string]: "2600" }}
-              />
-            </>
-          ) : (
-            <text x={w / 2} y={h / 2} textAnchor="middle" className="fill-subtle text-[14px]">
-              Provider history unavailable
-            </text>
-          )}
-
-          {hover !== null && points[hover] !== undefined && (
-            <>
-              <line
-                x1={(hover / (points.length - 1)) * w}
-                x2={(hover / (points.length - 1)) * w}
-                y1="0"
-                y2={h}
-                stroke="var(--color-border-strong)"
-                strokeWidth="1"
-              />
-              <circle
-                cx={(hover / (points.length - 1)) * w}
-                cy={h - (points[hover] ?? 0) * h}
-                r="4"
-                className={up ? "fill-positive" : "fill-negative"}
-              />
-            </>
-          )}
-        </svg>
+      <div className="relative mt-3 flex-1 px-2 pb-3">
+        {candles.length > 1 ? (
+          <AreaChart
+            points={candles}
+            up={up}
+            intraday={range === "1D" || range === "1W"}
+            label={`${instrument.name} ${range} price trend`}
+            className="h-[240px] sm:h-[300px]"
+            onHover={(index) =>
+              setHover(index == null ? null : Math.min(index, candles.length - 1))
+            }
+          />
+        ) : (
+          <div className="flex h-[240px] items-center justify-center text-[13px] text-subtle sm:h-[300px]">
+            {history.isLoading
+              ? "Loading provider history…"
+              : history.isError
+                ? "Provider history unavailable"
+                : "No provider history for this range"}
+          </div>
+        )}
+        {history.isError && (
+          <button
+            type="button"
+            className="absolute bottom-7 left-1/2 min-h-11 -translate-x-1/2 rounded-md border border-border px-3 text-xs text-primary-soft hover:text-foreground"
+            onClick={() => void history.refetch()}
+          >
+            Retry history
+          </button>
+        )}
       </div>
 
       {/* indices strip */}

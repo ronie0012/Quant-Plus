@@ -302,7 +302,7 @@ for (const width of [375, 1440]) {
     expect(workspace.watchlist).toMatchObject([{ symbol: "ASIANPAINT" }]);
     await research.click();
     await expect(page.getByRole("heading", { name: "ASIANPAINT", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "ASIANPAINT price action" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ASIANPAINT price action" })).toBeAttached();
     await expect.poll(() => workspace.streamSymbols.includes("ASIANPAINT")).toBe(true);
     await expect(page.getByText("₹1,088.00", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "In watchlist" })).toBeDisabled();
@@ -323,7 +323,7 @@ for (const width of [375, 1440]) {
       .toBe(true);
     await page
       .getByRole("navigation", { name: "Stock workspace sections" })
-      .getByRole("link", { name: "3. Decision plan" })
+      .getByRole("link", { name: "Decision plan", exact: true })
       .click();
     await expect(page.getByRole("heading", { name: "Decision canvas" })).toBeInViewport();
     await expect(

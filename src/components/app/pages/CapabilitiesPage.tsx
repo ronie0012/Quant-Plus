@@ -79,9 +79,12 @@ export function CapabilitiesPage() {
     },
     {
       title: "Options chains and strategy analysis",
-      status: "NOT_STARTED",
-      evidence: ["Options lab is shown as unavailable; no observed option chain"],
-      gate: "Observed chains with verified lot sizes, expiries and contract rules.",
+      status: "PARTIAL",
+      evidence: [
+        "Observed FYERS option chain with OI, PCR and max pain (display only)",
+        "No option orders, lot-size rules or Greeks in the paper book",
+      ],
+      gate: "Verified lot sizes, expiries and contract rules before option paper orders.",
     },
     {
       title: "Options replay and risk",
@@ -113,7 +116,7 @@ export function CapabilitiesPage() {
     <div className="flex flex-col gap-5">
       <PageIntro
         eyebrow="Market roadmap"
-        title="Broader markets, in the correct order."
+        title="Market coverage"
         body="Each capability is added only after the previous one passes its integrity and evidence gate. Statuses are read from what this workspace can actually do today."
         status="Paper trading only"
       />

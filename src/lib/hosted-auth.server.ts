@@ -157,7 +157,17 @@ export async function hostedAuth(request: Request) {
         error ? 503 : 200,
       );
     }
-    if (!["sign-in", "sign-up", "verify-email", "resend-verification"].includes(action ?? ""))
+    if (
+      ![
+        "sign-in",
+        "sign-up",
+        "verify-email",
+        "resend-verification",
+        "send-reset-password",
+        "exchange-reset-password",
+        "reset-password",
+      ].includes(action ?? "")
+    )
       return reply({ error: "Unknown authentication action" }, 404);
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return reply({ error: "Invalid sign-in details" }, 400);
@@ -184,6 +194,45 @@ export async function hostedAuth(request: Request) {
         ...options,
         cookies,
       }).auth.resendVerificationEmail({ email, redirectTo: `${url.origin}/auth` });
+      if (error) return reply({ error: error.message }, error.statusCode === 429 ? 429 : 400);
+      return reply({ ok: true });
+    }
+    if (action === "send-reset-password") {
+      const { error } = await createServerClient({
+        ...options,
+        cookies,
+      }).auth.sendResetPasswordEmail({
+        email,
+        redirectTo: `${url.origin}/auth`,
+      });
+      if (error) return reply({ error: error.message }, error.statusCode === 429 ? 429 : 400);
+      return reply({ ok: true });
+    }
+    if (action === "exchange-reset-password") {
+      const otp = input["otp"];
+      if (typeof otp !== "string" || !/^\d{6}$/.test(otp))
+        return reply({ error: "Enter the six-digit reset code" }, 400);
+      const { data, error } = await createServerClient({
+        ...options,
+        cookies,
+      }).auth.exchangeResetPasswordToken({
+        email,
+        code: otp,
+      });
+      if (error) return reply({ error: error.message }, error.statusCode === 429 ? 429 : 400);
+      return reply({ token: data?.token });
+    }
+    if (action === "reset-password") {
+      const otp = input["otp"];
+      if (typeof otp !== "string" || !otp || typeof password !== "string" || password.length < 8)
+        return reply(
+          { error: "Enter a valid reset code and a password of at least 8 characters" },
+          400,
+        );
+      const { error } = await createServerClient({ ...options, cookies }).auth.resetPassword({
+        newPassword: password,
+        otp,
+      });
       if (error) return reply({ error: error.message }, error.statusCode === 429 ? 429 : 400);
       return reply({ ok: true });
     }

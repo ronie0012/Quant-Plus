@@ -49,6 +49,9 @@ npm run typecheck
 npm test
 npm run lint
 npm run build
+npm run test:intelligence
+npm run test:backend
+npm run test:browser
 ```
 
 To run the built app locally, use `npm run preview` and open

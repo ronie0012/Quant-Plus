@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
@@ -43,15 +44,8 @@ export function Navbar() {
           aria-label="Quant Plus home"
           className="inline-flex min-h-11 shrink-0 items-center gap-2.5"
         >
-          <span
-            aria-hidden="true"
-            className="grid h-4 w-4 place-items-center border border-primary-soft"
-          >
-            <span className="h-1 w-1 bg-primary-soft" />
-          </span>
-          <span className="font-mono text-sm tracking-[0.18em] uppercase">
-            Quant<span className="text-primary-soft">+</span>
-          </span>
+          <BrandMark className="h-7 w-7" />
+          <BrandWordmark className="text-[16px]" />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-7 lg:flex">

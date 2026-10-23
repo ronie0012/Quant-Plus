@@ -181,9 +181,7 @@ test("Review separates workspaces while keeping an unfinished decision draft", a
   const thesis = page.getByPlaceholder("What must be true for this trade to work?");
   await thesis.fill("A draft I am still evaluating");
   await page.getByRole("button", { name: "Review overview", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Turn outcomes into better decisions.",
-  );
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Review");
   await expect(thesis).not.toBeVisible();
   await page.getByRole("button", { name: "Execution review", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Execution review");

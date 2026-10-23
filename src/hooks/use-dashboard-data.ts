@@ -225,6 +225,8 @@ export function useInstruments() {
   return useQuery({
     queryKey: ["instruments"],
     staleTime: STALE,
+    // The overview stream pushes ticks; polling only covers stream outages.
+    refetchInterval: 60_000,
     queryFn: async (): Promise<Instrument[]> => {
       const response = await agentFetch("market/overview");
       const payload = (await response.json()) as { instruments?: Instrument[] };

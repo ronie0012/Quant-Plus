@@ -508,13 +508,12 @@ export function DataSourcesPage() {
               ))}
             </dl>
             {selected.health === 0 && (
-              <Button
-                variant="outline"
-                disabled
-                className="mt-5 w-full font-medium text-[11px] uppercase tracking-[0.06em]"
+              <div
+                role="status"
+                className="mt-5 border border-border bg-background/40 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-subtle"
               >
                 Integration unavailable
-              </Button>
+              </div>
             )}
             <p className="mt-5 text-[10px] leading-relaxed text-subtle">
               Quote coverage counts returned provider values; other source health is unmeasured.
@@ -657,13 +656,12 @@ export function HelpPage() {
                 A direct support channel has not been configured yet. Use the in-product guidance
                 while support access is prepared.
               </p>
-              <Button
-                variant="outline"
-                disabled
-                className="mt-5 w-full font-medium text-[11px] uppercase tracking-[0.06em]"
+              <div
+                role="status"
+                className="mt-5 border border-border bg-background/40 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-subtle"
               >
-                Support coming soon
-              </Button>
+                Support channel not configured
+              </div>
             </div>
           </Card>
         </div>

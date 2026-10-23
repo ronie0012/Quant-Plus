@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { Card, CardHead, Pill } from "@/components/app/cards";
 import { relativeTime } from "@/hooks/use-dashboard-data";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { rippleName, useRippleOrigins } from "@/hooks/use-ripple";
 import { EDGE_LABELS, isFactor, propagate, RIPPLE_EDGES } from "@/lib/quant/ripple";
 
@@ -97,9 +98,9 @@ export function StockRipplePanel({ symbol }: { symbol: string }) {
                     {origin.published_at ? ` · ${relativeTime(origin.published_at)}` : ""} · curated
                     possible effect
                   </p>
-                  {origin.url && (
+                  {safeExternalUrl(origin.url) && (
                     <a
-                      href={origin.url}
+                      href={safeExternalUrl(origin.url)!}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-1 inline-flex min-h-11 items-center text-[12px] text-primary-soft hover:underline"

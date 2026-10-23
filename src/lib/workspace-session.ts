@@ -222,6 +222,7 @@ async function authAction(action: string, body?: Record<string, string>) {
   });
   const data = (await response.json()) as {
     error?: string;
+    token?: string;
     requireEmailVerification?: boolean;
     verifyEmailMethod?: "code" | "link";
   };
@@ -264,4 +265,18 @@ export async function signOutWorkspace() {
   if (!hostedAuthConfig()) return;
   await authAction("sign-out");
   announceSessionChange();
+}
+
+export async function sendResetPasswordEmail(email: string) {
+  await authAction("send-reset-password", { email });
+}
+
+export async function exchangeResetPasswordToken(email: string, otp: string) {
+  const data = await authAction("exchange-reset-password", { email, otp });
+  if (!data.token) throw new Error("Reset code could not be exchanged");
+  return data.token;
+}
+
+export async function resetHostedPassword(otp: string, password: string) {
+  await authAction("reset-password", { otp, password });
 }

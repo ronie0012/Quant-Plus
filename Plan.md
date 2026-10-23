@@ -18,7 +18,8 @@
 5. The CodeCraft-backed agent graph persists checkpoints, analyst reports, debate, risk review and research-only decisions.
 6. Quantitative market sentiment calculates NIFTY momentum, breadth, sectors, VIX, news, volume and Bank Nifty with explicit missingness.
 7. Google News RSS is normalized, deduplicated, relevance-scored and sentiment-scored.
-8. Paper orders validate fresh FYERS prices and settle through Supabase functions.
+8. Paper orders validate fresh FYERS prices and settle through the server-owned
+   local book or the InsForge compare-and-swap book when hosted mode is explicitly enabled.
 
 ### Hardcoded or incomplete surfaces to convert
 
@@ -62,7 +63,7 @@
 3. Replace synthetic price charts with provider history or clear unavailable states.
 4. Load watchlist quotes from the shared quote stream.
 5. Display source, freshness and closed/delayed state in dashboard and watchlist rows.
-6. Replace hardcoded source health with live FYERS, Yahoo, news, intelligence, Supabase and AI health checks.
+6. Replace hardcoded source health with live FYERS, Yahoo, news, intelligence, InsForge and AI health checks.
 
 ## Phase 3: portfolio and paper-trading reliability
 

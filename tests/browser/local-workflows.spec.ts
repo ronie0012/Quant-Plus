@@ -57,7 +57,7 @@ for (const [route, text] of [
   ["options", "Options unavailable"],
   ["replay", "Replay"],
   ["orders", "Orders"],
-  ["screener", "Find the setups that fit."],
+  ["screener", "Screener"],
   ["settings", "Settings"],
 ] as const) {
   test(`local ${route} renders with unavailable providers`, async ({ page }) => {
