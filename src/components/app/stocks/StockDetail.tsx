@@ -9,7 +9,7 @@ import { useCalendar } from "@/hooks/use-quant-data";
 import { classifyEvent, EVENT_LABELS } from "@/lib/quant/events";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, CandlestickChart, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, CandlestickChart, Layers3, Sparkles, Loader2 } from "lucide-react";
 import { usePriceFlash } from "@/hooks/use-price-flash";
 import { Card, CardHead, Pill } from "@/components/app/cards";
 import { ProgressBar, Segmented } from "@/components/app/pages/workspace";
@@ -28,6 +28,7 @@ import {
   useStockMetrics,
   useStockFundamentals,
 } from "@/hooks/use-agent-stock";
+import { useMarketStructure } from "@/lib/market-structure";
 import { AgentPrediction } from "@/components/app/stocks/AgentPrediction";
 import { ForecastCard } from "@/components/app/stocks/ForecastCard";
 import { StockMarketData } from "@/components/app/stocks/StockMarketData";
@@ -97,6 +98,34 @@ function ChartRangeControls({
     </div>
   );
 }
+
+function StructureToggle({
+  enabled,
+  loading,
+  onToggle,
+}: {
+  enabled: boolean;
+  loading: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={enabled}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors",
+        enabled
+          ? "border-primary/50 bg-primary/10 text-primary-soft"
+          : "border-border text-muted-foreground hover:text-foreground",
+      )}
+      title="Show rule-based order-block and liquidity overlays"
+    >
+      <Layers3 className="h-3.5 w-3.5" />
+      {loading ? "Loading structure…" : enabled ? "Structure on" : "Structure"}
+    </button>
+  );
+}
 /** Price → research → deliberate decision, with supplementary market detail on demand. */
 export function StockDetail({
   stock: reference,
@@ -142,6 +171,7 @@ export function StockDetail({
   const verdict = completedAnalysis?.decision?.action.toUpperCase();
   const [range, setRangeState] = useState<Range>("1D");
   const [interval, setInterval] = useState<string | null>(null);
+  const [structureEnabled, setStructureEnabled] = useState(false);
   const setRange = (next: Range) => {
     setRangeState(next);
     setInterval(null);
@@ -183,6 +213,7 @@ export function StockDetail({
   const metrics = useStockMetrics(reference.symbol);
   const fundamentals = useStockFundamentals(reference.symbol);
   const history = useMarketHistory(reference.symbol, range, interval);
+  const structure = useMarketStructure(reference.symbol, "1D", structureEnabled);
   const chartCandles = useMemo(() => {
     const data = history.data?.candles;
     if (
@@ -460,12 +491,26 @@ export function StockDetail({
                 alerts={chartAlerts}
                 onCreateAlert={addChartAlert}
                 toolbarStart={
-                  <ChartRangeControls
-                    range={range}
-                    onRange={setRange}
-                    interval={interval ?? history.data?.interval}
-                    onInterval={setInterval}
-                  />
+                  <div className="flex items-center gap-2">
+                    <ChartRangeControls
+                      range={range}
+                      onRange={setRange}
+                      interval={interval ?? history.data?.interval}
+                      onInterval={setInterval}
+                    />
+                    <StructureToggle
+                      enabled={structureEnabled}
+                      loading={structureEnabled && structure.isLoading}
+                      onToggle={() => setStructureEnabled((current) => !current)}
+                    />
+                  </div>
+                }
+                structure={
+                  structureEnabled &&
+                  !structure.isError &&
+                  structure.data?.classification.label !== "unavailable"
+                    ? (structure.data ?? null)
+                    : null
                 }
                 {...(preferences
                   ? {
@@ -478,12 +523,19 @@ export function StockDetail({
             ) : (
               <>
                 <div className="flex min-h-11 items-center border-b border-border px-2 py-1">
-                  <ChartRangeControls
-                    range={range}
-                    onRange={setRange}
-                    interval={interval ?? undefined}
-                    onInterval={setInterval}
-                  />
+                  <div className="flex items-center gap-2">
+                    <ChartRangeControls
+                      range={range}
+                      onRange={setRange}
+                      interval={interval ?? undefined}
+                      onInterval={setInterval}
+                    />
+                    <StructureToggle
+                      enabled={structureEnabled}
+                      loading={structureEnabled && structure.isLoading}
+                      onToggle={() => setStructureEnabled((current) => !current)}
+                    />
+                  </div>
                 </div>
                 <div
                   role="status"
@@ -507,6 +559,15 @@ export function StockDetail({
                 </div>
               </>
             )}
+            {structureEnabled &&
+              (structure.isError || structure.data?.classification.label === "unavailable") && (
+                <p role="status" className="border-t border-border px-4 py-2 text-xs text-warning">
+                  {structure.isError && structure.data
+                    ? "Structure refresh failed; stale overlays hidden."
+                    : "Structure unavailable; overlays hidden."}
+                  {structure.error instanceof Error ? ` ${structure.error.message}` : ""}
+                </p>
+              )}
             {history.data && history.error && (
               <p className="border-t border-border px-4 py-2 text-xs text-warning">
                 History refresh failed; showing cached candles.

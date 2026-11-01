@@ -374,7 +374,7 @@ export function DataSourcesPage() {
     },
     {
       name: "Committee analyses",
-      type: "CodeCraft research",
+      type: "OpenRouter research",
       status: analyses ? "Connected" : "Unavailable",
       coverage: analyses ? `${analyses.length} stored analyses` : "Research sessions",
       freshness: "On request",

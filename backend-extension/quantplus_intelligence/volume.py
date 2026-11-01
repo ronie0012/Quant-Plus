@@ -9,15 +9,21 @@ from .config import RULES
 from .market_data import IST
 
 
-def relative_volume(quote, daily, intraday=None):
+def relative_volume(quote, daily, intraday=None, session=None):
     volume = number(quote.get("volume"))
     if not volume or volume <= 0 or not quote.get("as_of"):
         return None
     observed = datetime.fromisoformat(quote["as_of"]).astimezone(IST)
-    minute = min(930, observed.hour * 60 + observed.minute + observed.second / 60)
-    elapsed = clamp((minute - 555) / 375, 0, 1)
-    if elapsed < RULES["volume_min_elapsed"]:
-        return None
+    if session == "closed":
+        # Closed-session rows are stamped at the pre-open UTC-midnight epoch.
+        # The day's cumulative volume is complete, so the equivalent observation
+        # time is the session close (elapsed 1), never the stamp's 05:30 IST.
+        minute, elapsed = 930, 1.0
+    else:
+        minute = min(930, observed.hour * 60 + observed.minute + observed.second / 60)
+        elapsed = clamp((minute - 555) / 375, 0, 1)
+        if elapsed < RULES["volume_min_elapsed"]:
+            return None
     prior = defaultdict(dict)
     if intraday and intraday.get("source") == "fyers" and intraday.get("interval") == "5m":
         for candle in intraday.get("candles", []):
@@ -53,14 +59,14 @@ def relative_volume(quote, daily, intraday=None):
             "baseline_method": method, "baseline_sessions": sessions, "confidence": confidence}
 
 
-def analyze_volume(quotes, daily_histories, intraday_histories=None, minimum=None):
+def analyze_volume(quotes, daily_histories, intraday_histories=None, minimum=None, session=None):
     minimum = minimum if minimum is not None else RULES["min_volume_samples"]
     intraday_histories = intraday_histories or {}
     observations = {}
     for symbol, quote in quotes.items():
         if number(quote.get("change_pct")) is None:
             continue
-        observation = relative_volume(quote, daily_histories.get(symbol), intraday_histories.get(symbol))
+        observation = relative_volume(quote, daily_histories.get(symbol), intraday_histories.get(symbol), session)
         if observation:
             observations[symbol] = {**observation, "change_pct": quote["change_pct"]}
     observed = len(observations)

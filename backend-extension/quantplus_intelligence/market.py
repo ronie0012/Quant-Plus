@@ -51,6 +51,49 @@ def last_completed_session_quote(quote, history):
             "score_basis": "LAST_COMPLETED_SESSION"}
 
 
+def last_completed_session_stamp(index_histories):
+    """UTC-midnight epoch of the verified last completed session, or None.
+
+    FYERS stamps both daily candles and closed-session REST quote rows at the
+    same UTC-midnight epoch of the trading date, so a loaded index daily history
+    is the reference that decides whether a closed-session quote row describes
+    the last completed session. NIFTY is preferred; any other loaded FYERS index
+    daily history is a fallback when its request failed.
+    """
+    for name in ("NIFTY", "BANK", "VIX", "IT", "AUTO", "PHARMA", "FMCG", "METAL", "ENERGY", "REALTY"):
+        history = index_histories.get(name) if isinstance(index_histories, dict) else None
+        candles = history.get("candles", []) if isinstance(history, dict) else []
+        if isinstance(history, dict) and history.get("source") == "fyers" and candles:
+            stamp = number(candles[-1].get("time"))
+            if stamp:
+                return stamp
+    return None
+
+
+def closed_session_direction(quote, stamp):
+    """A closed-session quote keeps its daily direction only when the observation
+    verifiably belongs to the last completed session.
+
+    A FYERS REST row carries that session's UTC-midnight stamp; a stream tick is
+    accepted only inside the session's regular trading window. Anything else —
+    an overnight tick from an earlier session, or a pre-open row already stamped
+    at the next calendar date — would assert a direction the market has not
+    confirmed for the completed session, so it is reported as missing rather
+    than scored.
+    """
+    if not quote or stamp is None or quote.get("source") != "fyers" or number(quote.get("change_pct")) is None:
+        return False
+    try:
+        as_of = datetime.fromisoformat(quote["as_of"]).astimezone(timezone.utc)
+    except (KeyError, TypeError, ValueError, OSError, OverflowError):
+        return False
+    session_time = datetime.fromtimestamp(stamp, timezone.utc)
+    if as_of == session_time:
+        return True
+    local = as_of.astimezone(IST)
+    return local.date() == session_time.astimezone(IST).date() and (9, 15) <= (local.hour, local.minute) < (15, 30)
+
+
 def _metric_percentage(quotes, predicate, minimum=0):
     observed = [quote for quote in quotes.values() if predicate(quote) is not None]
     if len(observed) < minimum or not observed:
@@ -297,21 +340,29 @@ class MarketEngine:
             nifty_history = snapshot.get("nifty_history", {}) or {"candles": []}
             index_histories = snapshot.get("index_histories", {})
             if session == "closed":
-                for symbol, history in snapshot.get("history_by_symbol", {}).items():
-                    if symbol in quotes:
-                        quotes[symbol] = last_completed_session_quote(quotes[symbol], history)
-            if session == "closed":
+                # A closed session must not score an intraday row's direction
+                # unless the observation is tied to the last completed session:
+                # a candle rebuild, a REST row stamped at the session's daily
+                # candle time, or a tick observed inside that session. This is
+                # why breadth stays available minutes after close and after a
+                # fresh closed-market boot, without trusting stale pairs.
+                stamp = last_completed_session_stamp(index_histories)
                 for name in ("NIFTY", "VIX", "BANK", "IT", "AUTO", "PHARMA", "FMCG", "METAL", "ENERGY", "REALTY"):
                     history = index_histories.get(name, {})
                     if indices.get(name) and history.get("candles"):
                         indices[name] = last_completed_session_quote(indices[name], history)
-                    elif indices.get(name):
+                    elif indices.get(name) and not closed_session_direction(indices[name], stamp):
                         indices[name] = {**indices[name], "change_pct": None}
-                quotes = {
-                    symbol: quote if snapshot.get("history_by_symbol", {}).get(symbol, {}).get("candles")
-                    else {**quote, "change_pct": None}
-                    for symbol, quote in quotes.items()
-                }
+                rebuilt = {}
+                for symbol, quote in quotes.items():
+                    history = snapshot.get("history_by_symbol", {}).get(symbol, {})
+                    if history.get("candles"):
+                        rebuilt[symbol] = last_completed_session_quote(quote, history)
+                    elif closed_session_direction(quote, stamp):
+                        rebuilt[symbol] = quote
+                    else:
+                        rebuilt[symbol] = {**quote, "change_pct": None}
+                quotes = rebuilt
             components = {}
             nifty = indices.get("NIFTY")
             components["nifty_momentum"] = {"score": momentum(nifty), "confidence": .75 if nifty else 0,
@@ -531,7 +582,7 @@ class MarketEngine:
         if collected_histories is not None:
             # This is a pure calculation on the shared snapshot. A second
             # five-minute cache would hide newly warmed baselines and fresh ticks.
-            return analyze_volume(quotes, collected_histories, collected_intraday)
+            return analyze_volume(quotes, collected_histories, collected_intraday, session=session)
         async def load():
             sample = sorted(quotes)[:RULES["min_volume_samples"]]
             async def get_history(symbol):

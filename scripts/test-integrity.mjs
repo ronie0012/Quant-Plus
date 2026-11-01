@@ -17,9 +17,11 @@ import { localTestModule } from "./local-test-module.mjs";
 const directory = mkdtempSync(join(tmpdir(), "qp-integrity-"));
 const previousFile = process.env.LOCAL_DATA_FILE;
 const previousKey = process.env.AGENT_SERVICE_API_KEY;
+const previousProvider = process.env.QUANT_PLUS_BOOK_PROVIDER;
 const originalFetch = globalThis.fetch;
 const originalNow = Date.now;
 Date.now = () => Date.parse("2026-10-14T05:00:00Z");
+process.env.QUANT_PLUS_BOOK_PROVIDER = "";
 const store = localTestModule("@/lib/local-store.server");
 const source = readFileSync(new URL("../src/routes/api/paper/$.ts", import.meta.url), "utf8");
 const exports = {};
@@ -228,6 +230,8 @@ try {
   else process.env.LOCAL_DATA_FILE = previousFile;
   if (previousKey === undefined) delete process.env.AGENT_SERVICE_API_KEY;
   else process.env.AGENT_SERVICE_API_KEY = previousKey;
+  if (previousProvider === undefined) delete process.env.QUANT_PLUS_BOOK_PROVIDER;
+  else process.env.QUANT_PLUS_BOOK_PROVIDER = previousProvider;
   for (const name of readdirSync(directory)) unlinkSync(join(directory, name));
   rmdirSync(directory);
 }

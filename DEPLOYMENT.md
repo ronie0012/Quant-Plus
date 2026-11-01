@@ -32,8 +32,8 @@ NSE and to each other low.
 ## 1. Agent service
 
 Create `D:\QP\agent-service\.env.production` (never commit it) with the backend
-secrets from `.env`: `CODECRAFT_KEY_*`, `CODECRAFT_BASE_URL`, `ANALYST_MODEL`,
-`DECIDER_MODEL`, `WEBSITE_API_KEY`, `FYERS_*`, and
+secrets from `.env`: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL`,
+`OPENROUTER_MODEL`, `WEBSITE_API_KEY`, `FYERS_*`, and
 `FRONTEND_ORIGINS=https://<web-app-domain>`.
 
 ```powershell

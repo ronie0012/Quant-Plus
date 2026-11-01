@@ -87,6 +87,80 @@ export async function marketFixture(page: Page) {
     TCS: quote("TCS", 4102.5, -21.4),
     HDFCBANK: quote("HDFCBANK", 1708.9, 4.1),
   };
+  const structure = (symbol: string) => ({
+    symbol,
+    source: "fyers",
+    as_of: asOf,
+    data_cutoff: asOf,
+    methodology_version: "quantplus.market_structure.v1",
+    quality: "GOOD",
+    quality_reasons: [],
+    classification: {
+      label: symbol === "TCS" ? "bearish" : symbol === "HDFCBANK" ? "choppy" : "bullish",
+      reason: "Fixture completed candles",
+      evidence: ["completed_candles_only"],
+    },
+    order_blocks: [
+      {
+        direction: symbol === "TCS" ? "bearish" : "bullish",
+        lower: quotes[symbol]?.price ? quotes[symbol]!.price - 12 : 988,
+        upper: quotes[symbol]?.price ? quotes[symbol]!.price - 6 : 994,
+        base_at: asOf,
+        formed_at: asOf,
+        status: "active",
+        invalidated_at: null,
+        invalidation_close: null,
+      },
+    ],
+    price_liquidity_proxies: [
+      {
+        kind: "equal_high",
+        side: "buy_side",
+        level: quotes[symbol]?.price ? quotes[symbol]!.price + 8 : 1008,
+        tolerance: 1,
+        touches: [asOf],
+        formed_at: asOf,
+        last_touch_at: asOf,
+      },
+    ],
+    liquidity_sweeps: [],
+    depth_imbalance: {
+      bid_size: 120,
+      ask_size: 80,
+      imbalance: 0.2,
+      bias: "bullish",
+      as_of: asOf,
+      source: "fyers",
+    },
+    volume: {
+      observed_candles: 20,
+      missing_candles: 0,
+      latest_volume: 5400000,
+      recent_median_volume: 4500000,
+      latest_vs_recent_median: 1.2,
+    },
+    diagnostics: {
+      input_candles: 20,
+      valid_candles: 20,
+      invalid_candles: 0,
+      incomplete_candles_excluded: 0,
+      future_candles_excluded: 0,
+      duplicate_timestamps: 0,
+      gap_count: 0,
+      missing_volume_candles: 0,
+      expected_interval_seconds: 86400,
+    },
+    live_price: quotes[symbol]?.price ?? 1000,
+    quote: quotes[symbol] ?? null,
+    history: { source: "fyers", as_of: asOf, interval: "1d", delayed: false },
+    rank: {
+      score: 82,
+      label: symbol === "TCS" ? "bearish" : symbol === "HDFCBANK" ? "choppy" : "bullish",
+      components: { active_zone: 30, depth_imbalance: 3, data_quality: 15 },
+    },
+    industry: symbol === "HDFCBANK" ? "Financial Services" : "Information Technology",
+    market_session: "open",
+  });
   await page.clock.setFixedTime(NOW);
   await page.addInitScript(() => sessionStorage.setItem("quant-plus:welcome-dismissed", "true"));
   await page.route("**/*", async (route) => {
@@ -133,6 +207,24 @@ export async function marketFixture(page: Page) {
             .map((name) => `data: ${JSON.stringify(quotes[name])}\n\n`)
             .join(""),
         });
+      }
+      if (agent === "terminal/structure-board") {
+        const rows = Object.keys(quotes).map(structure);
+        return route.fulfill({
+          json: {
+            rows,
+            universe: "NIFTY_50",
+            requested: rows.length,
+            observed: rows.length,
+            source: "nifty50-fixture",
+            market_session: "open",
+            updated_at: asOf,
+          },
+        });
+      }
+      if (/^terminal\/structure\//.test(agent)) {
+        const symbol = agent.split("/")[2]!;
+        return route.fulfill({ json: structure(symbol) });
       }
       if (/^market\/[^/]+\/history$/.test(agent)) {
         const symbol = agent.split("/")[1]!;

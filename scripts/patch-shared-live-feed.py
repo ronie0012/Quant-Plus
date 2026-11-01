@@ -38,6 +38,25 @@ def patched_live_market(source):
         'symbols=[f"NSE:{s}" if s.endswith("-INDEX") else f"NSE:{s}-EQ" for s in symbols]')
     source = _edit(source, "_subscription", 'depth_symbols = [s for s in symbols if s in self.deep_symbols]',
         'depth_symbols = [s for s in symbols if s in self.deep_symbols and not s.endswith("-INDEX") and bool(self.listeners.get(s)) == subscribe]')
+    source = _edit(source, "_subscription", '''                method = self.socket.subscribe if subscribe else self.socket.unsubscribe
+                await asyncio.to_thread(method, symbols=[f"NSE:{s}" if s.endswith("-INDEX") else f"NSE:{s}-EQ" for s in symbols], data_type="SymbolUpdate")
+                depth_symbols = [s for s in symbols if s in self.deep_symbols and not s.endswith("-INDEX") and bool(self.listeners.get(s)) == subscribe]
+                if depth_symbols:
+                    await asyncio.to_thread(method, symbols=[f"NSE:{s}-EQ" for s in depth_symbols], data_type="DepthUpdate")''',
+        '''                method = self.socket.subscribe if subscribe else self.socket.unsubscribe
+                # A crashed SDK symbol-conversion table raises from inside
+                # subscribe/unsubscribe; a dead wire must not cascade into a
+                # route 500 or a stuck shared-feed release. Recovery recreates
+                # the socket; this only contains the error.
+                try:
+                    await asyncio.to_thread(method, symbols=[f"NSE:{s}" if s.endswith("-INDEX") else f"NSE:{s}-EQ" for s in symbols], data_type="SymbolUpdate")
+                    depth_symbols = [s for s in symbols if s in self.deep_symbols and not s.endswith("-INDEX") and bool(self.listeners.get(s)) == subscribe]
+                    if depth_symbols:
+                        await asyncio.to_thread(method, symbols=[f"NSE:{s}-EQ" for s in depth_symbols], data_type="DepthUpdate")
+                except Exception as error:
+                    import logging
+                    logging.getLogger("quantplus.market").warning(
+                        "FYERS subscription send failed: %s", type(error).__name__)''')
     source = _edit(source, "_tick", 'if not isinstance(message, dict) or not message.get("symbol", "").startswith("NSE:"):',
         'if not isinstance(message, dict) or not isinstance(message.get("symbol"), str) or not message["symbol"].startswith("NSE:"):')
     source = _edit(source, "_tick", '        # SymbolUpdate may contain partial fields; merge with the previous tick.\n        previous = self.fyers_quotes.get(symbol, {})',

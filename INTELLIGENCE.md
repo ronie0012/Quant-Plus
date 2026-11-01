@@ -4,6 +4,156 @@ The engines are installed in the existing FastAPI backend at `D:\QP\agent-servic
 
 The frontend commonly runs on port **8080**; use the URL printed by Vite. Its API routes validate the loopback local identity or verified InsForge session and forward requests using the server-only website API key. The browser never calls Google, NSE or FYERS directly. See [ROADMAP_IMPLEMENTATION_20261015.md](ROADMAP_IMPLEMENTATION_20261015.md) for the current verified scope and remaining gates.
 
+## LLM provider cutover: Experiential Labs (gpt-6-luna) — 2026-10-28
+
+The daily-quota-limited OpenRouter free tier was replaced as the active
+prediction/chat provider. Facts verified live against the hosted gateway
+(`https://api.experientiallabs.ai/v1`, `xpl_` keys, free `GET /v1/models`
+catalog read):
+
+- The user's first pick `gpt-6-luna-decisions` is NOT chat-callable: the API
+  answers 400 directing callers to the native Decisions surface
+  (`POST /v1/decisions`, typed predicate/choice/score questions). Using it
+  would require a protocol adapter plus a decider-prompt redesign; deferred.
+  `gpt-6-luna` (chat, 1.05M context, tools + JSON mode) was wired instead.
+- Provider priority in the backend config: **experiential > openrouter >
+  codecraft**; `provider_keys/base_url/analyst_model/decider_model/
+  provider_name` all honor it. New `EXPLABS_*` settings fields; the key lives
+  in the backend `.env` and is mirrored in the frontend `.env.local`.
+- Body policy (`app/gateway/codecraft.py`): models that reject optional
+  request fields (`unsupported_parameter`) are handled two ways — a boot-time
+  capability seed from the free catalog read (for gpt-6-luna `temperature` is
+  omitted because `sampling_requires_reasoning_none`, JSON mode is kept), plus
+  an adaptive 400 handler that drops/renames the named field (`max_tokens` →
+  `max_completion_tokens`) and remembers it per model for the process lifetime.
+- Quota semantics for the credits lane: a 429 whose body reports
+  `insufficient_credits`/`model_requires_payment` raises `OutOfFunds`
+  immediately (account-wide; top-up required); `free_limit`/`key_daily_cap`
+  429s record a daily reset (UTC-midnight fallback) and persist it. The
+  persisted `usage_daily.quota_reset` row is now **provider-scoped** (new
+  `provider` column): a provider cutover no longer inherits the previous
+  provider's 429 wall (observed live as a bogus "experiential … resets
+  05:30 IST" pre-flight block on the first post-cutover call).
+- Local wallet guard raised `DAILY_REQUEST_CAP` 50 → 300 (paid credits have no
+  provider-side request cap; ~$1.50/day worst case at luna list prices). Token
+  caps unchanged. The legacy OpenRouter lane remains wired as a fallback that
+  activates by removing the `EXPLABS_API_KEY` line.
+- Frontend chat lane (`src/routes/api/chat.ts`) follows the same priority: the
+  Experiential body strips OpenRouter-only fields (`reasoning: {effort}` →
+  `reasoning_effort: "low"`, no `provider.allow_fallbacks`, no
+  `HTTP-Referer`/`X-OpenRouter-Title` headers), omits temperature, and surfaces
+  `insufficient_credits` as its own actionable 429 message.
+
+Verification (2026-10-28 ~01:00–01:20 IST): catalog policy seeded on boot;
+tiny probe returned pure JSON (~1.6–2.5 s round trip); a full TCS prediction
+ran the whole 12-role graph — **18/18 LLM calls succeeded, 20,520 tokens,
+67 s wall (01:17:38→01:18:45 IST), zero 400s/retries/quarantines** — decision
+produced with governance flags intact (`RESEARCH_ONLY`, no capital authority).
+Backend suite 504 passed / 1 skipped (new `test_gateway_experiential.py`);
+frontend typecheck, lint, `test-chat.mjs` and the full `npm test` chain
+passed. Still open: a live browser chat check on a running dev server; the
+`-decisions` model as a future hybrid decider via the Decisions API.
+
+## Closed-session repair, request-budget amortization and LLM quota gateway — 2026-10-27/28
+
+Five features degraded during live market hours and one degraded after hours. All
+repairs below were reproduced hermetically and verified against the running local
+backend; the closed-session (after-market) checks ran at 2026-10-27 19:00–20:15 IST
+and the structure-board re-verification at 2026-10-28 00:23–00:35 IST.
+
+### FYERS daily request quota gateway (prediction/chat)
+
+The OpenRouter free-tier daily quota exhausted mid-research. The gateway now
+tracks real per-day request/token usage (`usage_daily`), refuses new LLM work
+with an explicit `quota exhausted; resets <IST reset time>` message, persists the
+reset epoch, and exposes `GET /api/v1/stocks/quota`. A prediction POST is still
+accepted (202 queued) and the session fails fast in ~11 s with the quota label
+instead of hanging. `DAILY_REQUEST_CAP=50`, reset 05:30 IST. The frontend chat
+route preflights the backend quota and answers 429 with the reset time; the
+X-Ray explanation path degrades to non-AI output with `ai_explanation: null`
+rather than fabricating text.
+
+### FYERS shared-socket recovery
+
+The FYERS SDK kept its socket object alive through an SSL-certificate and DNS
+outage (14:38–19:15 IST, `fyersDataSocket.log`) while its reconnect loop silently
+failed — breadth, sector and volume inputs starved for the whole afternoon. A
+bounded recovery now forces one full `LiveMarket` socket reset during an OPEN
+session after `stream_silence_reset_seconds` (default 180 s) of global tick
+silence, at most once per `stream_reset_cooldown_seconds` (300 s), only with
+equity listeners registered and a present token. The socket demonstrably
+recovered (19:15 IST "Successfully loaded index_hsm_mapping").
+
+### Closed-session breadth direction and volume
+
+Closed quotes without FYERS daily history were nulled to "no direction", leaving
+breadth at 5/50. Direction is now kept only when verifiably tied to the last
+completed session (candle rebuild, REST row stamped at the session's UTC-midnight
+daily-candle epoch, or a tick inside that session's window); unverified
+directions stay null. Closed-market volume pairs the last-session quotes with
+daily baselines at elapsed=1 (session close) instead of the 05:30-IST stamp, so
+relative volume and volume momentum report honestly after hours.
+
+### Closed-session baseline budget
+
+The snapshot collector's baseline warmer now accepts a per-plan call budget
+override (`INTELLIGENCE_CLOSED_SNAPSHOT_HISTORY_CALLS`, default 12, ≤50) used
+only at closed, where no live stream shares the FYERS budget. Verified live:
+12 history loads warmed 12 usable daily baselines; open budget stays 6.
+
+### Structure board: request-budget amortization (the 19/50 GOOD defect)
+
+The 50-symbol board refetched a 1-minute FYERS history per symbol per refresh
+(50 calls at a 4/s pace). The shared `RequestBudget` (45/min) or FYERS itself
+(rejection observed at ≈50 requests/min) cut the burst, the circuit breaker then
+rejected the remaining callers **instantly**, and `market.history` swallowed the
+reason and served labelled-but-degraded Yahoo bars — silently capping the board
+at 19–35/50 FYERS rows on every refresh, live and closed.
+
+Four coordinated repairs:
+
+1. `FyersUnavailable` (typed, subclass of `RuntimeError`) now marks the transient
+   family: HTTP 429/5xx, in-body rate-limit errors, circuit backoff and budget
+   exhaustion. Credential/parse failures stay plain `RuntimeError` and go
+   straight to Yahoo.
+2. `LiveMarket.history` waits out the circuit (bounded, `retry_after()`, ≤5 s per
+   wait, ≤2 retries) before falling back, and every FYERS→Yahoo fallback is
+   logged (`fyers_history_fallback`).
+3. `ExistingMarketData.stock_history` caches FYERS-sourced histories
+   session-aware: closed sessions reuse the immutable completed candles for
+   `INTELLIGENCE_CLOSED_STOCK_HISTORY_TTL_SECONDS` (default 3600 s), open
+   sessions for `INTELLIGENCE_OPEN_STOCK_HISTORY_TTL_SECONDS` (default 120 s —
+   the old per-refresh refetch was unsatisfiable within any FYERS plan: 50
+   symbols/45 s ≈ 66 req/min). Yahoo payloads are never long-cached, so rows
+   heal on the next load.
+4. The board logs one `structure_board_load` line (rows/FYERS/Yahoo split) plus
+   a FYERS budget snapshot per load.
+
+### Verified result (structure board, closed session)
+
+| Load | Sources | Notes |
+| ---- | ------- | ----- |
+| 1 (cold burst, 50 fetches) | 42 FYERS / 8 Yahoo | budget clipped exactly 45 requests; retries exhausted inside the minute window |
+| 2 (after TTL, 8 fetches + healing) | **50 FYERS / 0 Yahoo** | one real FYERS 429 absorbed by the typed retry |
+| 3 (cache hit) | **50 FYERS / 0 Yahoo** | zero FYERS calls; budget counters unchanged |
+
+All 50 rows `GOOD`, none delayed, all ranked. Hermetic suites: **450 extension
+tests** (including 5 new stock-history-cache and closed-session tests) and
+**488 agent-service tests** passed. `verify-intelligence-live.py --http` passed:
+news (RELIANCE 22/TCS 16/INFY 19 articles), sentiment cached-repeat, sectors 8/8,
+history endpoint, 401 auth check, no secret leakage. `/health` also gained a root
+alias (an external monitor polled `/health`, which 404'd every cycle).
+
+### Remaining gates
+
+- The open-session cadence (120 s outer TTL ≈ 25 req/min for the board plus the
+  collector's ≈13 req/min) must be re-verified after 09:15 IST on 2026-10-28,
+  including whether FYERS' last 1 m history bar is a completed or forming candle.
+- Full LLM paths (chat live probe, X-Ray AI explanation) wait for the quota
+  reset at 05:30 IST on 2026-10-28.
+- Live-market socket-recovery behavior after a real outage can only be observed
+  in an actual OPEN session; hermetic recovery tests cover the logic.
+
 ## Full live-feed coverage follow-up — 2026-10-19
 
 This follow-up resolves the coverage gaps recorded in the earlier repair below.

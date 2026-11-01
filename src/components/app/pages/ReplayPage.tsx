@@ -78,7 +78,7 @@ export function ReplayPage() {
         />
       </PageIntro>
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,.6fr)]">
-        <Card>
+        <Card animated={history.isLoading || enough}>
           <CardHead
             title={state ? `${symbol} · bar ${state.cursor - state.start + 1}` : `${symbol} replay`}
             meta={

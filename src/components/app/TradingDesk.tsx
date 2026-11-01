@@ -227,7 +227,7 @@ export function TradingDeskProvider({ children }: { children: ReactNode }) {
                 ["T / L / M", "Track record, Strategy lab, Regime map"],
                 ["P / H", "Flight simulator, Behavioural risk"],
                 ["F", "Toggle focus mode"],
-                ["V", "Toggle review mode (blocks entries without a complete plan)"],
+                ["V", "Toggle plan gate (suggests a plan before entries, never blocks)"],
                 ["?", "Toggle this help"],
                 ["Esc", "Close any panel"],
               ].map(([k, v]) => (

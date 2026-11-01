@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatNum } from "@/hooks/use-dashboard-data";
+import { formatNum, relativeTime } from "@/hooks/use-dashboard-data";
 import {
   INDICATORS,
   useChartLayout,
@@ -55,6 +55,7 @@ import {
   type Candle,
 } from "@/lib/market-history";
 import { cn } from "@/lib/utils";
+import type { MarketStructure } from "@/lib/market-structure";
 
 export type ChartEvent = { time: number; label: string; kind?: string };
 export type ChartAlert = { id: string; price: number; above: boolean };
@@ -124,6 +125,7 @@ export function ProfessionalChart({
   showVolume = true,
   events = [],
   alerts = [],
+  structure = null,
   onCreateAlert,
   toolbarStart,
 }: {
@@ -138,6 +140,8 @@ export function ProfessionalChart({
   events?: ChartEvent[];
   /** Active price alerts drawn as levels on the price scale. */
   alerts?: ChartAlert[];
+  /** Optional, user-enabled rule-based structure overlays. */
+  structure?: MarketStructure | null;
   /** Enables the alert tool: a click on the chart creates an alert at that price. */
   onCreateAlert?: (price: number, above: boolean) => void;
   /** Controls placed at the start of the toolbar, such as the range selector. */
@@ -502,6 +506,37 @@ export function ProfessionalChart({
         title: alert.above ? "Alert ↑" : "Alert ↓",
       });
 
+    for (const zone of structure?.order_blocks ?? []) {
+      if (zone.status !== "active") continue;
+      const bullish = zone.direction === "bullish";
+      const color = bullish ? C.up : C.down;
+      priceSeries.createPriceLine({
+        price: zone.lower,
+        color,
+        lineWidth: 1,
+        lineStyle: lib.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: bullish ? "Demand low" : "Supply low",
+      });
+      priceSeries.createPriceLine({
+        price: zone.upper,
+        color,
+        lineWidth: 1,
+        lineStyle: lib.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: bullish ? "Demand high" : "Supply high",
+      });
+    }
+    for (const proxy of structure?.price_liquidity_proxies ?? [])
+      priceSeries.createPriceLine({
+        price: proxy.level,
+        color: proxy.kind === "equal_high" ? C.downFaded : C.upFaded,
+        lineWidth: 1,
+        lineStyle: lib.LineStyle.Dotted,
+        axisLabelVisible: false,
+        title: proxy.kind === "equal_high" ? "Buy-side liquidity" : "Sell-side liquidity",
+      });
+
     const pinned: SeriesMarker<Time>[] = [];
     for (const event of events) {
       const at = barAt(event.time);
@@ -512,6 +547,17 @@ export function ProfessionalChart({
         shape: "circle",
         color: C.warning,
         size: 0.8,
+      });
+    }
+    for (const sweep of structure?.liquidity_sweeps ?? []) {
+      const at = barAt(Date.parse(sweep.swept_at) / 1000);
+      if (at == null) continue;
+      pinned.push({
+        time: t(full[at]!.time),
+        position: sweep.direction === "bullish" ? "belowBar" : "aboveBar",
+        shape: sweep.direction === "bullish" ? "arrowUp" : "arrowDown",
+        color: sweep.direction === "bullish" ? C.up : C.down,
+        text: "Sweep",
       });
     }
     for (const note of notes) {
@@ -557,6 +603,7 @@ export function ProfessionalChart({
     showVolume,
     events,
     notes,
+    structure,
     series,
     updating,
     stock.symbol,
@@ -1008,6 +1055,19 @@ export function ProfessionalChart({
           {issues.length ? ` · ${issues.length} invalid bars excluded` : ""}
         </span>
         <span>
+          {structure && (
+            <>
+              {structure.classification.label} structure ·{" "}
+              {structure.history.interval ?? "Interval unknown"}
+              {" · "}
+              {structure.history.source?.toUpperCase() ?? "Source unavailable"}
+              {structure.history.delayed ? " (delayed)" : ""} ·{" "}
+              {structure.data_cutoff
+                ? `completed ${relativeTime(structure.data_cutoff)}`
+                : "Completed candle time unavailable"}{" "}
+              ·{" "}
+            </>
+          )}
           {drawings.length ? `${drawings.length} drawings · ` : ""}
           {full.length} bars · IST
         </span>

@@ -260,7 +260,7 @@ export function EmptyModule({ title, body }: { title: string; body: string }) {
         <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
       </span>
       <h2 className="mt-4 text-[15px] font-semibold">{title}</h2>
-      <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-muted-foreground">{body}</p>
+      <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-foreground">{body}</p>
     </div>
   );
 }

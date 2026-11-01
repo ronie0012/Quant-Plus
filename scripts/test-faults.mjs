@@ -16,6 +16,7 @@ const originalNow = Date.now;
 const originalFetch = globalThis.fetch;
 const results = [];
 const record = (name, detail) => results.push({ name, ...detail });
+process.env.QUANT_PLUS_BOOK_PROVIDER = "";
 
 function child(file, count, label, pause = 0) {
   return new Promise((resolve, reject) => {

@@ -25,11 +25,13 @@ const saved = {
   LOCAL_DATA_FILE: process.env.LOCAL_DATA_FILE,
   AGENT_SERVICE_URL: process.env.AGENT_SERVICE_URL,
   AGENT_SERVICE_API_KEY: process.env.AGENT_SERVICE_API_KEY,
+  QUANT_PLUS_BOOK_PROVIDER: process.env.QUANT_PLUS_BOOK_PROVIDER,
 };
 Object.assign(process.env, {
   LOCAL_DATA_FILE: join(directory, "book.json"),
   AGENT_SERVICE_URL: "https://agent.test",
   AGENT_SERVICE_API_KEY: "agent-test-key",
+  QUANT_PLUS_BOOK_PROVIDER: "",
 });
 const originalNow = Date.now;
 let now = Date.parse("2026-10-14T05:00:00Z");

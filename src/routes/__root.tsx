@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { reportError, startTelemetry } from "@/lib/telemetry";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { Navbar as LandingNavbar } from "@/components/landing/Navbar";
+import { Footer as LandingFooter } from "@/components/landing/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { RouteAnnouncer } from "@/components/site/RouteAnnouncer";
 import { BackToTop } from "@/components/site/BackToTop";
@@ -144,11 +146,12 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // The authenticated terminal and the auth screen own their own chrome.
   const isAppSurface = pathname.startsWith("/app") || pathname.startsWith("/auth");
+  const isLandingPage = pathname === "/";
   useEffect(() => startTelemetry(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {!isAppSurface && <Navbar />}
+      {!isAppSurface && (isLandingPage ? <LandingNavbar /> : <Navbar />)}
       {/* The terminal renders its own <main>; only public pages use this one. */}
       {isAppSurface ? (
         <Outlet />
@@ -158,8 +161,8 @@ function RootComponent() {
           <Outlet />
         </main>
       )}
-      {!isAppSurface && <Footer />}
-      {!isAppSurface && <BackToTop />}
+      {!isAppSurface && (isLandingPage ? <LandingFooter /> : <Footer />)}
+      {!isAppSurface && !isLandingPage && <BackToTop />}
       <RouteAnnouncer />
       <Toaster position="top-right" />
     </QueryClientProvider>

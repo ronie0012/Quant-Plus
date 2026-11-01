@@ -212,14 +212,15 @@ export function useTradeGuard(ticket: TicketSpec | null) {
     readiness?.ready,
   ]);
 
-  const reviewBlock =
+  // Review mode is a nudge, never a block: no trader is prevented from placing
+  // an order because a decision plan is missing or incomplete.
+  const planReminder =
     ticket && ticket.side === "BUY" && workspace.review_mode && !(readiness?.ready ?? false)
       ? plan
-        ? `Review mode: complete the linked plan first (missing ${readiness!.missing.join(", ")}).`
-        : "Review mode: new entries need a complete decision plan. Link or create one first."
+        ? `Plan gate: the linked plan is still missing ${readiness!.missing.join(", ")} — trading is allowed, but completing it improves review.`
+        : "Plan gate: linking a decision plan is encouraged for review quality, but never required."
       : null;
   const blocks = [
-    ...(reviewBlock ? [reviewBlock] : []),
     ...(result?.protection.blocks ?? []),
     ...(result?.preview.violations.filter((v) => v.severity === "BLOCK").map((v) => v.message) ??
       []),
@@ -228,6 +229,7 @@ export function useTradeGuard(ticket: TicketSpec | null) {
     preview: result?.preview ?? null,
     protection: result?.protection ?? null,
     blocks,
+    planReminder,
     plan,
     readiness,
     quote: feed.quote,

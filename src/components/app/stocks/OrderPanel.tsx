@@ -462,6 +462,11 @@ export function OrderPanel({
           >
             Write a decision plan for {stock.symbol}
           </Link>
+          {guard.planReminder && !practising && (
+            <p className="mt-2 text-[11px] leading-relaxed text-subtle">
+              {guard.planReminder}
+            </p>
+          )}
 
           <div className="mt-5">
             <p className="mb-2 font-medium text-[11px] uppercase tracking-[0.06em] text-subtle">

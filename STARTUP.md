@@ -7,7 +7,7 @@ This guide starts the Quant Plus frontend and the agent backend locally.
 - Windows PowerShell
 - Node.js and npm
 - Python 3.11 or newer
-- CodeCraft model credentials for the prediction agent
+- OpenRouter model credentials for the prediction agent
 - Fyers credentials if you need live broker quotes or paper order execution
 
 The repositories are expected at:
@@ -60,9 +60,8 @@ OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_CHAT_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 ```
 
-The chatbot uses NVIDIA Nemotron 3 Ultra through OpenRouter. The agentic stock
-prediction graph continues to use its existing CodeCraft gateway. Do not place
-the OpenRouter key in a `VITE_*` variable.
+The chatbot and the agentic stock-prediction graph both use NVIDIA Nemotron 3
+Ultra through OpenRouter. Do not place the OpenRouter key in a `VITE_*` variable.
 
 Do not commit `.env.local` or any value prefixed with `VITE_` that contains a secret.
 
@@ -86,8 +85,8 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
 Set the following in `D:\QP\agent-service\.env`:
 
-- One or more `CODECRAFT_KEY_*` values, plus `CODECRAFT_BASE_URL` if it differs from the example.
-- `ANALYST_MODEL` and `DECIDER_MODEL` as required by your deployment.
+- `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL`, and `OPENROUTER_MODEL` for the prediction graph.
+- Legacy `CODECRAFT_KEY_*` values are only a compatibility fallback and should be left blank when OpenRouter is configured.
 - `WEBSITE_API_KEY`, using exactly the same value as the frontend `AGENT_SERVICE_API_KEY`.
 - `FYERS_*` credentials if live quotes or paper order execution are required.
 - `FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173` when using the default Vite port.
@@ -178,7 +177,7 @@ The complete backend test suite may take several minutes.
 ## Troubleshooting
 
 - **`401 Invalid website API key`**: make sure `AGENT_SERVICE_API_KEY` and `WEBSITE_API_KEY` match exactly, then restart both processes.
-- **`503 Agent model credentials not configured`**: add valid `CODECRAFT_KEY_*` values to the backend `.env` and restart the backend.
+- **`503 Agent model credentials not configured`**: add a valid `OPENROUTER_API_KEY` to the backend `.env` and restart the backend.
 - **Frontend cannot reach the agent**: confirm the backend is listening on `127.0.0.1:8000`, check `AGENT_SERVICE_URL`, and restart Vite.
 - **Fyers login is required**: run `connect_fyers.py --open` again; tokens can expire or be revoked.
 - **The first prediction is slower**: a new symbol may require research and model analysis. Warmed or cached analyses return faster while retaining the full analysis pipeline.

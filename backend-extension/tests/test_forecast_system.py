@@ -300,8 +300,11 @@ def test_forecast_routes_generate_reuse_and_score(monkeypatch):
     book = L.Ledger(is_trading_day=weekdays)
     monkeypatch.setattr(service, "_ledger", book)
     s, b = series(seed=11), series(seed=12)
+    # Keep the mocked cutoff before the generated card's maturity date even
+    # when the suite is run years after this test was written.
+    current_bar = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     monkeypatch.setattr(service, "live_inputs", lambda sym, now: {
-        "closes": s, "bench": b, "volumes": [1000.0] * len(s), "last_bar": "2026-10-19T00:00:00"})
+        "closes": s, "bench": b, "volumes": [1000.0] * len(s), "last_bar": current_bar})
     monkeypatch.setattr(forecast_api, "gateway_complete",
                         lambda *a: (lambda sy, u: '{"p_outperform": 0.56, "abstain": false}'))
     monkeypatch.setattr(forecast_api, "_sector", lambda sym: "IT")

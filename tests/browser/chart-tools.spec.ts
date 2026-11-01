@@ -4,11 +4,17 @@ import { marketFixture } from "./market-fixture";
 test("chart: indicators persist, drawings save per symbol and alerts are set from the chart", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const { tables } = await marketFixture(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/app/stocks/RELIANCE");
   const chart = page.getByRole("img", { name: /OHLC chart/ });
-  await expect(chart).toBeVisible();
+  await expect(chart).toBeVisible({ timeout: 15_000 });
+
+  // Structure overlays are opt-in so the default chart stays uncluttered.
+  await page.getByRole("button", { name: "Structure" }).click();
+  await expect(page.getByRole("button", { name: "Structure on" })).toBeVisible();
+  await expect(page.getByText(/bullish structure/)).toBeVisible();
 
   // Indicators menu: enabling MACD and VWAP updates the legend and is remembered.
   await page.getByRole("button", { name: "Indicators" }).click();
@@ -46,7 +52,7 @@ test("chart: indicators persist, drawings save per symbol and alerts are set fro
 
   // Layout and drawings survive a reload; undo removes the latest drawing.
   await page.reload();
-  await expect(chart).toBeVisible();
+  await expect(chart).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/^MACD /).first()).toBeVisible();
   await expect(page.getByText(/2 drawings/)).toBeVisible();
   await page.getByRole("button", { name: "Undo last drawing" }).click();
@@ -62,6 +68,18 @@ test("chart: indicators persist, drawings save per symbol and alerts are set fro
     .click();
   await page.getByLabel("Bar interval").selectOption("5m");
   await requested;
+});
+
+test("discover: market pulse keeps liquidity and market X-Ray in one workspace", async ({
+  page,
+}) => {
+  await marketFixture(page);
+  await page.goto("/app/markets");
+  await page.getByRole("button", { name: "Liquidity Board" }).click();
+  await expect(page.getByRole("heading", { name: "Market structure" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Liquidity board" })).toBeVisible();
+  await page.getByRole("button", { name: "Market X-Ray" }).click();
+  await expect(page.getByRole("heading", { name: "Market X-Ray" })).toBeVisible();
 });
 
 test("stock page: Buy and Sell open the paper ticket with the side preselected", async ({

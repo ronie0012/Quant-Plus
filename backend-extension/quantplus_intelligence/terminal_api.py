@@ -36,6 +36,31 @@ async def metrics(symbols: str):
     return {"metrics": {row["symbol"]: row for row in rows}, "updated_at": utcnow().isoformat()}
 
 
+@router.get("/structure/{symbol}")
+async def structure(symbol: str, range: str = Query("1D", pattern="^(1D|1W|1M)$")):
+    name = stock_symbol(symbol)
+    try:
+        return await terminal.structure(name, range)
+    except Exception:
+        raise HTTPException(502, "Market structure unavailable")
+
+
+@router.get("/structure-board")
+async def structure_board(
+    symbols: str | None = None,
+    range: str = Query("1D", pattern="^(1D|1W|1M)$"),
+):
+    names = None
+    if symbols is not None:
+        names = list(dict.fromkeys(stock_symbol(s.strip()) for s in symbols.split(",")))
+        if not 1 <= len(names) <= 50:
+            raise HTTPException(422, "Expected 1 to 50 symbols")
+    try:
+        return await terminal.structure_board(names, range)
+    except Exception:
+        raise HTTPException(502, "Market structure board unavailable")
+
+
 @router.get("/fundamentals/{symbol}")
 async def fundamentals(symbol: str):
     return await terminal.fundamentals(stock_symbol(symbol))

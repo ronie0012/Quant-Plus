@@ -63,6 +63,7 @@ Committee and Agent Activity show actual persisted research sessions.
 The AI chat receives your question, recent conversation and authenticated live
 context when available, with source and freshness labels.
 
-Quant AI chat is now server-side OpenRouter Nemotron (`nvidia/nemotron-3-ultra-550b-a55b:free`)
-with authenticated provider context. The CodeCraft-backed agentic stock research system remains
-separate and continues to produce research-only stock predictions. Quant Plus is paper-trading only.
+Quant AI chat and the agentic stock-research graph use server-side OpenRouter
+Nemotron (`nvidia/nemotron-3-ultra-550b-a55b:free`) with authenticated provider
+context. The research graph continues to produce research-only stock predictions.
+Quant Plus is paper-trading only.

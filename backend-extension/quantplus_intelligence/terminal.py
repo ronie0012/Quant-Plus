@@ -10,8 +10,10 @@ from urllib.parse import quote as urlquote
 import httpx
 
 from .cache import cache
-from .common import number, utcnow
+from .common import log, number, utcnow
+from .config import config
 from .market_data import market_data, raw_quote, quote_valid, IST
+from .market_structure import analyze_market_structure
 
 INDICES = {
     "NIFTY": ("NIFTY 50", "NSE:NIFTY50-INDEX", "^NSEI"),
@@ -24,6 +26,7 @@ RANGES = {"1D": ("1", "1m", 7, "1d"), "1W": ("15", "15m", 7, "5d"),
           "6M": ("D", "1d", 184, "6mo"), "1Y": ("D", "1d", 366, "1y")}
 history_slots = asyncio.Semaphore(4)
 fundamental_slots = asyncio.Semaphore(2)
+structure_ranges = {"1D", "1W", "1M"}
 
 
 def candles_from(rows):
@@ -194,6 +197,208 @@ async def stock_metrics(symbol):
                 return {"symbol": symbol, **technical([]), "source": None, "as_of": None,
                         "data_quality": "DEGRADED", "sample_size": 0}
     return await cache.get_or_load("terminal:metrics:" + symbol, 900, load)
+
+
+def _interval_seconds(history):
+    interval = history.get("interval") if isinstance(history, dict) else None
+    # These endpoints request intraday bars. Gaps cannot establish their duration.
+    values = {"1m": 60, "5m": 300, "15m": 900, "60m": 3600, "1h": 3600}
+    return values.get(interval) if isinstance(interval, str) else None
+
+
+def _structure_timestamp(value):
+    try:
+        if isinstance(value, str):
+            timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return timestamp.astimezone(timezone.utc) if timestamp.tzinfo else None
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
+            return datetime.fromtimestamp(value, timezone.utc)
+    except (TypeError, ValueError, OverflowError, OSError):
+        pass
+    return None
+
+
+def _structure_quote(quote, now):
+    quote = dict(quote) if isinstance(quote, dict) else None
+    timestamp = _structure_timestamp(quote.get("as_of")) if quote else None
+    if quote:
+        # Keep the display adapter's 60-second stale boundary on cache hits too.
+        usable = (timestamp is not None and 0 <= (now - timestamp).total_seconds() <= 60
+                  and quote_valid(quote, now=now) and not quote.get("delayed"))
+        quote["stale"] = bool(quote.get("stale") or not usable)
+    return quote, timestamp, quote if quote and not quote["stale"] else None
+
+
+def _structure_response(payload):
+    """Expire quote context without reusing cached forming OHLC as a final bar."""
+    quote, _, live_quote = _structure_quote(payload.get("quote"), utcnow())
+    if live_quote or not quote:
+        return payload
+    components = dict(payload["rank"]["components"])
+    components.pop("depth_imbalance", None)
+    rank = {**payload["rank"], "components": components}
+    if rank["score"] is not None:
+        rank["score"] = round(sum(components.values()), 2)
+    return {**payload, "quote": quote, "live_price": None, "depth_imbalance": None,
+            "as_of": payload["data_cutoff"], "rank": rank}
+
+
+def _structure_payload(symbol, quote, history, *, evaluated_at, session, error=None):
+    history = history if isinstance(history, dict) else {}
+    raw_candles = history.get("candles", []) if isinstance(history.get("candles", []), list) else []
+    candles = []
+    provider_timestamps = set()
+    interval_seconds = _interval_seconds(history)
+    for candle in raw_candles:
+        if not isinstance(candle, dict):
+            candles.append(candle)  # Let the detector report invalid rows.
+            continue
+        # ExistingMarketData supplies bar START in `time`, never bar-end aliases.
+        row = {key: candle[key] for key in ("time", "open", "high", "low", "close", "volume",
+               "completed", "is_completed", "is_complete", "forming") if key in candle}
+        start = _structure_timestamp(row.get("time"))
+        row["time"] = start
+        # FYERS can replay one timestamp with either the same row or a
+        # corrected OHLC value. Keep the first provider observation so replay
+        # rows do not turn an otherwise usable series into all duplicate
+        # evidence. The pure detector still rejects duplicates from callers
+        # that bypass this provider normalization.
+        if start is not None and start in provider_timestamps:
+            continue
+        if start is not None:
+            provider_timestamps.add(start)
+        if start is not None and start <= evaluated_at:
+            end = start.timestamp() + interval_seconds if interval_seconds else None
+            if end is not None and session == "closed":
+                local = start.astimezone(IST)
+                close = local.replace(hour=15, minute=30, second=0, microsecond=0)
+                # The final NSE cash hourly bar is shorter, but only a verified
+                # closed session after normal close permits this truncation.
+                if (9, 15) <= (local.hour, local.minute) < (15, 30) and close <= evaluated_at:
+                    end = min(end, close.timestamp())
+            if end is None or end > evaluated_at.timestamp():
+                row["completed"] = False  # Even an explicit True cannot confirm a forming bar.
+        candles.append(row)
+    history_source = history.get("source") if isinstance(history.get("source"), str) else None
+    history_time = _structure_timestamp(history.get("as_of"))
+    history_as_of = history_time.isoformat() if history_time else None
+    quote, quote_time, live_quote = _structure_quote(quote, evaluated_at)
+    result = analyze_market_structure(
+        candles,
+        live_quote=live_quote,
+        source=history_source,
+        as_of=evaluated_at,
+        interval_seconds=interval_seconds,
+    )
+    payload = result.to_dict()
+    rank = result.rank()
+    payload.update(
+        {
+            "symbol": symbol,
+            "source": history_source,
+            # Evaluation time bounds evidence; it is not an observation timestamp.
+            "evaluated_at": evaluated_at.isoformat(),
+            "as_of": max(filter(None, (result.data_cutoff, quote_time.isoformat() if live_quote else None)), default=None),
+            "quote": quote,
+            "market_session": session,
+            "history": {
+                "source": history_source,
+                "as_of": history_as_of,
+                "interval": history.get("interval") if isinstance(history.get("interval"), str) else None,
+                "delayed": history.get("delayed") if isinstance(history.get("delayed"), bool) else None,
+            },
+            "rank": {
+                "score": rank.score,
+                "label": rank.label,
+                "components": dict(rank.components),
+            },
+        }
+    )
+    if error or result.quality == "UNAVAILABLE":
+        payload["error"] = error or "No valid completed provider candles"
+    return payload
+
+
+async def structure(symbol, range_name="1D"):
+    if range_name not in structure_ranges:
+        raise ValueError("Unsupported structure range")
+
+    async def load():
+        evaluated_at = utcnow()
+        quotes = await market_data.equities([symbol], session)
+        quote = quotes.get(symbol)
+        context = {"evaluated_at": evaluated_at, "session": session}
+        try:
+            async with history_slots:
+                history = await market_data.stock_history(symbol, range_name, session=session)
+            if not history:
+                return _structure_payload(symbol, quote, {}, **context, error="No provider history")
+            return _structure_payload(symbol, quote, history, **context)
+        except Exception:
+            return _structure_payload(symbol, quote, {}, **context, error="Provider history unavailable")
+
+    session = await market_data.session()
+    ttl = config.market_ttl_seconds if session == "open" else config.closed_market_ttl_seconds
+    payload = await cache.get_or_load(f"terminal:structure:{symbol}:{range_name}:{session}", ttl, load)
+    return _structure_response(payload)
+
+
+async def structure_board(symbols=None, range_name="1D"):
+    if range_name not in structure_ranges:
+        raise ValueError("Unsupported structure range")
+
+    membership = await market_data.universe()
+    official = membership.get("symbols", []) if isinstance(membership, dict) else []
+    requested = list(dict.fromkeys(symbols or official))[:50]
+    session = await market_data.session()
+    ttl = config.market_ttl_seconds if session == "open" else config.closed_market_ttl_seconds
+    cache_key = f"terminal:structure-board:{range_name}:{session}:" + ",".join(requested)
+
+    async def load():
+        context = {"evaluated_at": utcnow(), "session": session}
+        quotes = await market_data.equities(requested, session) if requested else {}
+
+        async def load_one(symbol):
+            try:
+                async with history_slots:
+                    history = await market_data.stock_history(symbol, range_name, session=session)
+                return _structure_payload(symbol, quotes.get(symbol), history or {}, **context,
+                                          error=None if history else "No provider history")
+            except Exception:
+                return _structure_payload(symbol, quotes.get(symbol), {}, **context, error="Provider history unavailable")
+
+        rows = await asyncio.gather(*(load_one(symbol) for symbol in requested))
+        # One line per board load: the FYERS/Yahoo split is the fastest signal
+        # for request-budget starvation or a degraded provider.
+        source_counts = {}
+        for row in rows:
+            source = (row.get("history") or {}).get("source") or row.get("source")
+            source_counts[source or "none"] = source_counts.get(source or "none", 0) + 1
+        log("structure_board_load", range=range_name, rows=len(rows), sources=source_counts)
+        try:
+            from app.data.fyers_provider import fyers as fyers_data
+            log("fyers_budget_snapshot", **fyers_data.budget.health())
+        except Exception:
+            pass
+        industries = membership.get("industries", {}) if isinstance(membership, dict) else {}
+        for row in rows:
+            row["industry"] = industries.get(row["symbol"])
+            row["market_session"] = session
+        return {
+            "rows": rows,
+            "universe": "NIFTY_50" if requested == official[: len(requested)] else "REQUESTED",
+            "requested": len(requested),
+            "observed": sum(row.get("quality") != "UNAVAILABLE" for row in rows),
+            "source": membership.get("source") if isinstance(membership, dict) else None,
+            "market_session": session,
+            "updated_at": utcnow().isoformat(),
+        }
+
+    payload = await cache.get_or_load(cache_key, ttl, load)
+    rows = [_structure_response(row) for row in payload["rows"]]
+    rows.sort(key=lambda row: (row["rank"]["score"] is None,
+                              -(row["rank"]["score"] or 0), row["symbol"]))
+    return {**payload, "rows": rows}
 
 
 async def fundamentals(symbol):

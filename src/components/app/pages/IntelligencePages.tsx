@@ -106,8 +106,8 @@ export function DecisionsPage() {
         <Card>
           <CardHead
             title="Decision queue"
-            meta="Latest CodeCraft research outputs"
-            action={<SourceTag label="CodeCraft research" />}
+            meta="Latest OpenRouter research outputs"
+            action={<SourceTag label="OpenRouter research" />}
           />
           {isLoading ? (
             <div className="space-y-2 p-5">

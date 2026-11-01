@@ -406,8 +406,8 @@ export function evaluateProtections(
 ): ProtectionResult {
   const result: ProtectionResult = { blocks: [], prompts: [], size_cap: null, warnings: [] };
   if (!policy.consent) return result;
-  for (const pattern of ctx.patterns.filter((p) => p.detected && p.statement))
-    result.warnings.push(pattern.statement!);
+  const detectedPatterns = ctx.patterns.filter((p) => p.detected && p.statement);
+  for (const pattern of detectedPatterns) result.warnings.push(pattern.statement!);
   if (ctx.side === "SELL") return result;
 
   const trips = roundTrips(ctx.orders).sort((a, b) => a.exit_at.localeCompare(b.exit_at));
@@ -426,10 +426,6 @@ export function evaluateProtections(
     if (count >= policy.max_daily_decisions)
       result.blocks.push(`Daily decision limit reached (${count}/${policy.max_daily_decisions}).`);
   }
-  if (policy.mandatory_thesis && !ctx.plan_ready)
-    result.blocks.push(
-      "Mandatory thesis review: complete and link a decision plan before entering.",
-    );
   if (policy.drawdown_trigger_pct > 0 && ctx.drawdown_pct >= policy.drawdown_trigger_pct) {
     const sizes = ctx.orders
       .filter((o) => o.side === "BUY" && o.filled_quantity > 0)
@@ -443,8 +439,13 @@ export function evaluateProtections(
         );
     }
   }
-  if (policy.explain_prompt && result.warnings.length)
+  if (policy.explain_prompt && detectedPatterns.length)
     result.prompts.push("Explain why this trade is different from the pattern above.");
+  // A missing thesis is a reminder, not a block: an order without a plan is always allowed.
+  if (policy.mandatory_thesis && !ctx.plan_ready)
+    result.warnings.push(
+      "Thesis reminder: consider completing and linking a decision plan before entering.",
+    );
   return result;
 }
 

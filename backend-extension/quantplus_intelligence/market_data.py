@@ -138,12 +138,62 @@ class ExistingMarketData:
         self.feed = feed
         self.equity_diagnostics = {}
         self.index_diagnostics = {}
+        self._stock_history_cache = {}
+        self._last_feed_reset = 0.0
+
+    async def _recover_shared_feed(self, session):
+        """Force one bounded socket reset when market hours produce no ticks at all.
+
+        The FYERS SDK keeps its socket object alive through SSL-certificate and
+        DNS failures while its reconnect loop silently fails (fyersDataSocket.log,
+        2026-10-27 14:38-19:15 IST), and LiveMarket._start_socket never recreates
+        an existing object — so one dead connection starved breadth, sector and
+        volume inputs for the whole afternoon. Recovery is bounded: only during
+        an OPEN session, only with equity listeners registered, only after
+        `stream_silence_reset_seconds` of global tick silence, at most one full
+        LiveMarket reset per cooldown (its serialized lifecycle rebuilds the
+        socket and _on_open resubscribes every shared listener).
+        """
+        if session != "open":
+            return
+        market = getattr(self.feed, "_market", None)
+        if market is None or not hasattr(market, "refresh_fyers_connection"):
+            return  # hermetic feed doubles without a shared socket
+        listeners = getattr(market, "listeners", None) or {}
+        equity_listeners = [symbol for symbol in listeners if not str(symbol).endswith("-INDEX")]
+        if not equity_listeners:
+            return
+        now_monotonic = time.monotonic()
+        last_fyers = getattr(market, "last_fyers", None) or {}
+        last_tick = max(last_fyers.values(), default=0.0)
+        last_activity = max(last_tick, getattr(market, "_socket_attempt", 0.0))
+        silent_for = now_monotonic - last_activity
+        if silent_for < config.stream_silence_reset_seconds:
+            return
+        if now_monotonic - self._last_feed_reset < config.stream_reset_cooldown_seconds:
+            return
+        try:
+            from app.data.fyers_provider import fyers
+            if not fyers.token():
+                return  # login_required is surfaced by the feed, not fixable here
+        except Exception:
+            return
+        self._last_feed_reset = now_monotonic
+        log("shared_feed_recovery", silent_seconds=round(silent_for), equity_listeners=len(equity_listeners))
+        try:
+            await market.refresh_fyers_connection()
+        except Exception as error:
+            log("shared_feed_recovery_failed", error_type=type(error).__name__)
 
     async def prepare(self, symbols, session):
         if self.feed is None:
             from .live_feed import sentiment_feed
             self.feed = sentiment_feed
         status = await self.feed.ensure(symbols, session)
+        try:
+            await self._recover_shared_feed(session)
+        except Exception:
+            pass  # recovery must never break a collection
         if session == "open" and status["state"] == "active":
             # The first collection may precede the socket's initial frames. Wait
             # briefly once per collection; never stamp receipt time onto prices.
@@ -178,6 +228,16 @@ class ExistingMarketData:
     async def equities(self, symbols, session):
         from app.data.fyers_provider import fyers
         from app.data.live_market import market
+        if self.feed is None:
+            try:
+                from .live_feed import sentiment_feed
+                self.feed = sentiment_feed
+            except Exception:
+                self.feed = None
+        try:
+            await self._recover_shared_feed(session)
+        except Exception:
+            pass  # recovery must never break a quote read
         quotes = {s: dict(market.fyers_quotes[s]) for s in symbols
                   if quote_valid(market.fyers_quotes.get(s), session)}
         missing = [s for s in symbols if s not in quotes]
@@ -343,13 +403,38 @@ class ExistingMarketData:
             log("sentiment_history_provider_failure", error_type=type(error).__name__)
             return {"source": "unavailable", "candles": []}
 
-    async def stock_history(self, symbol, range_name="6M"):
+    async def stock_history(self, symbol, range_name="6M", session=None):
+        """Session-aware adapter over LiveMarket.history.
+
+        Completed candles are immutable: a closed session's FYERS history is
+        reused across board refreshes (default one hour) so a 50-symbol board
+        does not re-fight the shared request budget every refresh. A Yahoo
+        fallback is deliberately NOT cached here — the next load retries the
+        provider and heals the row. Cache keys carry the session so an
+        overnight entry can never serve a stale day after the next open.
+        """
+        session = session if session is not None else await self.session()
+        key = (symbol, range_name, session or "unknown")
+        ttl = (config.closed_stock_history_ttl_seconds if session == "closed"
+               else config.open_stock_history_ttl_seconds)
+        now = time.monotonic()
+        cached = self._stock_history_cache.get(key)
+        if cached and cached[0] > now and cached[1] and cached[1].get("source") == "fyers":
+            return cached[1]
         from app.data.live_market import market
         try:
             async with slots:
-                return await market.history(symbol, range_name)
-        except Exception:
+                value = await market.history(symbol, range_name)
+        except Exception as error:
+            # market.history raises only when FYERS AND its labelled Yahoo
+            # fallback both failed; surface that distinct from a FYERS-only
+            # fallback so provider outages stay diagnosable.
+            log("stock_history_unavailable", symbol=symbol, range=range_name,
+                error_type=type(error).__name__)
             return None
+        if value and value.get("source") == "fyers":
+            self._stock_history_cache[key] = (now + ttl, value)
+        return value
 
     async def universe(self):
         async def load():
@@ -448,7 +533,8 @@ class MarketSnapshotCollector:
                 except Exception:
                     provider_history_available = False
             jobs = self.baseline_warmer.plan(symbols, now=utcnow(), monotonic=now,
-                include_intraday=session == "open", enabled=provider_history_available)
+                include_intraday=session == "open", enabled=provider_history_available,
+                call_budget=None if session != "closed" else min(config.closed_snapshot_history_calls, len(symbols)))
 
             async def history(job):
                 symbol, intraday = job.symbol, job.intraday

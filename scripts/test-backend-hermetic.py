@@ -8,6 +8,11 @@ import json
 from datetime import datetime, timezone
 from uuid import uuid4
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 root = Path(__file__).resolve().parents[1]
 backend = Path(os.environ.get("QUANTPLUS_BACKEND_PATH", "D:/QP/agent-service"))
 isolated_python = root / ".local-data/backend-runtime/Scripts/python.exe"

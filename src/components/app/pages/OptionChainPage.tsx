@@ -151,7 +151,7 @@ export function OptionsPage() {
       </div>
 
       {chain.isError && !data ? (
-        <Card>
+        <Card animated={false}>
           <EmptyModule
             title="Options unavailable"
             body={`${chain.error.message}. Index and stock option chains appear here once FYERS market data is connected.`}

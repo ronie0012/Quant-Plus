@@ -220,11 +220,11 @@ export function BehaviorPage() {
               />
               <div className="space-y-4">
                 <label className="flex items-center justify-between gap-3 text-[13px]">
-                  Mandatory thesis review before entries
+                  Thesis reminder before entries
                   <Switch
                     checked={current.mandatory_thesis}
                     onCheckedChange={(v) => set({ mandatory_thesis: v })}
-                    aria-label="Mandatory thesis review"
+                    aria-label="Thesis reminder"
                   />
                 </label>
                 <label className="flex items-center justify-between gap-3 text-[13px]">

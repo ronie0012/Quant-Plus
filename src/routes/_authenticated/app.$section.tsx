@@ -405,7 +405,7 @@ function SectionPage() {
   const Page = pages[canonical];
   if (Page)
     return (
-      <Suspense fallback={<PageFallback />}>
+      <Suspense fallback={<PageFallback showDiscoverTabs={canonical === "markets"} />}>
         <Page />
       </Suspense>
     );
@@ -427,9 +427,26 @@ function SectionPage() {
   );
 }
 
-function PageFallback() {
+function PageFallback({ showDiscoverTabs = false }: { showDiscoverTabs?: boolean }) {
   return (
     <div className="flex flex-col gap-4" role="status" aria-label="Loading">
+      {showDiscoverTabs && (
+        <div
+          className="flex w-fit gap-0.5 rounded-md border border-border bg-background/50 p-0.5"
+          aria-label="Discover view loading"
+        >
+          {(["Stocks", "Liquidity Board", "Market X-Ray"] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              disabled
+              className="h-9 rounded-[5px] px-3 text-[12px] font-medium text-muted-foreground opacity-70"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
       <Skeleton className="h-7 w-48" />
       <Skeleton className="h-4 w-96 max-w-full" />
       <Skeleton className="h-[320px] w-full rounded-lg" />

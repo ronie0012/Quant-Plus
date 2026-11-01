@@ -80,6 +80,19 @@ def test_fifty_symbol_cold_warm_is_bounded_paired_and_fair_before_ticks(budget):
     assert set(daily_map) == set(intraday_map) == set(SYMBOLS)
 
 
+def test_closed_session_budget_override_widens_one_refresh_window():
+    warmer = BaselineWarmer(call_budget=2, allow_daily_fallback=True)
+    assert len(warmer.plan([f"A{i}" for i in range(6)], **at(0))) == 2
+    # The configured budget still bounds a refresh of other members.
+    assert len(warmer.plan([f"B{i}" for i in range(20)], **at(1000))) == 2
+    wider = warmer.plan([f"C{i}" for i in range(20)], **at(2000))
+    assert len(wider) == 2
+    assert len(warmer.plan([f"D{i}" for i in range(20)], include_intraday=False, **at(3000),
+                           call_budget=12)) == 12
+    # The override is per-plan, not sticky: the next refresh returns to two.
+    assert len(warmer.plan([f"E{i}" for i in range(20)], include_intraday=False, **at(4000))) == 2
+
+
 def test_all_failures_visit_every_key_before_retrying_and_retries_rotate():
     warmer = BaselineWarmer(call_budget=6)
     calls = []

@@ -112,6 +112,21 @@
   --dur-slow: 700ms;
 }
 
+/* Marketing surfaces use subdued labels extensively; keep them readable when
+   animation or a translucent panel would otherwise reduce contrast. */
+.landing-page .text-subtle,
+.landing-page [class*="text-subtle/"] {
+  color: var(--muted-foreground);
+}
+.landing-page .opacity-25,
+.landing-page .opacity-30,
+.landing-page .opacity-40 {
+  opacity: 0.78;
+}
+.landing-page [class*="border-primary/"] {
+  border-color: var(--primary-soft);
+}
+
 .calm-mode .pulse-ring,
 .calm-mode .scan-line,
 .calm-mode .marquee-track,

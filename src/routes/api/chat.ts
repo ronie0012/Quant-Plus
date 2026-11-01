@@ -1,9 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const MODEL = process.env["OPENROUTER_CHAT_MODEL"] ?? "nvidia/nemotron-3-ultra-550b-a55b:free";
-const OPENROUTER_URL =
-  (process.env["OPENROUTER_BASE_URL"] ?? "https://openrouter.ai/api/v1").replace(/\/$/, "") +
-  "/chat/completions";
+const EXPLABS_KEY = process.env["EXPLABS_API_KEY"] ?? "";
+const OPENROUTER_KEY = process.env["OPENROUTER_API_KEY"] ?? process.env["OPENROUTER_KEY"] ?? "";
+// Experiential Labs takes precedence over OpenRouter, mirroring the backend gateway.
+const ACTIVE_PROVIDER = EXPLABS_KEY ? "experiential" : OPENROUTER_KEY ? "openrouter" : null;
+const API_KEY = EXPLABS_KEY || OPENROUTER_KEY;
+const MODEL =
+  ACTIVE_PROVIDER === "experiential"
+    ? (process.env["EXPLABS_CHAT_MODEL"] ?? "gpt-6-luna")
+    : (process.env["OPENROUTER_CHAT_MODEL"] ?? "nvidia/nemotron-3-ultra-550b-a55b:free");
+const UPSTREAM_URL =
+  (ACTIVE_PROVIDER === "experiential"
+    ? (process.env["EXPLABS_BASE_URL"] ?? "https://api.experientiallabs.ai/v1")
+    : (process.env["OPENROUTER_BASE_URL"] ?? "https://openrouter.ai/api/v1")
+  ).replace(/\/$/, "") + "/chat/completions";
 const DAILY_LIMIT = Number(process.env["QUANT_AI_DAILY_REQUEST_LIMIT"] ?? 300) || 300;
 
 const SYSTEM = `You are Quant AI, the read-only research copilot inside Quant Plus.
@@ -36,6 +46,105 @@ const MODE_GUIDE: Record<string, string> = {
 };
 
 type ChatMessage = { role: "user" | "assistant"; text: string };
+
+const AGENT_SERVICE_URL = (process.env["AGENT_SERVICE_URL"] ?? "").replace(/\/$/, "");
+const AGENT_SERVICE_KEY = process.env["AGENT_SERVICE_API_KEY"] ?? "";
+
+type BackendQuota = {
+  exhausted?: boolean;
+  reset_ist?: string | null;
+  requests_today?: number;
+  daily_request_cap?: number | null;
+  provider?: string;
+};
+
+/** Shared provider quota truth from the backend gateway (best effort). */
+async function readQuota(signal: AbortSignal | null): Promise<BackendQuota | null> {
+  if (!AGENT_SERVICE_URL || !AGENT_SERVICE_KEY) return null;
+  try {
+    const res = await fetch(`${AGENT_SERVICE_URL}/api/v1/stocks/quota`, {
+      headers: { "X-QuantPlus-Key": AGENT_SERVICE_KEY },
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(2500)])
+        : AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as BackendQuota;
+    return typeof data?.exhausted === "boolean" ? data : null;
+  } catch {
+    return null; // The chat must keep working when the agent service is down.
+  }
+}
+
+function istTime(epochMs: number) {
+  try {
+    return new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(epochMs);
+  } catch {
+    return "";
+  }
+}
+
+function quotaMessage(quota: BackendQuota) {
+  const reset = quota.reset_ist ? ` around ${quota.reset_ist}` : "";
+  return (
+    `Quant AI's free daily model allowance is spent (resets${reset || " at the provider's daily reset"}). ` +
+    "Background stock research shares the same allowance, so it is paused too."
+  );
+}
+
+/** Distinguish a provider DAILY quota 429 from a short burst 429, and surface
+ * an empty-credit balance (insufficient_credits) as its own actionable state. */
+async function dailyLimitMessage(upstream: Response): Promise<string | null> {
+  let raw = "";
+  try {
+    raw = await upstream.text();
+  } catch {
+    return null;
+  }
+  let daily = false;
+  let reset = "";
+  try {
+    const parsed = JSON.parse(raw) as {
+      error?: { message?: string; metadata?: { limit_source?: string; reset_at?: string } };
+    };
+    const source = parsed?.error?.metadata?.limit_source;
+    if (source && source.includes("daily")) daily = true;
+    const message = parsed?.error?.message ?? "";
+    if (message.includes("free-models-per-day")) daily = true;
+    if (typeof parsed?.error?.metadata?.reset_at === "string") {
+      const epoch = Date.parse(parsed.error.metadata.reset_at);
+      if (Number.isFinite(epoch) && epoch > Date.now()) reset = istTime(epoch);
+    }
+  } catch {
+    const remaining = upstream.headers.get("x-ratelimit-remaining");
+    const resetHeader = upstream.headers.get("x-ratelimit-reset");
+    if (remaining === "0" && resetHeader) {
+      const epoch = Number(resetHeader);
+      if (Number.isFinite(epoch) && epoch / (epoch > 1e12 ? 1 : 1000) - Date.now() > 600_000) {
+        daily = true;
+        reset = istTime(epoch > 1e12 ? epoch : epoch * 1000);
+      }
+    }
+  }
+  if (!daily) {
+    if (raw.includes("insufficient_credits") || raw.includes("model_requires_payment")) {
+      return "The model provider account has no available credits; a top-up at the provider is needed.";
+    }
+    return null;
+  }
+  const suffix = reset ? ` It resets around ${reset} IST.` : "";
+  return (
+    `Quant AI's free daily model allowance is spent.${suffix} ` +
+    "Background stock research shares the same allowance, so it is paused too."
+  );
+}
 
 function response(status: number, message: string) {
   return new Response(message, {
@@ -94,15 +203,20 @@ export async function chatStatus(request: Request) {
   } catch {
     usage = null;
   }
+  const backend = await readQuota(request.signal);
   return Response.json(
     {
-      configured: Boolean(process.env["OPENROUTER_API_KEY"] ?? process.env["OPENROUTER_KEY"]),
+      configured: Boolean(API_KEY),
       model: MODEL,
       daily_limit: DAILY_LIMIT,
       usage,
-      cost_basis: MODEL.endsWith(":free")
-        ? "Free model tier: no per-token charge is billed by the provider."
-        : "Per-token pricing is set by OpenRouter for this model; it is not metered locally.",
+      backend_quota: backend,
+      cost_basis:
+        ACTIVE_PROVIDER === "experiential"
+          ? "Experiential Labs platform credits fund this model; spend draws down your credit balance (no markup)."
+          : MODEL.endsWith(":free")
+            ? "Free model tier: no per-token charge is billed by the provider."
+            : "Per-token pricing is set by OpenRouter for this model; it is not metered locally.",
     },
     { headers: { "Cache-Control": "no-store" } },
   );
@@ -154,8 +268,12 @@ export async function chat(request: Request) {
       return response(400, "Invalid context");
     }
 
-    const apiKey = process.env["OPENROUTER_API_KEY"] ?? process.env["OPENROUTER_KEY"];
+    const apiKey = API_KEY;
     if (!apiKey) return response(500, "Quant AI is not configured on the server");
+    // The prediction pipeline and this chat share one provider allowance; refuse
+    // a doomed upstream call when the backend's ledger already shows it spent.
+    const backendQuota = await readQuota(request.signal);
+    if (backendQuota?.exhausted) return response(429, quotaMessage(backendQuota));
     try {
       await books.query({ rpc: "ai_usage_record", values: { p_limit: DAILY_LIMIT } });
     } catch (error) {
@@ -195,30 +313,40 @@ export async function chat(request: Request) {
       .join("\n");
 
     const upstreamAbort = new AbortController();
-    const upstream = await fetch(OPENROUTER_URL, {
+    const upstreamBody: Record<string, unknown> = {
+      model: MODEL,
+      messages: [
+        { role: "system", content: SYSTEM },
+        { role: "system", content: `${notes}\nEVIDENCE_START\n${evidenceText}\nEVIDENCE_END` },
+        ...(history as ChatMessage[]).map((item) => ({ role: item.role, content: item.text })),
+        { role: "user", content: message },
+      ],
+      stream: true,
+      max_tokens: 1200,
+    };
+    if (ACTIVE_PROVIDER === "experiential") {
+      // Experiential contract: strip every OpenRouter-only field (each is either
+      // silently ignored or its own 400 unsupported_parameter). Sampling is
+      // rejected on reasoning routes (sampling_requires_reasoning_none), so
+      // temperature is omitted and reasoning effort uses the OpenAI field name.
+      upstreamBody["reasoning_effort"] = "low";
+    } else {
+      upstreamBody["temperature"] = 0.2;
+      upstreamBody["reasoning"] = { effort: "low" };
+      upstreamBody["include_reasoning"] = false;
+      upstreamBody["provider"] = { allow_fallbacks: true };
+    }
+    const upstream = await fetch(UPSTREAM_URL, {
       method: "POST",
       signal: AbortSignal.any([request.signal, upstreamAbort.signal, AbortSignal.timeout(90_000)]),
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://quant-plus.app",
-        "X-OpenRouter-Title": "Quant Plus",
+        ...(ACTIVE_PROVIDER === "openrouter"
+          ? { "HTTP-Referer": "https://quant-plus.app", "X-OpenRouter-Title": "Quant Plus" }
+          : {}),
       },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: SYSTEM },
-          { role: "system", content: `${notes}\nEVIDENCE_START\n${evidenceText}\nEVIDENCE_END` },
-          ...(history as ChatMessage[]).map((item) => ({ role: item.role, content: item.text })),
-          { role: "user", content: message },
-        ],
-        stream: true,
-        temperature: 0.2,
-        max_tokens: 1200,
-        reasoning: { effort: "low" },
-        include_reasoning: false,
-        provider: { allow_fallbacks: true },
-      }),
+      body: JSON.stringify(upstreamBody),
     });
 
     if (!upstream.ok || !upstream.body) {
@@ -228,11 +356,11 @@ export async function chat(request: Request) {
       return response(
         upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
         upstream.status === 429
-          ? "Quant AI is busy. Try again shortly."
+          ? ((await dailyLimitMessage(upstream)) ?? "Quant AI is busy. Try again shortly.")
           : upstream.status === 402
-            ? "The configured OpenRouter account has no available credits."
+            ? "The configured model provider account has no available credits."
             : upstream.status === 404
-              ? "The configured model is unavailable for this OpenRouter account."
+              ? "The configured model is unavailable for this provider account."
               : 400 <= upstream.status && upstream.status < 500
                 ? "Quant AI rejected the request. Please try a shorter question."
                 : "AI service unavailable. Please try again.",
@@ -268,7 +396,7 @@ export async function chat(request: Request) {
             event.choices?.[0]?.finish_reason === "error"
           ) {
             failed = true;
-            throw new Error("OpenRouter could not complete the answer");
+            throw new Error("The model provider could not complete the answer");
           }
           const delta = event.choices?.[0]?.delta?.content;
           if (typeof delta === "string" && delta) {

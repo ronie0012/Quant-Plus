@@ -3,8 +3,8 @@
 ## Confirmed product decisions
 
 - Quant Plus remains paper-trading only. No broker order placement will be added.
-- The existing CodeCraft-backed agentic stock-research graph remains the stock-prediction engine.
-- NVIDIA Nemotron is used only by the Quant AI chat assistant through OpenRouter.
+- The existing agentic stock-research graph remains the stock-prediction engine and now uses OpenRouter.
+- NVIDIA Nemotron is used by both the research graph and Quant AI chat through OpenRouter.
 - AI explanations may interpret validated data, but they cannot change deterministic scores or place orders.
 
 ## Current architecture
@@ -15,7 +15,7 @@
 2. Yahoo Finance is an explicitly delayed fallback for quotes and history.
 3. Stock history prefers FYERS candles and falls back to Yahoo.
 4. Stock depth, bid/ask, circuit data and other market fields come from FYERS when available.
-5. The CodeCraft-backed agent graph persists checkpoints, analyst reports, debate, risk review and research-only decisions.
+5. The OpenRouter-backed agent graph persists checkpoints, analyst reports, debate, risk review and research-only decisions.
 6. Quantitative market sentiment calculates NIFTY momentum, breadth, sectors, VIX, news, volume and Bank Nifty with explicit missingness.
 7. Google News RSS is normalized, deduplicated, relevance-scored and sentiment-scored.
 8. Paper orders validate fresh FYERS prices and settle through the server-owned
@@ -44,7 +44,7 @@
 2. Keep all provider and AI credentials server-side.
 3. Rotate any OpenRouter key exposed outside the private server environment before production use.
 4. Add environment placeholders only; never commit real values.
-5. Use the canonical OpenRouter model ID `nvidia/nemotron-3-ultra-550b-a55b` and verify that the supplied account can access it through the intended free route. Do not silently fall back to a paid model.
+5. Use the canonical OpenRouter model ID `nvidia/nemotron-3-ultra-550b-a55b:free` and verify that the supplied account can access it through the intended free route. Do not silently fall back to a paid model.
 
 ## Phase 1: unified live-data contracts
 
@@ -88,7 +88,7 @@
 
 ### Agentic research
 
-- Keep CodeCraft and the existing point-in-time research graph.
+- Keep the existing point-in-time research graph and its research-only authority boundary.
 - Add evidence IDs, provider timestamps, freshness, uncertainty and disagreement to the UI.
 - Keep current live context separate from historical PIT inputs.
 - Retain `RESEARCH_ONLY` authority and add calibration/quality visibility.
@@ -143,7 +143,7 @@ Live smoke checks must cover:
 - market overview and official universe
 - live portfolio valuation
 - news and sentiment
-- CodeCraft research sessions
+- OpenRouter research sessions
 - paper-order quote safeguards
 - OpenRouter Nemotron streaming
 - authentication and rate limiting

@@ -32,7 +32,7 @@ const test = base.extend<{ publicRequests: string[] }>({
 });
 
 const pages = [
-  { path: "/", title: "Understand the market. Practise your decisions." },
+  { path: "/", title: "See the market differently." },
   { path: "/platform", title: "A workspace for better market habits." },
   { path: "/markets", title: "Find the context behind a stock." },
   { path: "/research", title: "Build a view you can revisit." },

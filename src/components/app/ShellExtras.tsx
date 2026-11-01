@@ -188,7 +188,7 @@ export function ModeToggles() {
       label: "Review",
       icon: ShieldCheck,
       on: workspace.review_mode,
-      title: "Review mode blocks new entries until a decision plan is complete (V)",
+      title: "Review mode nudges you to link a decision plan before new entries (V)",
     },
   ];
   return (

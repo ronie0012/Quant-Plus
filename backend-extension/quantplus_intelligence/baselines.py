@@ -219,14 +219,18 @@ class BaselineWarmer:
         return day
 
     def plan(self, symbols: Iterable[str], *, now: datetime, monotonic: float,
-             include_intraday: bool = True, enabled: bool = True) -> tuple[BaselineRequest, ...]:
+             include_intraday: bool = True, enabled: bool = True,
+             call_budget: int | None = None) -> tuple[BaselineRequest, ...]:
         """Reserve this refresh's bounded work from official membership, not ticks.
 
         Membership is sorted/deduplicated/capped, and removed members' state and
         payloads are released. ``enabled=False`` performs cleanup without using
-        budget (e.g. an unavailable authenticated history transport).
+        budget (e.g. an unavailable authenticated history transport). A
+        ``call_budget`` override only widens the per-refresh window; the rolling
+        window and reservations still bound the actual request rate.
         """
         symbols = self._symbols(symbols)
+        budget = self.call_budget if call_budget is None else call_budget
         with self._lock:
             day = self._sweep(now, monotonic)
             members = set(symbols)
@@ -234,7 +238,7 @@ class BaselineWarmer:
                 for key in list(mapping):
                     if key[0] not in members:
                         mapping.pop(key)
-            remaining = min(self.call_budget - len(self._issued), self.call_budget - len(self._reservations)) if enabled else 0
+            remaining = min(budget - len(self._issued), budget - len(self._reservations)) if enabled else 0
             kinds = (False, True) if include_intraday else (False,)
             keys = [(symbol, intraday) for symbol in symbols for intraday in kinds
                     if (symbol, intraday) not in self.baselines and (symbol, intraday) not in self._reservations]

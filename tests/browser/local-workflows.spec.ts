@@ -27,9 +27,7 @@ test("landing page stays usable on a narrow viewport", async ({ page }) => {
   await page.goto("/");
   await page.waitForLoadState("networkidle").catch(() => undefined);
 
-  await expect(
-    page.getByRole("heading", { name: "Understand the market. Practise your decisions." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See the market differently." })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

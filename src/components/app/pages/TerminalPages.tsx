@@ -36,6 +36,7 @@ import { useJournal } from "@/hooks/use-trading-product";
 import { useOrders } from "@/hooks/use-orders";
 import { PortfolioIntelligence } from "@/components/app/pages/PortfolioIntelligence";
 import { WatchlistPicker } from "@/components/app/stocks/WatchlistPicker";
+import { MarketPulsePage, type MarketPulseView } from "@/components/app/pages/MarketPulsePage";
 
 const marketRanges = ["1D", "1W", "1M", "3M", "1Y"] as const;
 
@@ -120,7 +121,36 @@ export function MarketsPage() {
   const [selected, setSelected] = useState(0);
   const [range, setRange] = useState<(typeof marketRanges)[number]>("1D");
   const [contextOpen, setContextOpen] = useState(false);
+  const [discoverView, setDiscoverView] = useState<"stocks" | MarketPulseView>("stocks");
   const instrument = data?.[selected];
+  const discoverTabs = ["Stocks", "Liquidity Board", "Market X-Ray"] as const;
+  const discoverTab =
+    discoverView === "stocks"
+      ? "Stocks"
+      : discoverView === "liquidity"
+        ? "Liquidity Board"
+        : "Market X-Ray";
+  const setDiscoverTab = (value: string) => {
+    setDiscoverView(
+      value === "Liquidity Board" ? "liquidity" : value === "Market X-Ray" ? "xray" : "stocks",
+    );
+  };
+  const tabs = (
+    <Segmented
+      items={[...discoverTabs]}
+      value={discoverTab}
+      onChange={setDiscoverTab}
+      label="Discover view"
+    />
+  );
+
+  if (discoverView !== "stocks")
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">{tabs}</div>
+        <MarketPulsePage view={discoverView} onView={setDiscoverView} />
+      </div>
+    );
   if (isLoading)
     return (
       <div className="flex flex-col gap-5">
@@ -129,6 +159,7 @@ export function MarketsPage() {
           title="Discover stocks"
           body="Building a unified view of current market structure."
         >
+          <div className="mb-4">{tabs}</div>
           <Skeleton className="h-24 w-full" />
         </PageIntro>
         <StockBoard />
@@ -141,7 +172,9 @@ export function MarketsPage() {
           eyebrow="Markets desk"
           title="Discover stocks"
           body="Index-level context is unavailable, so the constituent board is shown on its own."
-        />
+        >
+          {tabs}
+        </PageIntro>
         <Card>
           <EmptyState
             title="No index feed"
@@ -164,6 +197,7 @@ export function MarketsPage() {
           <SourceTag label={instrument.source ? instrument.source.toUpperCase() : "UNAVAILABLE"} />
         }
       >
+        <div className="mb-4">{tabs}</div>
         <MetricStrip
           items={data.slice(0, 4).map((i) => ({
             label: i.name,
@@ -1027,7 +1061,7 @@ export function ResearchPage() {
       meta: `Completed ${relativeTime(analysis.created_at)}`,
       body:
         analysis.summary ??
-        "Completed CodeCraft research session with persisted analyst and risk stages.",
+        "Completed OpenRouter research session with persisted analyst and risk stages.",
       metrics: [
         { label: "Verdict", value: analysis.verdict },
         {

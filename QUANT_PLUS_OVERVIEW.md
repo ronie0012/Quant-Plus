@@ -967,7 +967,7 @@ flowchart TB
     API --> Feed[FYERS quotes and history]
     API --> Research[Checkpointed research graph]
     API --> Intelligence[News and market intelligence]
-    Research --> Gateway[CodeCraft model gateway]
+    Research --> Gateway[OpenRouter Nemotron model gateway]
     Intelligence --> Sources[RSS and official sources]
     Paper --> Local[Local JSON book]
     Paper --> Hosted[InsForge PostgreSQL book]
@@ -1002,7 +1002,7 @@ flowchart TB
 - FastAPI.
 - Pydantic schemas.
 - FYERS market integration.
-- CodeCraft model gateway.
+- OpenRouter Nemotron model gateway.
 - Checkpointed research graph.
 - SQLite research, news and history stores.
 - Parquet research datasets.

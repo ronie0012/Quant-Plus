@@ -128,7 +128,7 @@ def test_market_and_volume_caches_do_not_cross_provider_sessions(monkeypatch):
         collector = Collector()
         volume_calls = []
 
-        def volume(quotes, daily, intraday):
+        def volume(quotes, daily, intraday, session=None):
             volume_calls.append(data.state)
             return {"score": None if data.state == "closed" else 75, "confidence": .8}
 
@@ -335,5 +335,150 @@ def test_news_and_sentiment_http_apis_preserve_empty_provider_truth(monkeypatch,
             assert result["score"] is None and result["label"] == "UNAVAILABLE"
             assert result["provider_status"]["status"] == status
             assert feed.calls == 1
+
+    asyncio.run(scenario())
+
+
+# 2026-10-27 22:50 IST: five days after the FYERS probe, a closed-market
+# collection scored breadth 5/50 although every REST row carried the session
+# stamp. FYERS stamps daily candles and closed-session REST rows at the same
+# UTC-midnight epoch of the trading date, so the loaded index daily history is
+# the verifier for a closed-session row's direction.
+STAMP = 1793059200  # 2026-10-27T00:00:00Z
+SESSION_ROW = {"source": "fyers", "price": 1196.2, "previous_close": 1201.8,
+               "change_pct": -0.47, "open": 1195, "volume": 13067787,
+               "as_of": "2026-10-27T00:00:00+00:00"}
+
+
+def test_closed_session_direction_accepts_rest_row_and_session_ticks():
+    from quantplus_intelligence.market import closed_session_direction
+
+    assert closed_session_direction(SESSION_ROW, STAMP)
+    # The last live tick of the completed session is also a session observation.
+    tick = {**SESSION_ROW, "as_of": "2026-10-27T09:59:00+00:00", "change_pct": .9}
+    assert closed_session_direction(tick, STAMP)
+    # A tick between 15:30 IST and the next session, or from an earlier session,
+    # or a pre-open row stamped at the next calendar date, must not score.
+    assert not closed_session_direction({**SESSION_ROW, "as_of": "2026-10-27T10:01:00+00:00"}, STAMP)
+    assert not closed_session_direction({**SESSION_ROW, "as_of": "2026-10-26T09:59:00+00:00"}, STAMP)
+    assert not closed_session_direction({**SESSION_ROW, "as_of": "2026-10-28T00:00:00+00:00"}, STAMP)
+    assert not closed_session_direction({**SESSION_ROW, "source": "yahoo"}, STAMP)
+    assert not closed_session_direction(SESSION_ROW, None)
+    assert not closed_session_direction({**SESSION_ROW, "change_pct": None}, STAMP)
+
+
+def test_last_completed_session_stamp_prefers_nifty_daily_candles():
+    from quantplus_intelligence.market import last_completed_session_stamp
+
+    nifty = {"source": "fyers", "candles": [{"time": STAMP - 86400}, {"time": STAMP}]}
+    assert last_completed_session_stamp({"NIFTY": nifty}) == STAMP
+    bank = {"source": "fyers", "candles": [{"time": STAMP}]}
+    assert last_completed_session_stamp({"NIFTY": {"source": "fyers", "candles": []}, "BANK": bank}) == STAMP
+    assert last_completed_session_stamp({}) is None
+    assert last_completed_session_stamp({"NIFTY": {"source": "unavailable", "candles": [{"time": STAMP}]}}) is None
+
+
+def closed_engine(monkeypatch, market, rows):
+    """A closed-market MarketEngine whose quotes are the given closed rows."""
+    clock = [0]
+    data = SimpleNamespace()
+
+    async def session():
+        return "closed"
+
+    data.session = session
+    volume_calls = []
+
+    def volume_stub(quotes, daily, intraday, minimum=None, session=None):
+        volume_calls.append({"session": session, "quotes": len(quotes), "baselines": len(daily)})
+        return {"score": None, "confidence": 0, "sample_size": 0,
+                "required_samples": 10, "available": False}
+
+    class Collector:
+        async def snapshot(self):
+            return {"session": "closed", "membership": {"symbols": ["A", "B", "C", "D", "E"], "industries": {},
+                                                         "source": "official-fixture"},
+                    "quotes": {name: dict(row) for name, row in zip(("A", "B", "C", "D", "E"), rows)},
+                    "indices": {"NIFTY": dict(rows[0]), "BANK": dict(rows[1])},
+                    "index_histories": {"NIFTY": {"source": "fyers", "candles": [
+                        {"time": STAMP - 86400, "open": 23146, "close": 23146},
+                        {"time": STAMP, "open": 22780, "close": 22749.75}]},
+                        "BANK": {"source": "fyers", "candles": []}},
+                    "vix_history": {"candles": []}, "nifty_history": {"candles": []},
+                    "history_by_symbol": {}, "intraday_by_symbol": {},
+                    "diagnostics": {}, "collector": {}}
+
+    monkeypatch.setattr(market, "utcnow", lambda: datetime(2026, 10, 27, 17, 20, tzinfo=timezone.utc))
+    monkeypatch.setattr(market, "analyze_volume", volume_stub)
+    engine = MarketEngine(data, NewsService(Feed(), MemoryCache()), MemoryCache(clock=lambda: clock[0]),
+                          InMemorySentimentHistoryRepository(), Collector())
+    return engine, volume_calls
+
+
+def test_closed_volume_pairs_completed_session_volume_with_daily_baseline():
+    from quantplus_intelligence.volume import analyze_volume
+
+    closed_quote = {**SESSION_ROW, "volume": 13067787}
+    daily = {"source": "fyers", "interval": "1d", "candles": [
+        {"time": (datetime.fromtimestamp(STAMP, timezone.utc) - timedelta(days=day)).timestamp(),
+         "close": 100, "volume": 10_000_000} for day in range(1, 21)]}
+    result = analyze_volume({"RELIANCE": closed_quote}, {"RELIANCE": daily}, session="closed")
+    assert result["sample_size"] == 1
+    assert result["observations"]["RELIANCE"]["baseline_method"] == "DAILY_AVERAGE"
+    assert result["observations"]["RELIANCE"]["relative_volume"] == pytest.approx(1.3067787)
+    # The old stamp-derived elapsed (05:30 IST, before the session) rejected the pair.
+    assert analyze_volume({"RELIANCE": closed_quote}, {"RELIANCE": daily})["sample_size"] == 0
+
+
+def test_closed_breadth_scores_rest_rows_stamped_at_the_completed_session(monkeypatch):
+    from quantplus_intelligence import market
+
+    async def scenario():
+        rows = [dict(SESSION_ROW, change_pct=change) for change in (.9, -.47, .5, -.3, 2)]
+        engine, volume_calls = closed_engine(monkeypatch, market, rows)
+        result = await engine.sentiment()
+        breadth = result["components"]["market_breadth"]
+        assert breadth["observed"] == 5 and breadth["score"] is not None
+        assert breadth["advancing"] == 3 and breadth["declining"] == 2
+        assert "market_breadth unavailable" not in result["warnings"]
+        # The stamped NIFTY daily candles still rebuild the index quote itself.
+        assert result["components"]["nifty_momentum"]["score"] is not None
+        assert result["score"] is not None and result["market_session"] == "closed"
+        # The volume calculation receives the session, so closed rows pair with
+        # their daily baselines at the completed session's close.
+        assert volume_calls and volume_calls[0] == {"session": "closed", "quotes": 5, "baselines": 0}
+
+    asyncio.run(scenario())
+
+
+def test_closed_breadth_rejects_rows_not_stamped_at_the_completed_session(monkeypatch):
+    from quantplus_intelligence import market
+
+    async def scenario():
+        foreign = [dict(SESSION_ROW, as_of="2026-10-26T00:00:00+00:00", change_pct=1) for _ in range(5)]
+        engine, _ = closed_engine(monkeypatch, market, foreign)
+        result = await engine.sentiment()
+        breadth = result["components"]["market_breadth"]
+        assert breadth["observed"] == 0 and breadth["score"] is None
+        assert breadth["reason"] == "Fresh directional quotes 0/5; at least 4 required"
+
+        async def no_history_session():
+            return "closed"
+
+        # Without any FYERS index daily history there is no verifier at all.
+        class Collector:
+            async def snapshot(self):
+                return {"session": "closed", "index_histories": {}, "quotes": {},
+                        "indices": {}, "history_by_symbol": {}, "intraday_by_symbol": {},
+                        "vix_history": {}, "nifty_history": {}, "diagnostics": {},
+                        "membership": {"symbols": [], "industries": {}}, "collector": {}}
+
+        engine = MarketEngine(SimpleNamespace(session=no_history_session), NewsService(Feed(), MemoryCache()),
+                              MemoryCache(), InMemorySentimentHistoryRepository(), Collector())
+        monkeypatch.setattr(market, "analyze_volume",
+                            lambda *args, **kwargs: {"score": None, "confidence": 0, "sample_size": 0,
+                                                     "required_samples": 10, "available": False})
+        result = await engine.sentiment()
+        assert result["components"]["market_breadth"]["score"] is None
 
     asyncio.run(scenario())

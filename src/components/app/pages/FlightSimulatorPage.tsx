@@ -276,7 +276,7 @@ export function FlightSimulatorPage() {
       {history.isLoading ? (
         <Skeleton className="h-96" />
       ) : !enough ? (
-        <Card>
+        <Card animated={false}>
           <EmptyState
             title="Not enough history"
             hint={`The provider returned ${bars.length} valid bars for ${symbol} at this resolution.`}

@@ -31,7 +31,24 @@ class IntelligenceSettings(BaseSettings):
     maturation_enabled: bool = True
     scheduler_enabled: bool = True
     snapshot_history_calls: int = 6
+    # Closed sessions do not share FYERS budget with a live stream; a higher
+    # baseline budget warms daily volume baselines within a few on-demand
+    # collections instead of an hour of five-minute cycles.
+    closed_snapshot_history_calls: int = 12
+    # Terminal stock-history amortization. Completed candles are immutable, so a
+    # closed session's per-symbol history is reused far beyond one board
+    # refresh; at open the cadence must still fit the shared FYERS request
+    # budget (a 50-symbol board refetching 1m bars every 45 s is over any plan).
+    closed_stock_history_ttl_seconds: int = 3600
+    open_stock_history_ttl_seconds: int = 120
     stream_warm_wait_seconds: float = 2
+    # Dead-socket recovery: during OPEN, the FYERS SDK can keep a socket object
+    # alive through SSL/DNS failures while no tick flows (fyersDataSocket.log,
+    # 2026-10-27 14:38-19:15 IST). After this much global silence with equity
+    # listeners registered, force one full LiveMarket socket reset, at most once
+    # per cooldown.
+    stream_silence_reset_seconds: float = 180
+    stream_reset_cooldown_seconds: float = 300
     daily_history_ttl_seconds: int = 21600
     intraday_baseline_ttl_seconds: int = 21600
     market_holidays: list[str] = []
@@ -55,8 +72,15 @@ class IntelligenceSettings(BaseSettings):
             raise ValueError("Timeouts, TTLs and half-life must be positive")
         if not 0 <= self.relevance_threshold <= 100 or not 0 < self.duplicate_threshold <= 1:
             raise ValueError("Invalid analysis thresholds")
+        if self.stream_silence_reset_seconds <= 0 or self.stream_reset_cooldown_seconds < self.stream_silence_reset_seconds:
+            raise ValueError("Stream recovery thresholds must be positive and cooldown >= silence window")
         if not 0 <= self.stream_warm_wait_seconds <= 5 or not 0 <= self.snapshot_history_calls <= 20:
             raise ValueError("Stream warm wait and snapshot history budget must be bounded")
+        if not 0 <= self.closed_snapshot_history_calls <= 50:
+            raise ValueError("The closed-session history budget must be bounded")
+        if not 60 <= self.closed_stock_history_ttl_seconds <= 86400 or \
+                not 15 <= self.open_stock_history_ttl_seconds <= 3600:
+            raise ValueError("Stock history TTLs must stay within bounded session windows")
 
 
 config = IntelligenceSettings()

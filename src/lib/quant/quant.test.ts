@@ -383,6 +383,14 @@ test("behavioural engine finds size escalation after losses and protections neve
   assert.ok(evaluateProtections(policy, ctx).blocks.some((b) => b.startsWith("Cooling-off")));
   assert.deepEqual(evaluateProtections(policy, { ...ctx, side: "SELL" }).blocks, []);
   assert.deepEqual(evaluateProtections({ ...policy, consent: false }, ctx).blocks, []);
+  // A missing or incomplete decision plan is only ever a reminder, never a block.
+  const thesis = evaluateProtections({ ...policy, mandatory_thesis: true }, ctx);
+  assert.ok(!thesis.blocks.some((b) => /thesis|decision plan/i.test(b)));
+  assert.ok(thesis.warnings.some((w) => w.startsWith("Thesis reminder")));
+  assert.deepEqual(
+    evaluateProtections({ ...policy, mandatory_thesis: true }, { ...ctx, side: "SELL" }).blocks,
+    [],
+  );
 });
 
 test("track records mature only after the horizon and report abstentions", () => {

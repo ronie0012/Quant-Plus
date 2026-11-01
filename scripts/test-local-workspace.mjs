@@ -7,6 +7,7 @@ import ts from "typescript";
 import { localTestModule } from "./local-test-module.mjs";
 
 const previousFile = process.env.LOCAL_DATA_FILE;
+const previousProvider = process.env.QUANT_PLUS_BOOK_PROVIDER;
 const originalFetch = globalThis.fetch;
 const originalNow = Date.now;
 // A fixed in-session clock keeps session-dependent behavior deterministic.
@@ -14,6 +15,7 @@ Date.now = () => Date.parse("2026-10-14T05:00:00Z");
 const directory = mkdtempSync(join(tmpdir(), "qp-local-"));
 const file = join(directory, "book.json");
 process.env.LOCAL_DATA_FILE = file;
+process.env.QUANT_PLUS_BOOK_PROVIDER = "";
 const { LOCAL_TOKEN, isLocalRequest } = localTestModule("@/lib/local-session");
 const store = localTestModule("@/lib/local-store.server");
 function evaluate(path) {
@@ -263,6 +265,8 @@ try {
   globalThis.fetch = originalFetch;
   if (previousFile === undefined) delete process.env.LOCAL_DATA_FILE;
   else process.env.LOCAL_DATA_FILE = previousFile;
+  if (previousProvider === undefined) delete process.env.QUANT_PLUS_BOOK_PROVIDER;
+  else process.env.QUANT_PLUS_BOOK_PROVIDER = previousProvider;
   if (previousKey === undefined) delete process.env.AGENT_SERVICE_API_KEY;
   else process.env.AGENT_SERVICE_API_KEY = previousKey;
   rmSync(directory, { recursive: true, force: true });

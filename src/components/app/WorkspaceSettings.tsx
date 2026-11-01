@@ -40,7 +40,7 @@ export function WorkspaceSettings() {
     {
       key: "review_mode",
       label: "Review mode",
-      hint: "Blocks new entries until a complete decision plan is linked. Exits are never blocked. Shortcut: V.",
+      hint: "Nudges you to link a complete decision plan before new entries — never blocks ordering. Exits are never blocked. Shortcut: V.",
     },
     {
       key: "low_bandwidth",

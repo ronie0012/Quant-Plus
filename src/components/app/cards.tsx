@@ -10,6 +10,7 @@ export function Card({
   className,
   glow,
   delay = 0,
+  animated = true,
 }: {
   children: ReactNode;
   className?: string;
@@ -17,12 +18,15 @@ export function Card({
   glow?: boolean;
   /** Entrance stagger in ms. */
   delay?: number;
+  /** Error and empty states can render immediately for assistive technology. */
+  animated?: boolean;
 }) {
   return (
     <section
       style={{ ["--d" as string]: `${delay}ms` }}
       className={cn(
-        "dash-rise relative overflow-hidden rounded-lg border border-border bg-panel/80",
+        "relative overflow-hidden rounded-lg border border-border bg-panel/80",
+        animated && "dash-rise",
         className,
       )}
     >

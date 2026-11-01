@@ -32,7 +32,7 @@ function TopbarModeToggles() {
       key: "review_mode" as const,
       label: "Plan gate",
       on: workspace.review_mode,
-      title: "Plan gate blocks new entries until a decision plan is complete (V)",
+      title: "Plan gate nudges you to link a decision plan before new entries (V)",
     },
   ];
 
@@ -68,7 +68,7 @@ function TopbarModeToggles() {
           >
             <span>
               <span className="block">
-                {label === "Plan gate" ? "Require a decision plan" : "Focus mode"}
+                {label === "Plan gate" ? "Suggest a decision plan" : "Focus mode"}
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-subtle">{title}</span>
             </span>

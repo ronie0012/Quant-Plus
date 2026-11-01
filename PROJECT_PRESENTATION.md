@@ -187,7 +187,7 @@ flowchart TB
     API --> Research[Checkpointed research graph]
     API --> Intel[News and market intelligence]
     Feed --> Yahoo[Labelled Yahoo fallback where supported]
-    Research --> Gateway[CodeCraft model gateway]
+    Research --> Gateway[OpenRouter Nemotron model gateway]
     Research --> ResearchDB[SQLite sessions, theses, checkpoints and usage]
     Research --> RnD[Hypotheses, foundry, falsification and research memory]
     Intel --> Sources[RSS, official announcements and available provider data]
@@ -344,8 +344,8 @@ The following are identifiers in repository configuration, not independent certi
 
 | Workload                                                 | Configured default                       | Route                                         |
 | -------------------------------------------------------- | ---------------------------------------- | --------------------------------------------- |
-| Analysts, debate, trader and risk roles                  | `deepseek-v4-pro-0813`                   | Existing CodeCraft gateway.                   |
-| Research manager, devil's advocate and portfolio manager | `claude-sonnet-5`                        | Existing CodeCraft gateway.                   |
+| Analysts, debate, trader and risk roles                  | `nvidia/nemotron-3-ultra-550b-a55b:free` | Server-side OpenRouter prediction gateway.    |
+| Research manager, devil's advocate and portfolio manager | `nvidia/nemotron-3-ultra-550b-a55b:free` | Server-side OpenRouter prediction gateway.    |
 | Frontend Quant AI chat                                   | `nvidia/nemotron-3-ultra-550b-a55b:free` | Server-side OpenRouter-compatible chat route. |
 
 Older comments mention previous role labels such as “luna” and “sonnet.” Current configuration is the source of truth for routing. No API credentials are included in this document.
@@ -815,7 +815,7 @@ The tests cover important failure boundaries such as unauthorized requests, dupl
 | Build/runtime              | Vite 8, Nitro Node-server output, Node 22.14 reference environment.                      |
 | Backend                    | Python 3.11, FastAPI, Pydantic schemas and asynchronous/provider integration code.       |
 | Research orchestration     | Explicit Python state graph, bounded stages, concurrent specialist work and checkpoints. |
-| Model access               | CodeCraft research gateway and OpenRouter chat integration.                              |
+| Model access               | OpenRouter Nemotron research gateway and chat integration.                              |
 | Market integration         | FYERS streaming/history plus labelled Yahoo/yfinance fallback.                           |
 | Local persistence          | JSON paper book, SQLite research/news/history stores and Parquet research datasets.      |
 | Hosted application backend | InsForge authentication and PostgreSQL with RLS and atomic book commits.                 |

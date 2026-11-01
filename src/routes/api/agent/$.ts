@@ -37,6 +37,8 @@ export async function proxy(request: Request) {
           decoded === "market/overview" ||
           decoded === "market/overview/stream" ||
           /^terminal\/(quotes|metrics|calendar|research)$/.test(decoded) ||
+          decoded === "terminal/structure-board" ||
+          /^terminal\/structure\/[A-Za-z0-9][A-Za-z0-9&-]{0,29}$/.test(decoded) ||
           /^terminal\/indices\/(NIFTY|BANK|VIX|SENSEX)\/history$/.test(decoded) ||
           /^terminal\/fundamentals\/[A-Za-z0-9][A-Za-z0-9&-]{0,29}$/.test(decoded) ||
           /^market\/(sentiment|sentiment\/history|intelligence|sectors|news)$/.test(decoded) ||
